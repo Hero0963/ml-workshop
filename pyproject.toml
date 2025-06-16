@@ -3,8 +3,15 @@ name = "ml-workshop"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = []
+requires-python = ">=3.9"
+dependencies = [
+    "gym==0.26.2",
+    "ipykernel>=6.29.5",
+    "matplotlib==3.8.3",
+    "numpy<2.0.0",
+    "pettingzoo==1.23.1",
+    "pygame>=2.6.1",
+]
 
 [dependency-groups]
 dev = [

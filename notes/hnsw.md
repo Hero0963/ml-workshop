@@ -72,4 +72,4 @@
 ## 參考連結
 1. [Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs](https://arxiv.org/pdf/1603.09320)
 2. [Pinecone HNSW explain](https://www.pinecone.io/learn/series/faiss/hnsw/)
-
+3. [HNSW 算法介紹](https://luxiangdong.com/2023/11/06/hnsw/)

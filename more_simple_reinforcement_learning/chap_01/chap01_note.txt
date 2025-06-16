@@ -1,0 +1,25 @@
+ref_link: https://www.bilibili.com/video/BV1ZwZtYtE4R
+
+強化學習是一種機器學習方法，目標是讓智能體（Agent）在環境（Environment）中透過試誤（Trial and Error）方式學習最佳策略（Policy）。
+智能體根據當前狀態（State）選擇一個動作（Action），然後從環境中獲得回饋（Reward）與新的狀態。藉由最大化累積報酬（Cumulative Reward），
+智能體逐步學習出最佳的決策行為。
+
+強化學習方法只要求結果，中間過程讓 agent 自行規劃
+
+求解過程與遊戲環境複雜度無關
+
+
+冰湖 4 x 4 種狀態
+反饋表、狀態表、策略表
+Q 表 所有狀態下所有動作的分數(指導 Agent 在每一個狀態下應該做什麼動作)
+
+流程: start a new game -> state, cur_pos, action, feedback, arrive_pos, game_end? 
+calculate total feedback -> update Q table
+
+
+Q 表適合狀態空間小的問題（像 4x4 冰湖）。
+狀態太多時（例如玩 Atari 遊戲），會用 Q Network（DQN）取代表格，改用神經網路逼近 Q 值。
+
+to_deconfuse: Q table update process 
+
+
