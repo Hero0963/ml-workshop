@@ -16,10 +16,22 @@ Q 表 所有狀態下所有動作的分數(指導 Agent 在每一個狀態下應
 流程: start a new game -> state, cur_pos, action, feedback, arrive_pos, game_end? 
 calculate total feedback -> update Q table
 
-
 Q 表適合狀態空間小的問題（像 4x4 冰湖）。
 狀態太多時（例如玩 Atari 遊戲），會用 Q Network（DQN）取代表格，改用神經網路逼近 Q 值。
 
+
+# 强化学习从原理到实践 第2章 Q函数和时序差分
 to_deconfuse: Q table update process 
+update Q table 的方式: 玩完一局後，有拿到禮物(or 反饋總和/ 總分 比以往好)。，就把當時狀態選擇的操作全部加分！
+加多少分? => 自己設定
+
+SARSA（State-Action-Reward-State-Action）
+
+
+時序差分算法 -> 走一段路就進行估計
+不一定要走完全程才能優化Q表
+
+
+
 
 
