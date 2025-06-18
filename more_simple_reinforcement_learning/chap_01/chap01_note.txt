@@ -32,6 +32,47 @@ SARSA（State-Action-Reward-State-Action）
 不一定要走完全程才能優化Q表
 
 
+# 須注意是異策略（off-policy） or 同策略（on-policy）(只能使用自己產生的數據)算法
+# off-policy(觀戰) - QLearning、DQN、DDPG、TD3、SAC 
+# on-policy(自己復盤) - Sarsa、PPO 
 
+
+# update QTable by TD
+Q(s_t, a_t) = E[R_t + gamma * R_{t + 1} + gamma^2 * R_{t + 2} + .... + gamma^{n-t} * R_n]
+Q(s_t, a_t) = R_t + E[gamma * R_{t + 1} + gamma^2 * R_{t + 2} + .... + gamma^{n-t} * R_n]
+Q(s_t, a_t) = R_t + gamma * Q(s_{t+1}, a_{t + 1})
+
+value = Q(s_t, a_t)
+target = R_t + gamma * Q(s_{t+1}, a_{t + 1})
+td = target - value
+Q(s_t, a_t) <- Q(s_t, a_t) + alpha * td
+
+
+
+
+QLearning:
+Q(s_t, a_t) = R_t + gamma * max_v -> Q(s_{t+1}, *)
+
+
+'''
+Sarsa：你下次也是用你「實際」選的方向來更新 Q 值。
+
+Q-Learning：你假設下一步會選分數最高的方向來更新 Q 值，不管你實際上選的是不是那個方向。
+'''
+
+
+value 和target 应该會相等
+
+target = reward + Q[next_state].max() * 0.9
+這個 * 0.9 衰減是自己定義的(discount factor, γ, 0 < γ < 1, usually pick  γ = 0.9)
+
+這種設置下，Q-Learning 的 Bellman 方程一定有唯一解，Q 值會收斂到一個固定點（即最終值）。
+貝爾曼方程就是：「現在的價值 = 現在的分數 + 未來所有最佳選擇帶來的期望分數（有折扣）
+
+target 是「根據新觀察到的結果或合理預測算出來的最新正確答案」
+value（Q 表）只是「你之前的猜測」
+TD (Temporal Difference) 學習核心就在於用 target 來糾正 value。
+
+---------------------------------
 
 
