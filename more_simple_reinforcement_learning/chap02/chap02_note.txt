@@ -1,0 +1,10 @@
+DQN = deep QLearning
+QTable 的侷限: 當動作 or 狀態數 無法窮舉時
+從 QTable 到神經網路: state → model → Q(values for all actions)，相當於每次查詢輸出 QTable 的 1 row
+
+# 平衡車遊戲介紹
+一局有200個時刻，桿子會往左右傾倒，車子必須保持移動來維持平衡
+只要有一個時刻桿子不倒就 +1分，只要有一個時刻倒了，就 -1000分
+-1000 <= total_score <= 200
+
+DQN double model: target 延遲更新，才不會一直追逐目標。
