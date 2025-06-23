@@ -11,7 +11,25 @@ dependencies = [
     "numpy<2.0.0",
     "pettingzoo==1.23.1",
     "pygame>=2.6.1",
+    "torch==1.12.1",
+    "torchvision==0.13.1",
+    "torchaudio==0.12.1",
 ]
+
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu" },
+]
+torchvision = [
+    { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
 
 [dependency-groups]
 dev = [
@@ -21,3 +39,5 @@ dev = [
     "pytest>=8.4.0",
     "ruff>=0.11.13",
 ]
+
+

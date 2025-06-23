@@ -8,3 +8,7 @@ QTable 的侷限: 當動作 or 狀態數 無法窮舉時
 -1000 <= total_score <= 200
 
 DQN double model: target 延遲更新，才不會一直追逐目標。
+
+
+# Using a PyTorch index
+https://docs.astral.sh/uv/guides/integration/pytorch/#using-a-pytorch-index
