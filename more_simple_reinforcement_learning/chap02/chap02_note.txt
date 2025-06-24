@@ -12,3 +12,12 @@ DQN double model: target 延遲更新，才不會一直追逐目標。
 
 # Using a PyTorch index
 https://docs.astral.sh/uv/guides/integration/pytorch/#using-a-pytorch-index
+
+
+# model_delay
+
+'''
+你做了一個「大腦」，輸入是4個數字（代表桿子角度、位置等），輸出是「左」或「右」兩個動作的分數。
+
+還有一個一模一樣但不常更新的大腦（target network），這個是訓練的關鍵——避免因為太快自我複製學壞。
+'''
