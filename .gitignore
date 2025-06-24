@@ -195,3 +195,4 @@ cython_debug/
 
 
 my_personal_note.txt
+more_simple_reinforcement_learning/chap02/best_model.pth
