@@ -21,3 +21,11 @@ https://docs.astral.sh/uv/guides/integration/pytorch/#using-a-pytorch-index
 
 還有一個一模一樣但不常更新的大腦（target network），這個是訓練的關鍵——避免因為太快自我複製學壞。
 '''
+
+
+加權數據池（weighted replay buffer / prioritized replay buffer）
+對每條 transition（狀態-動作-回報-下個狀態）賦予一個權重，通常根據該樣本的 TD-error（時間差誤差，簡單來說就是loss），
+誤差大的 transition 會被賦予更高的抽樣概率。
+
+为了缓解过拟合,降低这些数据的lr,这里以削减loss的方式实现.
+per-sample adaptive adjustment
