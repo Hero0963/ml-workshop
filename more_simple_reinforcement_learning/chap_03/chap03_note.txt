@@ -1,0 +1,18 @@
+# 策略梯度
+回顧：ＱLearning, SARSA, DQN 基於價值
+從不好的狀態移動到好的狀態，並採取好的動作
+核心 = 優化 Q Table
+
+now: 基於策略做決策
+state -> model -> p(action) 
+output= 採取某個動作的機率
+
+# 策略迭代 
+goal: 找出最大收益的策略
+
+
+
+
+
+
+
