@@ -1,0 +1,8 @@
+# RL AC, A2C(Advantage Actor-Critic) 
+
+01. 該算法結合 DQN, Reinforce
+02. 改用 DQN 來估計 Q 函數
+03. A2C (去基線算法)，用 (target - value) 即視為去基線
+target 是根據 next_state 估計出來的
+value 是根據 state 估計出來的
+兩個的差值為做完這個動作後，是變好還是變差
