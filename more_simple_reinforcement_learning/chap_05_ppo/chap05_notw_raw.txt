@@ -1,0 +1,58 @@
+近端策略優化思想 Proximal Policy Optimization (PPO)
+
+01. 重要性採樣
+Q: 在某狀態下做某動作，之後一直玩下去，平均能得多少分
+V: 在某狀態下還沒選動作，如果接下來按照 π 策略，把所有可能動作的 Q 做平均
+J: 要最大化的目標，希望整體的表現越好 => 把所有可能會遇到的 V_{π} 再平均一下
+不斷取期望的過程
+
+實務上某策略是用 蒙地卡羅 or TD 算法
+
+V(S) = \Sigma_{a} P(a) Q(s, a)
+goal 改為 max \Sigma_{a} [p_now(a)/ p_old(a)] Q(s, a)
+即為 importance sampling
+能重複利用舊資料來更新策略
+
+02. ex: 在某情境下
+原策略 atk=0.5, defense=0.3, run=0.2
+新策略 atk=0.7, defense=0.25, run=0.05
+如果 atk 的 Q 值高，那麼更新方向正確
+
+03. 約束 & 裁剪 
+避免策略變化太劇烈
+KL(P_new - P_old) < delta
+loss -= \beta * KL(P_new - P_old)
+clip 
+
+04. 優勢函數 A(s, a) = Q(s, a) - V(s)
+去基線，原式子中的 Q 改用 A 取代
+goal 改為 max \Sigma_{a} [p_now(a)/ p_old(a)] A(s, a)
+
+05. 廣義優勢估計
+_待補數學式
+
+06. discrete.ipynb
+用平衡車當範例
+PPO 是 AC 算法的改進，所以也 define 2 models
+train_value() <-- 採用 TD 算法
+for _ loop 那段沒有必要，是為了寫起來跟 train_action() 對稱
+
+train_action()
+優勢函數
+for loop
+重要性採樣
+裁剪
+
+07. conti.ipynb
+用常態分佈擬合 P(action) (totally agree)
+
+\mathrm{pdf}(x) = \frac{1}{\sigma \sqrt{2\pi}} \exp \left( -\frac{(x - \mu)^2}{2\sigma^2} \right)
+
+用倒立擺做範例
+偏移 reward => [-1, 1]
+forward => output 用常態分佈
+
+08. PPO 廣泛應用於 LLM training, RLHF
+_待補充詳細資料
+
+
