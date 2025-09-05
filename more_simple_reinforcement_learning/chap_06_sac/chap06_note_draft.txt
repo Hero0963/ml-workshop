@@ -1,0 +1,30 @@
+SAC 算法
+
+01. AC 算法的改進 S means soft
+
+02. goal 本來是 max Q(s, a) 
+改為 max Q(s, *) P(* | s) + \alpha H (Q(s, *))
+引入 entropy + 改成考慮所有 action 並加權求和
+
+03. 引入 entropy 的理由：
+避免學習太劇烈(採樣機率極端化，某些動作的機率一下子降到 0)
+
+----
+
+看代碼
+
+04. SAC 依然是同策略，但使用了 Pool (數據池)
+因為已經是相當程度的解耦
+(check code implement)
+
+05. \alpha 如何自動調節
+check this
+target_entropy = log(action_dim) -> 上界
+為經驗值法則
+
+06. E = 1/2 log (2 * pi * e \sigma ^2) 
+check 連續動作的 entropy 怎麼定義的
+
+07. action = dist.rsample()
+用法，訓練時怎麼做 bp
+
