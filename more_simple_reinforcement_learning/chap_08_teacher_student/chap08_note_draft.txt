@@ -1,0 +1,4 @@
+RL Sec12 模仿學習
+
+01. 用 DL 的方法 (teacher-student model)
+goal: f(student) -> f(teacher) 有監督學習
