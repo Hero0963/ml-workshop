@@ -45,3 +45,19 @@ After running the tests, check the `src/core/tests/reports/` directory. Two new 
 
 *   `test_report_[timestamp].txt`: A plain text summary of the test results, identical to the terminal output.
 *   `log_[timestamp].log`: A detailed, step-by-step log of the test execution for debugging purposes.
+
+## 4. Future Work
+
+- [ ] **Algorithm Verification:**
+    - [ ] Rigorously verify the correctness of the current DFS solver against known complex or tricky puzzles.
+    - [ ] Debug and resolve failing test cases (e.g., `puzzle_02`).
+- [ ] **Alternative Solver Implementations:**
+    - [ ] Implement other traditional search algorithms (e.g., Breadth-First Search).
+    - [ ] Implement heuristic-based algorithms.
+    - [ ] Implement A* Search, which could be more efficient by using a heuristic to guide the pathfinding.
+- [ ] **Machine Learning Approaches:**
+    - [ ] Explore Deep Learning (DL) models to solve the puzzles.
+    - [ ] Investigate Reinforcement Learning (RL) agents to learn the puzzle-solving policy.
+- [ ] **API Development:**
+    - [ ] Create an API endpoint that can accept a puzzle, either as a data structure or directly from an image/URL.
+    - [ ] Investigate advanced models for image recognition and data extraction to automate puzzle input.

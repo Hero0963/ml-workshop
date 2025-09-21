@@ -1,5 +1,13 @@
 # Development Log
 
+## 2025-09-21
+
+### Test Suite and Architecture Overhaul
+-   **Test Case Expansion:** Transcribed and added puzzles 01 through 06 from image files into the test suite.
+-   **Test Architecture Refactoring:** Refactored the entire test workflow to be scalable and reusable. Test data is now centralized in `conftest.py` and dynamically loaded into a single test function in `test_dfs.py` using `pytest.parametrize`.
+-   **Input Refactoring:** Enhanced the core solver and input data structure to support "blocked cells" in addition to "walls", making the algorithm more versatile.
+-   **Workflow Update:** Updated the internal Gemini README to define collaboration rules regarding package management and test execution.
+
 ## 2025-09-20
 
 ### Core Solver Implementation

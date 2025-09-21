@@ -1,32 +1,35 @@
-from typing import Dict, List, Optional, Set, Tuple
+# src/core/dfs.py
+
 
 # Input Type Definition:
 # The puzzle is a dictionary with the following keys:
-# 'grid': A List[List[int]] representing the grid. 0 for empty, >0 for numbers.
-# 'walls': A Set[Tuple[Tuple[int, int], Tuple[int, int]]] where each inner tuple
+# 'grid': A list[list[int]] representing the grid. 0 for empty, >0 for numbers.
+# 'walls': A set[tuple[tuple[int, int], tuple[int, int]]] where each inner tuple
 #          is a coordinate (row, col), representing blocked passages.
 #          The coordinate pair in the tuple should be sorted to ensure uniqueness.
+# 'blocked_cells': A set of (row, col) tuples that cannot be entered.
 
 # Output Type Definition:
-# The solution is a List[Tuple[int, int]], representing the path of coordinates
+# The solution is a list[tuple[int, int]], representing the path of coordinates
 # from start to finish. Returns None if no solution is found.
 
 
-def solve_puzzle(puzzle: Dict) -> Optional[List[Tuple[int, int]]]:
+def solve_puzzle(puzzle: dict) -> list[tuple[int, int]] | None:
     """
     Solves a Zip puzzle using a backtracking DFS algorithm.
 
     Args:
-        puzzle: A dictionary containing the 'grid' and 'walls'.
+        puzzle: A dictionary containing the 'grid', 'walls', and optional 'blocked_cells'.
 
     Returns:
         A list of coordinates representing the solution path, or None.
     """
     grid = puzzle["grid"]
     walls = puzzle.get("walls", set())
+    blocked_cells = puzzle.get("blocked_cells", set())
     height = len(grid)
     width = len(grid[0])
-    total_cells = height * width
+    visitable_cells = (height * width) - len(blocked_cells)
 
     num_map = {
         grid[r][c]: (r, c)
@@ -39,23 +42,30 @@ def solve_puzzle(puzzle: Dict) -> Optional[List[Tuple[int, int]]]:
         return None  # No starting point
 
     start_pos = num_map[1]
+    # The starting cell itself cannot be a blocked cell
+    if start_pos in blocked_cells:
+        return None
+
     path = [start_pos]
     visited = {start_pos}
 
-    return _backtrack(path, visited, grid, walls, total_cells, num_map)
+    return _backtrack(
+        path, visited, grid, walls, blocked_cells, visitable_cells, num_map
+    )
 
 
 def _backtrack(
-    path: List[Tuple[int, int]],
-    visited: Set[Tuple[int, int]],
-    grid: List[List[int]],
-    walls: Set[Tuple[Tuple[int, int], Tuple[int, int]]],
-    total_cells: int,
-    num_map: Dict[int, Tuple[int, int]],
-) -> Optional[List[Tuple[int, int]]]:
+    path: list[tuple[int, int]],
+    visited: set[tuple[int, int]],
+    grid: list[list[int]],
+    walls: set[tuple[tuple[int, int], tuple[int, int]]],
+    blocked_cells: set[tuple[int, int]],
+    visitable_cells: int,
+    num_map: dict[int, tuple[int, int]],
+) -> list[tuple[int, int]] | None:
     """Recursive helper function for the backtracking algorithm."""
 
-    if len(path) == total_cells:
+    if len(path) == visitable_cells:
         return path
 
     last_pos = path[-1]
@@ -72,6 +82,8 @@ def _backtrack(
             continue  # Out of bounds
         if new_pos in visited:
             continue  # Already visited
+        if new_pos in blocked_cells:
+            continue  # Cell is blocked
 
         # Check for walls
         # Ensure the wall pair is sorted before checking existence
@@ -97,7 +109,9 @@ def _backtrack(
         path.append(new_pos)
         visited.add(new_pos)
 
-        solution = _backtrack(path, visited, grid, walls, total_cells, num_map)
+        solution = _backtrack(
+            path, visited, grid, walls, blocked_cells, visitable_cells, num_map
+        )
         if solution:
             return solution
 
