@@ -1,5 +1,20 @@
 # Development Log
 
+## 2025-09-22
+
+### Input System Refactoring and Test Data Integration
+
+-   **Input Refactoring:** Overhauled the puzzle input system. Puzzles are now defined with a readable, text-based `puzzle_layout`, which is then processed by a dedicated `parser` in `utils.py`.
+-   **Utility Functions:** Created `src/core/utils.py` to house shared functions, including the new `parse_puzzle_layout` parser and a `visualize_solution` function for displaying results.
+-   **Test Data Enhancement:** Integrated the user-provided, ground-truth solutions for all six puzzles (`puzzle_01` to `puzzle_06`) into the `conftest.py` test suite, enabling strict path verification.
+
+### To-Do List
+-   **Unit Testing:** Write and pass unit tests for the new utility functions in `src/core/utils.py`.
+-   **Algorithm Validation:** Run the full test suite to verify the DFS solver's correctness against all 6 ground-truth solutions.
+-   **Debugging:** Based on test results, debug any discrepancies between the solver's output and the expected solutions.
+-   **Visualization Polish:** Re-evaluate and possibly redesign the presentation of the visualized solution for better clarity during debugging.
+
+
 ## 2025-09-21
 
 ### Test Suite and Architecture Overhaul

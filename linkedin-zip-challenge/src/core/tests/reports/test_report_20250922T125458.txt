@@ -1,0 +1,42 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge
+configfile: pytest.ini
+plugins: html-4.1.1, metadata-3.1.1, reportlog-0.4.0
+collected 6 items
+
+src\core\tests\test_dfs.py .F....                                        [100%]
+
+================================== FAILURES ===================================
+________________________ test_image_puzzles[puzzle_02] ________________________
+
+puzzle_data = {'blocked_cells': set(), 'grid': [[0, 0, 5, 8, 0, 0], [0, 0, 12, 0, 9, 0], [4, 0, 0, 0, 0, 1], [0, 0, 6, 7, 0, 0], [0, 11, 0, 0, 10, 0], [3, 0, 0, 0, 0, 2]], 'walls': set()}
+puzzle_id = 'puzzle_02'
+
+    @pytest.mark.parametrize(
+        "puzzle_data, puzzle_id", puzzles_to_test, ids=[p[1] for p in puzzles_to_test]
+    )
+    def test_image_puzzles(puzzle_data, puzzle_id):
+        """
+        Tests puzzles transcribed from images, with data provided from conftest.py.
+        The primary goal is to run the solver and log the output for each puzzle.
+        """
+        logger.info(f"--- Starting test for: {puzzle_id} ---")
+        logger.debug(f"Puzzle input: {puzzle_data}")
+    
+        actual = solve_puzzle(puzzle_data)
+        logger.info(f"Solution found for {puzzle_id}: {actual}")
+    
+        # For now, we just assert that a solution is found and the path is complete.
+        # We can add assertions for specific paths later if needed.
+>       assert actual is not None, f"Solver did not find a solution for {puzzle_id}."
+E       AssertionError: Solver did not find a solution for puzzle_02.
+E       assert None is not None
+
+src\core\tests\test_dfs.py:46: AssertionError
+---------------------------- Captured stderr call -----------------------------
+2025-09-22 12:54:58.605 | INFO     | test_dfs:test_image_puzzles:38 - --- Starting test for: puzzle_02 ---
+2025-09-22 12:54:58.606 | INFO     | test_dfs:test_image_puzzles:42 - Solution found for puzzle_02: None
+=========================== short test summary info ===========================
+FAILED src/core/tests/test_dfs.py::test_image_puzzles[puzzle_02] - AssertionE...
+========================= 1 failed, 5 passed in 0.11s =========================
