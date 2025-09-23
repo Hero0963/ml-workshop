@@ -1,5 +1,5 @@
 # src/core/dfs.py
-
+from loguru import logger
 
 # Input Type Definition:
 # The puzzle is a dictionary with the following keys:
@@ -38,11 +38,21 @@ def solve_puzzle(puzzle: dict) -> list[tuple[int, int]] | None:
         if grid[r][c] > 0
     }
 
+    if not num_map:
+        # Handle empty puzzles or puzzles with no numbers
+        start_pos = (0, 0)
+        if start_pos in blocked_cells:
+            return None
+        path = [start_pos]
+        visited = {start_pos}
+        return _backtrack(
+            path, visited, grid, walls, blocked_cells, visitable_cells, num_map, 1
+        )
+
     if 1 not in num_map:
         return None  # No starting point
 
     start_pos = num_map[1]
-    # The starting cell itself cannot be a blocked cell
     if start_pos in blocked_cells:
         return None
 
@@ -50,7 +60,7 @@ def solve_puzzle(puzzle: dict) -> list[tuple[int, int]] | None:
     visited = {start_pos}
 
     return _backtrack(
-        path, visited, grid, walls, blocked_cells, visitable_cells, num_map
+        path, visited, grid, walls, blocked_cells, visitable_cells, num_map, 2
     )
 
 
@@ -62,11 +72,24 @@ def _backtrack(
     blocked_cells: set[tuple[int, int]],
     visitable_cells: int,
     num_map: dict[int, tuple[int, int]],
+    next_waypoint: int,
 ) -> list[tuple[int, int]] | None:
     """Recursive helper function for the backtracking algorithm."""
+    logger.debug(
+        f"Enter backtrack: path_len={len(path)}, next_waypoint={next_waypoint}, last_pos={path[-1]}"
+    )
 
+    # Base case: if all visitable cells have been visited
     if len(path) == visitable_cells:
-        return path
+        # And all waypoints have been collected in order
+        if not num_map or next_waypoint > max(num_map.keys()):
+            logger.debug("SUCCESS: Path is full and all waypoints visited.")
+            return path
+        else:
+            logger.debug(
+                f"FAIL: Path is full but not all waypoints visited. Next expected: {next_waypoint}"
+            )
+            return None  # Path is full but didn't hit all waypoints
 
     last_pos = path[-1]
     r, c = last_pos
@@ -77,40 +100,44 @@ def _backtrack(
         nr, nc = r + dr, c + dc
         new_pos = (nr, nc)
 
-        # Check if the move is valid
+        # Standard validity checks
         if not (0 <= nr < height and 0 <= nc < width):
-            continue  # Out of bounds
+            continue
         if new_pos in visited:
-            continue  # Already visited
+            continue
         if new_pos in blocked_cells:
-            continue  # Cell is blocked
-
-        # Check for walls
-        # Ensure the wall pair is sorted before checking existence
+            logger.trace(f"Pruning {new_pos}: is a blocked cell.")
+            continue
         wall_pair = tuple(sorted((last_pos, new_pos)))
         if wall_pair in walls:
+            logger.trace(f"Pruning {new_pos}: wall detected at {wall_pair}.")
             continue
 
-        # Pre-move validation: If we are about to step on a numbered cell,
-        # check if it's the correct one in the sequence.
         num_at_new_pos = grid[nr][nc]
-        if num_at_new_pos > 0:
-            # Find the highest number we have visited so far in the path
-            max_visited_num = 0
-            for num, pos in num_map.items():
-                if pos in visited:
-                    if num > max_visited_num:
-                        max_visited_num = num
 
-            # The number we are stepping on must be the next in sequence
-            if num_at_new_pos != max_visited_num + 1:
-                continue  # Invalid move, prune this branch
+        # Waypoint logic: if we hit a numbered cell, it must be the one we're looking for
+        if num_at_new_pos > 0 and num_at_new_pos != next_waypoint:
+            logger.trace(
+                f"Pruning {new_pos}: hit waypoint {num_at_new_pos}, expected {next_waypoint}."
+            )
+            continue
 
         path.append(new_pos)
         visited.add(new_pos)
 
+        new_next_waypoint = (
+            next_waypoint + 1 if num_at_new_pos == next_waypoint else next_waypoint
+        )
+
         solution = _backtrack(
-            path, visited, grid, walls, blocked_cells, visitable_cells, num_map
+            path,
+            visited,
+            grid,
+            walls,
+            blocked_cells,
+            visitable_cells,
+            num_map,
+            new_next_waypoint,
         )
         if solution:
             return solution
@@ -118,5 +145,6 @@ def _backtrack(
         # Backtrack
         visited.remove(new_pos)
         path.pop()
+        logger.trace(f"Backtracking from {new_pos}. Path len: {len(path)}")
 
     return None

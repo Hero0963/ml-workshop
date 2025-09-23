@@ -19,6 +19,7 @@
 1. 類型提示(Type Hinting)請使用現代風格，例如用 `|` 取代 `Optional`，並用小寫內建類型 (`list`, `dict`) 取代大寫的 `List`, `Dict`。
 2. 在 `.py` 檔案的開頭，請加上一行註解來標明其檔案路徑，例如：`# src/core/dfs.py`。
 3. 你必須參考其他 `.py` 檔案寫法、用到的套件、已經有的功能，然後在適當的結構或模組中新增程式碼。
+4. function input/ output param 請加上 Type Hinting。
 
 協作流程
 1. 如果需要新增套件，請通知我，由我手動執行 `uv add`。

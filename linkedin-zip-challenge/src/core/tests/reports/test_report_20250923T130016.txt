@@ -1,0 +1,92 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge
+configfile: pytest.ini
+plugins: html-4.1.1, metadata-3.1.1, reportlog-0.4.0
+collected 12 items
+
+src\core\tests\test_dfs.py ......                                        [ 50%]
+src\core\tests\test_utils.py ..FFF.                                      [100%]
+
+================================== FAILURES ===================================
+_______________________ test_visualize_solution_no_path _______________________
+
+    def test_visualize_solution_no_path():
+        """Tests that the visualizer handles a None solution path gracefully."""
+        vis_grid = visualize_solution(puzzle_01_data, None)
+>       assert vis_grid == []
+E       AssertionError: assert [['.', '.', '....', '.', '.']] == []
+E         
+E         Left contains 6 more items, first extra item: ['.', '.', '.', '.', '.', '.']
+E         Use -v to get more diff
+
+src\core\tests\test_utils.py:51: AssertionError
+______ test_print_grid[grid_input0-   1    22   333\n4444  55555     6] _______
+
+grid_input = [['1', '22', '333'], ['4444', '55555', '6']]
+expected_output = '   1    22   333\n4444  55555     6'
+capsys = <_pytest.capture.CaptureFixture object at 0x00000204D8874A50>
+
+    @pytest.mark.parametrize(
+        "grid_input, expected_output",
+        [
+            (
+                [["1", "22", "333"], ["4444", "55555", "6"]],
+                "   1    22   333\n4444  55555     6",
+            ),
+            ([["A"], ["BB"], ["CCC"]], "  A\n BB\nCCC"),
+        ],
+    )
+    def test_print_grid(grid_input, expected_output, capsys):
+        """Tests that the grid printing function correctly aligns columns."""
+        print_grid(grid_input)
+        captured = capsys.readouterr()
+        # Normalize line endings and strip trailing whitespace
+        actual_output = "\n".join(line.rstrip() for line in captured.out.strip().splitlines())
+>       assert actual_output == expected_output
+E       AssertionError: assert '1     22  33...4  55555    6' == '   1    22  ...  55555     6'
+E         
+E         -    1    22   333
+E         ? ---       -
+E         + 1     22  333
+E         ?  +
+E         - 4444  55555     6
+E         ?                -
+E         + 4444  55555    6
+
+src\core\tests\test_utils.py:70: AssertionError
+_________________ test_print_grid[grid_input1-  A\n BB\nCCC] __________________
+
+grid_input = [['A'], ['BB'], ['CCC']], expected_output = '  A\n BB\nCCC'
+capsys = <_pytest.capture.CaptureFixture object at 0x00000204D9361410>
+
+    @pytest.mark.parametrize(
+        "grid_input, expected_output",
+        [
+            (
+                [["1", "22", "333"], ["4444", "55555", "6"]],
+                "   1    22   333\n4444  55555     6",
+            ),
+            ([["A"], ["BB"], ["CCC"]], "  A\n BB\nCCC"),
+        ],
+    )
+    def test_print_grid(grid_input, expected_output, capsys):
+        """Tests that the grid printing function correctly aligns columns."""
+        print_grid(grid_input)
+        captured = capsys.readouterr()
+        # Normalize line endings and strip trailing whitespace
+        actual_output = "\n".join(line.rstrip() for line in captured.out.strip().splitlines())
+>       assert actual_output == expected_output
+E       AssertionError: assert 'A\n BB\nCCC' == '  A\n BB\nCCC'
+E         
+E         -   A
+E         + A
+E            BB
+E           CCC
+
+src\core\tests\test_utils.py:70: AssertionError
+=========================== short test summary info ===========================
+FAILED src/core/tests/test_utils.py::test_visualize_solution_no_path - Assert...
+FAILED src/core/tests/test_utils.py::test_print_grid[grid_input0-   1    22   333\n4444  55555     6]
+FAILED src/core/tests/test_utils.py::test_print_grid[grid_input1-  A\n BB\nCCC]
+========================= 3 failed, 9 passed in 0.28s =========================
