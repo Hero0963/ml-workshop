@@ -1,11 +1,12 @@
-# src/core/tests/test_dfs.py
+# src/core/tests/solvers/test_dfs.py
+
 import os
 import sys
 from datetime import datetime, timezone
 
 import pytest
 from loguru import logger
-from src.core.dfs import solve_puzzle
+from src.core.solvers.dfs import solve_puzzle
 from src.core.tests.conftest import puzzles_to_test
 
 # --- Logger Configuration ---
@@ -57,4 +58,7 @@ def test_image_puzzles(puzzle_data, expected_solution, puzzle_id):
             len(actual) == expected_len
         ), f"Path length for {puzzle_id} should be {expected_len}, but was {len(actual)}."
 
-    logger.info(f"--- Finished test for: {puzzle_id} ---\n")
+    logger.info(
+        f"--- Finished test for: {puzzle_id} ---\
+"
+    )
