@@ -31,13 +31,7 @@ def solve_puzzle(puzzle: dict) -> list[tuple[int, int]] | None:
     height = len(grid)
     width = len(grid[0])
     visitable_cells = (height * width) - len(blocked_cells)
-
-    num_map = {
-        grid[r][c]: (r, c)
-        for r in range(height)
-        for c in range(width)
-        if grid[r][c] > 0
-    }
+    num_map = puzzle["num_map"]
 
     if not num_map:
         # Handle empty puzzles or puzzles with no numbers

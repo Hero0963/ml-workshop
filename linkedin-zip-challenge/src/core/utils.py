@@ -15,21 +15,115 @@ def parse_puzzle_layout(grid_layout: list[list[str]]) -> dict[str, Any]:
     """
     Parses a grid defined with 2-character string elements ('  ', 'xx', '01', '12')
     into the standard puzzle dictionary format.
+    Also creates the 'num_map' for quick waypoint lookup.
     """
     grid: list[list[int]] = []
     blocked_cells: set[tuple[int, int]] = set()
-    for r, row_list in enumerate(grid_layout):
+    num_map: dict[int, tuple[int, int]] = {}
+    height, width = len(grid_layout), len(grid_layout[0]) if grid_layout else 0
+
+    for r in range(height):
         row: list[int] = []
-        for c, item in enumerate(row_list):
+        for c in range(width):
+            item = grid_layout[r][c]
             if item.isdigit():
-                row.append(int(item))
+                num = int(item)
+                row.append(num)
+                num_map[num] = (r, c)
             elif item == "xx":
                 row.append(0)
                 blocked_cells.add((r, c))
             else:
                 row.append(0)
         grid.append(row)
-    return {"grid": grid, "blocked_cells": blocked_cells}
+
+    # Sort the num_map by waypoint number
+    sorted_num_map = dict(sorted(num_map.items()))
+
+    return {"grid": grid, "blocked_cells": blocked_cells, "num_map": sorted_num_map}
+
+
+def _calculate_perfect_score(puzzle: dict[str, Any]) -> int:
+    """Calculates the theoretical maximum score for a perfect solution."""
+    grid = puzzle["grid"]
+    blocked_cells = puzzle.get("blocked_cells", set())
+    num_map = puzzle["num_map"]
+    height = len(grid)
+    width = len(grid[0])
+    visitable_cells = (height * width) - len(blocked_cells)
+
+    # 1. Path length reward
+    score = visitable_cells * 10
+
+    # 2. Waypoint rewards
+    if num_map:
+        num_waypoints = len(num_map)
+        # Sum of an arithmetic series: n * (a1 + an) / 2
+        # Here: num_waypoints * (1 + num_waypoints) / 2
+        waypoint_bonus = sum(range(1, num_waypoints + 1))
+        score += 20000 * waypoint_bonus
+
+    # 3. Jackpot
+    score += 1_000_000
+
+    return score
+
+
+def calculate_fitness_score(
+    puzzle: dict[str, Any], path: list[tuple[int, int]]
+) -> tuple[int, int]:
+    """
+    Calculates a fitness score for a given path against a puzzle.
+    Higher scores are better. The score is designed to guide metaheuristic search.
+
+    Returns:
+        A tuple of (current_score, perfect_score).
+    """
+    grid = puzzle["grid"]
+    walls = puzzle.get("walls", set())
+    blocked_cells = puzzle.get("blocked_cells", set())
+    num_map = puzzle["num_map"]
+    height = len(grid)
+    width = len(grid[0])
+    visitable_cells = (height * width) - len(blocked_cells)
+
+    perfect_score = _calculate_perfect_score(puzzle)
+    score = 0
+
+    # --- Hard Constraint Penalties (for invalid paths) ---
+    if len(path) != len(set(path)) or not path or path[0] in blocked_cells:
+        return -1, perfect_score
+
+    for i in range(len(path) - 1):
+        wall_pair = tuple(sorted((path[i], path[i + 1])))
+        if wall_pair in walls:
+            score -= 50000
+
+    # --- Soft Constraint Rewards/Penalties (for path quality) ---
+    score += len(path) * 10
+
+    next_waypoint_num = 1
+    if 1 in num_map and path[0] != num_map[1]:
+        score -= 100000
+    elif 1 in num_map and path[0] == num_map[1]:
+        score += 20000  # Correct start reward is not scaled
+        next_waypoint_num = 2
+
+    for pos in path[1:]:
+        cell_value = grid[pos[0]][pos[1]]
+        if cell_value > 0:
+            if cell_value == next_waypoint_num:
+                score += 20000 * next_waypoint_num
+                next_waypoint_num += 1
+            else:
+                score -= 5000
+
+    # --- Jackpot for a complete, valid solution ---
+    all_waypoints_visited = not num_map or next_waypoint_num > max(num_map.keys())
+    if len(path) == visitable_cells and all_waypoints_visited and score > 0:
+        score += 1_000_000
+
+    return score, perfect_score
 
 
 def visualize_solution_simple(

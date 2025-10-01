@@ -71,12 +71,7 @@ def solve_puzzle_cp(puzzle: dict) -> list[tuple[int, int]] | None:
     model.AddCircuit(arcs)
 
     # Waypoint ordering constraints
-    num_map = {
-        grid[r][c]: (r, c)
-        for r in range(height)
-        for c in range(width)
-        if grid[r][c] > 0
-    }
+    num_map = puzzle["num_map"]
 
     ranks = {
         i: model.NewIntVar(0, num_real_nodes - 1, f"rank_{i}")

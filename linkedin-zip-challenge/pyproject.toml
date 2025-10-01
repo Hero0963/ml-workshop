@@ -10,4 +10,8 @@ dependencies = [
     "pytest>=8.4.2",
     "pytest-html>=4.1.1",
     "pytest-reportlog>=0.4.0",
+    "sortedcontainers>=2.4.0",
 ]
+
+[tool.isort]
+profile = "black"

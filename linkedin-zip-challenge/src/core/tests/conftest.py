@@ -1,12 +1,5 @@
 # src/core/tests/conftest.py
 
-import os
-import sys
-
-# Add the project root to the Python path to allow absolute imports from 'src'
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-
-# src/core/tests/conftest.py
 from src.core.utils import parse_puzzle_layout
 
 # This list holds all puzzle data for parametrized tests.

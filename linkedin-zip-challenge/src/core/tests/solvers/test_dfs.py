@@ -1,20 +1,21 @@
 # src/core/tests/solvers/test_dfs.py
 
-import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 from loguru import logger
+
 from src.core.solvers.dfs import solve_puzzle
 from src.core.tests.conftest import puzzles_to_test
 
 # --- Logger Configuration ---
-report_dir = os.path.join(os.path.dirname(__file__), "reports")
-os.makedirs(report_dir, exist_ok=True)
+report_dir = Path(__file__).parent / "reports"
+report_dir.mkdir(exist_ok=True)
 utc_timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
 log_filename = f"log_{utc_timestamp}.log"
-log_file_path = os.path.join(report_dir, log_filename)
+log_file_path = report_dir / log_filename
 logger.remove()
 logger.add(sys.stderr, level="INFO")
 logger.add(

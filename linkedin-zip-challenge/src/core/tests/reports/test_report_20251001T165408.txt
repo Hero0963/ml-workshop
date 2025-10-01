@@ -1,0 +1,14 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge
+configfile: pytest.ini
+plugins: html-4.1.1, metadata-3.1.1, reportlog-0.4.0
+collected 27 items
+
+src\core\tests\solvers\test_a_star.py ............                       [ 44%]
+src\core\tests\solvers\test_cp.py ......                                 [ 66%]
+src\core\tests\solvers\test_dfs.py ......                                [ 88%]
+src\core\tests\solvers\test_monte_carlo.py .                             [ 92%]
+src\core\tests\test_utils.py ..                                          [100%]
+
+============================= 27 passed in 0.79s ==============================
