@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge
+configfile: pytest.ini
+plugins: html-4.1.1, metadata-3.1.1, reportlog-0.4.0
+collected 36 items
+
+src\core\tests\solvers\test_a_star.py ............                       [ 33%]
+src\core\tests\solvers\test_ant_colony_optimization.py .                 [ 36%]
+src\core\tests\solvers\test_cp.py ......                                 [ 52%]
+src\core\tests\solvers\test_dfs.py ......                                [ 69%]
+src\core\tests\solvers\test_genetic_algorithm.py ..                      [ 75%]
+src\core\tests\solvers\test_monte_carlo.py .                             [ 77%]
+src\core\tests\solvers\test_particle_swarm_optimization.py .             [ 80%]
+src\core\tests\solvers\test_simulated_annealing.py ..                    [ 86%]
+src\core\tests\solvers\test_tabu_search.py .                             [ 88%]
+src\core\tests\test_utils.py ....                                        [100%]
+
+============================= 36 passed in 0.83s ==============================

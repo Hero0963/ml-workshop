@@ -4,6 +4,7 @@ import sys
 import time
 from typing import Any, Callable
 
+import random
 from PIL import Image, ImageDraw, ImageFont
 
 # ANSI escape codes for styling
@@ -95,6 +96,14 @@ def calculate_fitness_score(
         return -1, perfect_score
 
     for i in range(len(path) - 1):
+        # Adjacency check: Ensure path doesn't "jump" between non-neighboring cells.
+        r1, c1 = path[i]
+        r2, c2 = path[i + 1]
+        manhattan_distance = abs(r1 - r2) + abs(c1 - c2)
+        if manhattan_distance > 1:
+            score -= 100000  # Heavy penalty for jumping
+
+        # Wall check
         wall_pair = tuple(sorted((path[i], path[i + 1])))
         if wall_pair in walls:
             score -= 50000
@@ -357,15 +366,117 @@ def save_animation_as_gif(
     print(f"Animation saved to {filename}")
 
 
+def generate_random_path(puzzle: dict) -> list[tuple[int, int]]:
+    """Generates a single random path through the puzzle."""
+    grid = puzzle["grid"]
+    walls = puzzle.get("walls", set())
+    blocked_cells = puzzle.get("blocked_cells", set())
+    num_map = puzzle["num_map"]
+    height = len(grid)
+    width = len(grid[0])
+
+    if 1 not in num_map:
+        return []
+
+    start_pos = num_map[1]
+    if start_pos in blocked_cells:
+        return []
+
+    path = [start_pos]
+    visited = {start_pos}
+    current_pos = start_pos
+
+    while True:
+        r, c = current_pos
+        valid_neighbors = []
+        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            new_pos = (nr, nc)
+
+            if not (0 <= nr < height and 0 <= nc < width):
+                continue
+            if new_pos in visited:
+                continue
+            if new_pos in blocked_cells:
+                continue
+            wall_pair = tuple(sorted((current_pos, new_pos)))
+            if wall_pair in walls:
+                continue
+
+            valid_neighbors.append(new_pos)
+
+        if not valid_neighbors:
+            break
+
+        next_pos = random.choice(valid_neighbors)
+        path.append(next_pos)
+        visited.add(next_pos)
+        current_pos = next_pos
+
+    return path
+
+
+def generate_neighbor_path(
+    path: list[tuple[int, int]], puzzle: dict
+) -> list[tuple[int, int]]:
+    """
+    Generates a neighbor path using a "truncate and regrow" strategy.
+    This ensures the generated path is always contiguous on the grid.
+    """
+    if len(path) <= 2:
+        return path.copy()
+
+    # 1. Truncate the path at a random point (but not at the very start).
+    cut_index = random.randint(1, len(path) - 1)
+    new_path = path[:cut_index]
+
+    # 2. Set up the state for regrowth.
+    visited = set(new_path)
+    current_pos = new_path[-1]
+
+    grid = puzzle["grid"]
+    walls = puzzle.get("walls", set())
+    blocked_cells = puzzle.get("blocked_cells", set())
+    height = len(grid)
+    width = len(grid[0])
+
+    # 3. Regrow the path with a random walk from the truncation point.
+    while True:
+        r, c = current_pos
+        valid_neighbors = []
+        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            new_pos = (nr, nc)
+
+            if not (0 <= nr < height and 0 <= nc < width):
+                continue
+            if new_pos in visited:
+                continue
+            if new_pos in blocked_cells:
+                continue
+            wall_pair = tuple(sorted((current_pos, new_pos)))
+            if wall_pair in walls:
+                continue
+
+            valid_neighbors.append(new_pos)
+
+        if not valid_neighbors:
+            break  # Stuck, no valid moves
+
+        next_pos = random.choice(valid_neighbors)
+        new_path.append(next_pos)
+        visited.add(next_pos)
+        current_pos = next_pos
+
+    return new_path
+
+
 if __name__ == "__main__":
     from src.core.tests.conftest import puzzle_05_data, solution_05
 
-    sample_puzzle_data = puzzle_05_data
-    sample_soltution = solution_05
-
     def _simple_example():
         # Generate the GIF
-        save_animation_as_gif(sample_puzzle_data, sample_soltution)
+        save_animation_as_gif(puzzle_05_data, solution_05)
 
         # # Run console animations
         # print("--- Running Animation: Style 1 (Simple) ---")
