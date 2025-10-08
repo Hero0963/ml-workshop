@@ -20,8 +20,14 @@
 2. 在 `.py` 檔案的開頭，請加上一行註解來標明其檔案路徑，例如：`# src/core/dfs.py`。
 3. 你必須參考其他 `.py` 檔案寫法、用到的套件、已經有的功能，然後在適當的結構或模組中新增程式碼。
 4. function input/ output param 請加上 Type Hinting。
+5. 路徑操作請使用 `pathlib` 模組，而不是 `os.path`。
+6. 匯入模組時請使用絕對路徑（例如 `from src.core.utils import ...`），而不是相對路徑（`from .utils import ...`）。
 
 協作流程
 1. 如果需要新增套件，請通知我，由我手動執行 `uv add`。
 2. 如果需要執行測試，請通知我，由我手動執行。
 
+----
+
+1. 請先閱讀本專案內的 dev_log.md file
+2. 請了解本專案用途 各 module 功能，並在必要時閱讀程式碼了解實作細節

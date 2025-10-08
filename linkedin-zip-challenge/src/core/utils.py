@@ -2,7 +2,7 @@
 import os
 import sys
 import time
-from typing import Any, Callable
+from typing import Callable, TypedDict, Set, List, Tuple, Dict
 
 import random
 from PIL import Image, ImageDraw, ImageFont
@@ -12,7 +12,18 @@ BG_HIGHLIGHT = "\u001b[47;30m"  # Black text on a grey background
 RESET_STYLE = "\u001b[0m"
 
 
-def parse_puzzle_layout(grid_layout: list[list[str]]) -> dict[str, Any]:
+class Puzzle(TypedDict):
+    grid_size: Tuple[int, int]
+    puzzle_layout: List[List[str]]
+    walls: Set[Tuple[Tuple[int, int], Tuple[int, int]]]
+    grid: List[List[int]]
+    blocked_cells: Set[Tuple[int, int]]
+    num_map: Dict[int, Tuple[int, int]]
+    start: Tuple[int, int] | None
+    end: Tuple[int, int] | None
+
+
+def parse_puzzle_layout(grid_layout: list[list[str]]) -> Puzzle:
     """
     Parses a grid defined with 2-character string elements ('  ', 'xx', '01', '12')
     into the standard puzzle dictionary format.
@@ -41,10 +52,19 @@ def parse_puzzle_layout(grid_layout: list[list[str]]) -> dict[str, Any]:
     # Sort the num_map by waypoint number
     sorted_num_map = dict(sorted(num_map.items()))
 
-    return {"grid": grid, "blocked_cells": blocked_cells, "num_map": sorted_num_map}
+    return {
+        "grid": grid,
+        "blocked_cells": blocked_cells,
+        "num_map": sorted_num_map,
+        "grid_size": (height, width),
+        "puzzle_layout": grid_layout,
+        "walls": set(),  # Initially empty, added later
+        "start": sorted_num_map.get(1),
+        "end": sorted_num_map.get(max(sorted_num_map.keys()) if sorted_num_map else 1),
+    }
 
 
-def _calculate_perfect_score(puzzle: dict[str, Any]) -> int:
+def _calculate_perfect_score(puzzle: Puzzle) -> int:
     """Calculates the theoretical maximum score for a perfect solution."""
     grid = puzzle["grid"]
     blocked_cells = puzzle.get("blocked_cells", set())
@@ -71,7 +91,7 @@ def _calculate_perfect_score(puzzle: dict[str, Any]) -> int:
 
 
 def calculate_fitness_score(
-    puzzle: dict[str, Any], path: list[tuple[int, int]]
+    puzzle: Puzzle, path: list[tuple[int, int]]
 ) -> tuple[int, int]:
     """
     Calculates a fitness score for a given path against a puzzle.
@@ -136,7 +156,7 @@ def calculate_fitness_score(
 
 
 def visualize_solution_simple(
-    puzzle_data: dict[str, Any], solution_path: list[tuple[int, int]] | None
+    puzzle_data: Puzzle, solution_path: list[tuple[int, int]] | None
 ) -> list[list[str]]:
     """Visualizes the path using brackets `[]` and asterisks `*`."""
     grid: list[list[int]] = puzzle_data["grid"]
@@ -167,7 +187,7 @@ def visualize_solution_simple(
 
 
 def visualize_solution_highlight(
-    puzzle_data: dict[str, Any], solution_path: list[tuple[int, int]] | None
+    puzzle_data: Puzzle, solution_path: list[tuple[int, int]] | None
 ) -> list[list[str]]:
     """Visualizes the path using ANSI background color highlighting."""
     grid: list[list[int]] = puzzle_data["grid"]
@@ -223,10 +243,10 @@ def print_grid(grid: list[list[str]], col_widths: list[int] | None = None) -> No
 
 
 def _animate(
-    puzzle_data: dict[str, Any],
+    puzzle_data: Puzzle,
     solution_path: list[tuple[int, int]] | None,
     visualization_func: Callable[
-        [dict[str, Any], list[tuple[int, int]] | None], list[list[str]]
+        [Puzzle, list[tuple[int, int]] | None], list[list[str]]
     ],
     speed: float,
 ) -> None:
@@ -261,7 +281,7 @@ def _animate(
 
 
 def animate_solution_simple(
-    puzzle_data: dict[str, Any],
+    puzzle_data: Puzzle,
     solution_path: list[tuple[int, int]] | None,
     speed: float = 0.25,
 ) -> None:
@@ -269,7 +289,7 @@ def animate_solution_simple(
 
 
 def animate_solution_highlight(
-    puzzle_data: dict[str, Any],
+    puzzle_data: Puzzle,
     solution_path: list[tuple[int, int]] | None,
     speed: float = 0.25,
 ) -> None:
@@ -277,7 +297,7 @@ def animate_solution_highlight(
 
 
 def save_animation_as_gif(
-    puzzle_data: dict[str, Any],
+    puzzle_data: Puzzle,
     solution_path: list[tuple[int, int]] | None,
     filename: str = "solution.gif",
     speed: int = 250,
@@ -291,8 +311,8 @@ def save_animation_as_gif(
     walls: set[tuple[tuple[int, int], tuple[int, int]]] = puzzle_data.get(
         "walls", set()
     )
-    height = len(grid)
-    width = len(grid[0])
+    blocked_cells: set[tuple[int, int]] = puzzle_data.get("blocked_cells", set())
+    height, width = puzzle_data["grid_size"]
     cell_size = 50
     margin = 10
     img_width = width * cell_size + 2 * margin
@@ -316,6 +336,11 @@ def save_animation_as_gif(
                 x1 = x0 + cell_size
                 y1 = y0 + cell_size
                 rect = [(x0, y0), (x1, y1)]
+
+                # Draw blocked cells first
+                if (r, c) in blocked_cells:
+                    draw.rectangle(rect, fill="black")
+                    continue
 
                 if (r, c) in path_coords:
                     draw.rectangle(rect, fill="#cccccc")  # Highlight path
@@ -366,14 +391,12 @@ def save_animation_as_gif(
     print(f"Animation saved to {filename}")
 
 
-def generate_random_path(puzzle: dict) -> list[tuple[int, int]]:
+def generate_random_path(puzzle: Puzzle) -> list[tuple[int, int]]:
     """Generates a single random path through the puzzle."""
-    grid = puzzle["grid"]
     walls = puzzle.get("walls", set())
     blocked_cells = puzzle.get("blocked_cells", set())
     num_map = puzzle["num_map"]
-    height = len(grid)
-    width = len(grid[0])
+    height, width = puzzle["grid_size"]
 
     if 1 not in num_map:
         return []
@@ -417,7 +440,7 @@ def generate_random_path(puzzle: dict) -> list[tuple[int, int]]:
 
 
 def generate_neighbor_path(
-    path: list[tuple[int, int]], puzzle: dict
+    path: list[tuple[int, int]], puzzle: Puzzle
 ) -> list[tuple[int, int]]:
     """
     Generates a neighbor path using a "truncate and regrow" strategy.
@@ -434,11 +457,9 @@ def generate_neighbor_path(
     visited = set(new_path)
     current_pos = new_path[-1]
 
-    grid = puzzle["grid"]
     walls = puzzle.get("walls", set())
     blocked_cells = puzzle.get("blocked_cells", set())
-    height = len(grid)
-    width = len(grid[0])
+    height, width = puzzle["grid_size"]
 
     # 3. Regrow the path with a random walk from the truncation point.
     while True:
