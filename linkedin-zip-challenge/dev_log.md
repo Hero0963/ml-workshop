@@ -1,5 +1,27 @@
 # Development Log
 
+## 2025-10-12
+
+### Reinforcement Learning (RL) Solver Framework
+
+-   **Architectural Design**: Designed a complete framework to solve puzzles using Deep Reinforcement Learning. The approach is based on a DQN (Deep Q-Network) agent interacting with a custom environment, with a focus on making the training pipeline robust and reproducible.
+-   **Custom RL Environment (`rl_env.py`)**: Implemented a `gymnasium.Env`-compatible environment, `PuzzleEnv`, to wrap the puzzle logic.
+    -   Features a sophisticated **reward shaping** mechanism to provide dense rewards, guiding the agent by calculating the change in Manhattan distance to the next waypoint.
+    -   The state space is defined by the agent's location and the next target waypoint, making the problem tractable for a neural network.
+-   **DQN Agent (`dqn_agent.py`)**: Implemented a complete DQN agent, including:
+    -   A `DQNModel` (MLP) to approximate the Q-function.
+    -   A `ReplayBuffer` for experience storage and sampling.
+    -   The core `DQNAgent` class encapsulating the learning logic, epsilon-greedy action selection, and target network updates.
+-   **Two-Stage Training Pipeline**: Decoupled data generation from training for better workflow and reproducibility.
+    -   **Dataset Generation (`generate_rl_dataset.py`)**: Created a multiprocessing-enabled script to generate and save large puzzle datasets (`6x6` and `7x7`). It outputs both a human-readable log for verification and a `pickle` file for the trainer to consume.
+    -   **Training Script (`train.py`)**: Developed the main training script that loads the pre-generated dataset, manages the training loop, logs progress with `tqdm` and `loguru`, and saves the final trained model.
+
+### Code Quality and Bug Fixes
+
+-   **Pathing Logic**: Corrected a path calculation error in `generate_rl_dataset.py` and `train.py` that resulted in an incorrect, duplicated output directory path. The logic for determining the project root was made more robust.
+-   **Linter Compliance**: Resolved a `SyntaxError` reported by `ruff` in `dqn_agent.py` by refactoring a multi-line expression to be more robust, ensuring the codebase passes all `pre-commit` checks.
+-   **Dependency Management**: Identified and added necessary dependencies (`gymnasium`, `torch`, `tqdm`) for the new RL framework, using the project's `uv add` workflow.
+
 ## 2025-10-08
 
 ### Puzzle Generation Framework

@@ -2,16 +2,33 @@
 name = "linkedin-zip-challenge"
 version = "0.1.0"
 description = "A solver for the LinkedIn Zip Challenge."
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.12"
 dependencies = [
+    "gymnasium>=1.2.1",
     "loguru>=0.7.3",
+    "numpy>=1.26.4,<2.0",
     "ortools>=9.14.6206",
     "pillow>=11.3.0",
     "pytest>=8.4.2",
     "pytest-html>=4.1.1",
     "pytest-reportlog>=0.4.0",
     "sortedcontainers>=2.4.0",
+    "torch==2.4.1",
+    "torchaudio==2.4.1",
+    "torchvision==0.19.1",
+    "tqdm>=4.67.1",
 ]
 
 [tool.isort]
 profile = "black"
+
+
+[tool.uv.pip]
+extra-index-url = ["https://download.pytorch.org/whl/cu121"]
+index-strategy = "unsafe-best-match"
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu121"
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
