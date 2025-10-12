@@ -1,4 +1,4 @@
-# D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge\src\core\rl\rl_env.py
+# src\core\rl\rl_env.py
 """
 This module requires the following packages to be installed:
 - gymnasium
@@ -39,7 +39,7 @@ class PuzzleEnv(gym.Env):
 
     metadata = {"render_modes": ["ansi"]}
 
-    def __init__(self, puzzle: Puzzle):
+    def __init__(self, puzzle: Puzzle, max_steps: int | None = None):
         super().__init__()
         self.puzzle = puzzle
         self.grid_size = puzzle["grid_size"]
@@ -71,7 +71,8 @@ class PuzzleEnv(gym.Env):
 
         self._agent_location = self.start_pos
         self._next_waypoint_idx = 0
-        self._max_steps = self.grid_size[0] * self.grid_size[1] * 2
+        default_max_steps = self.grid_size[0] * self.grid_size[1] * 2
+        self._max_steps = max_steps if max_steps is not None else default_max_steps
         self._current_step = 0
 
     def _get_obs(self) -> Dict[str, np.ndarray]:
@@ -145,7 +146,8 @@ class PuzzleEnv(gym.Env):
         dist_after = self._calculate_manhattan_distance(new_pos, target_pos)
 
         # Reward shaping: reward for getting closer to the target
-        reward = (dist_before - dist_after) * 1.0
+        # NOTE: Weight reduced from 1.0 to 0.1 to test if it resolves looping behavior.
+        reward = (dist_before - dist_after) * 0.1
         reward -= 1.0  # Time penalty for each step
 
         terminated = False

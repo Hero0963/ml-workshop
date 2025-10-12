@@ -2,6 +2,55 @@
 
 ## 2025-10-12
 
+### RL Agent Deep Debugging and Analysis
+
+A deep-dive debugging session was conducted to diagnose why the DQN agent, despite successful training metrics, failed during deterministic evaluation.
+
+-   **Initial State & Problem:** The agent, whether custom-built or using `stable-baselines3`, showed high average rewards during training but consistently failed to complete a puzzle during deterministic evaluation (`epsilon=0`), always timing out at the maximum step limit.
+
+-   **Hypothesis 1: Insufficient Evaluation Steps.** The initial hypothesis was that the evaluation loop's step limit was too low. This was proven false, as increasing the limit in the evaluation script had no effect. The root cause was identified as a hardcoded `_max_steps` limit within the `PuzzleEnv` itself.
+
+-   **Hypothesis 2: Flawed Reward Shaping.** The second hypothesis was that the distance-based reward shaping (`(dist_before - dist_after) * 1.0`) was creating a "reward trap" or local optimum, causing the agent to loop near the goal. An experiment was conducted by reducing the shaping weight to `0.1`. While this produced even better training metrics, the deterministic evaluation still failed in the exact same manner.
+
+-   **Final Diagnosis: Deterministic Policy Loop.** The conclusive diagnosis is that the agent's learned deterministic policy contains an inescapable loop. The successful, shorter-episode training runs were an illusion created by random exploration (`epsilon > 0`) accidentally "bumping" the agent out of its learned loop, allowing it to reach the goal. When this randomness is removed, the policy's fatal flaw is revealed.
+
+-   **Framework Enhancement:** To facilitate debugging, the `PuzzleEnv` was refactored to allow its `max_steps` limit to be configured externally during instantiation. The evaluation scripts (`evaluate_sb.py`) were updated to use this new parameter, providing a more flexible testing environment.
+
+### Reinforcement Learning Framework Q&A
+
+A summary of the RL agent's core mechanics was documented to clarify understanding.
+
+-   **Q1: What are the agent's movement rules?**
+    -   The agent has a discrete action space (Up, Down, Left, Right). It is permitted to reverse its direction and revisit cells it has previously occupied. There are no rules preventing revisits.
+
+-   **Q2: What is the agent's goal and behavior?**
+    -   **Goal:** To navigate from a starting position, visiting a sequence of numbered waypoints in the correct order, and finally arriving at the last waypoint.
+    -   **Behavior:** The agent's behavior is governed by a policy network (an MLP). This network takes the current state (`agent_location`, `next_waypoint_location`) and outputs Q-values for each of the four actions. The agent selects the action with the highest Q-value, which it predicts will lead to the maximum cumulative future reward.
+
+-   **Q3: How does the agent interact with the environment?**
+    -   The interaction follows the standard RL loop. The agent submits an `action` to the environment via `env.step(action)`. The environment transitions to a `next_state` and returns a `reward`, a `terminated` flag (for goal completion), a `truncated` flag (for timeouts), and an `info` dictionary. The agent uses this feedback to update its policy.
+
+-   **Q4: What is the reward function?**
+    -   The reward function is composed of several components:
+        -   `+1000.0` for reaching the final waypoint.
+        -   `+200.0` for reaching an intermediate waypoint.
+        -   `-10.0` for an invalid move (hitting a wall, obstacle, or boundary).
+        -   `-1.0` as a time penalty for every step taken.
+        -   `(dist_before - dist_after) * 0.1` as a small, dense reward for reducing the Manhattan distance to the next target.
+
+-   **Q5: What logging is available besides the GIF animation?**
+    -   **Console Logs:** Real-time statistical tables from `stable-baselines3` during training.
+    -   **File Logs:** Detailed, timestamped logs saved by `loguru` to the `logs/` directory.
+    -   **TensorBoard Logs:** The most powerful tool. Detailed, interactive graphs of all training metrics (reward, loss, etc.) are saved to `logs/sb_tensorboard/`. This can be launched via the command `tensorboard --logdir ./logs/sb_tensorboard/`.
+
+### To-Do List
+
+-   Review the visual `evaluation_sb.gif` and TensorBoard logs to pinpoint the exact location and pattern of the agent's deterministic loop.
+-   Based on the loop's characteristics, redesign the reward function to specifically penalize or disincentivize the observed looping behavior.
+-   If reward redesign is insufficient, consider redesigning the environment's rules of interaction (e.g., adding a penalty for immediately revisiting the previous state).
+
+## 2025-10-12
+
 ### Reinforcement Learning (RL) Solver Framework
 
 -   **Architectural Design**: Designed a complete framework to solve puzzles using Deep Reinforcement Learning. The approach is based on a DQN (Deep Q-Network) agent interacting with a custom environment, with a focus on making the training pipeline robust and reproducible.

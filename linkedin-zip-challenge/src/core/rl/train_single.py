@@ -1,24 +1,18 @@
-# src\core\rl\train.py
+# src/core/rl/train_single.py
 """
-Main training script for the DQN Agent with advanced saving and loading.
+Training script for the DQN Agent focused on a SINGLE puzzle.
 
-This script orchestrates the training process by:
-1. Loading a pre-generated set of training puzzles.
-2. Optionally loading a pre-trained model to resume training.
-3. Initializing the environment and the DQN agent.
-4. Running the main training loop, saving checkpoints and the best model.
-5. Logging progress and saving the final trained model.
+This script is a modified version of train.py, designed specifically
+for overfitting on one puzzle to test the agent's basic learning capabilities.
 
-Requires:
-- torch
-- numpy
-- loguru
-- tqdm
-- gymnasium
+Changes from train.py:
+1. It loads the entire puzzle dataset but only uses the FIRST puzzle.
+2. The environment is initialized only ONCE.
+3. Inside the training loop, `env.reset()` is used instead of creating a new env.
+4. Model save paths are changed to avoid overwriting general models.
 """
 
 import pickle
-import random
 import sys
 from pathlib import Path
 from typing import Dict, List
@@ -44,9 +38,9 @@ CONFIG: Dict[str, any] = {
     # IMPORTANT: Update this path to your generated .pkl file
     "DATASET_PATH": "D:/it_project/github_sync/ml-workshop/linkedin-zip-challenge/datasets/rl_datasets/rl_dataset_2025-10-12_092521/puzzles.pkl",
     "LOAD_MODEL_ON_START": False,  # Set to True to resume training
-    "MODEL_LOAD_PATH": "models/dqn_agent_checkpoint.pth",
-    "BEST_MODEL_SAVE_PATH": "models/dqn_agent_best.pth",
-    "CHECKPOINT_SAVE_PATH": "models/dqn_agent_checkpoint.pth",
+    "MODEL_LOAD_PATH": "models/dqn_agent_single_checkpoint.pth",
+    "BEST_MODEL_SAVE_PATH": "models/dqn_agent_single_best.pth",
+    "CHECKPOINT_SAVE_PATH": "models/dqn_agent_single_checkpoint.pth",
     # --- Training Settings ---
     "TOTAL_TIMESTEPS": 200_000,
     "LEARNING_RATE": 5e-4,
@@ -85,7 +79,7 @@ def main():
     # --- 1. Setup ---
     log_dir = PROJECT_ROOT / "linkedin-zip-challenge" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_file_path = log_dir / "training_{time:YYYY-MM-DD_HH-mm-ss}.log"
+    log_file_path = log_dir / "training_single_{time:YYYY-MM-DD_HH-mm-ss}.log"
 
     logger.remove()
     logger.add(
@@ -95,7 +89,7 @@ def main():
     )
     logger.add(log_file_path, level="INFO")  # Add file sink
 
-    logger.info("Starting DQN training process...")
+    logger.info("Starting DQN single-puzzle overfitting test...")
 
     # Create full paths for models
     base_model_dir = PROJECT_ROOT / "linkedin-zip-challenge"
@@ -107,10 +101,16 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
 
-    # --- 2. Puzzle and Environment Initialization ---
+    # --- 2. Puzzle and Environment Initialization (Modified for Overfitting Test) ---
     dataset_path = Path(CONFIG["DATASET_PATH"])
     training_puzzles = load_puzzles(dataset_path)
-    env = PuzzleEnv(random.choice(training_puzzles))
+
+    # Select ONE puzzle and use it for the entire training session
+    fixed_puzzle = training_puzzles[0]
+    env = PuzzleEnv(fixed_puzzle)
+    logger.info(
+        "Starting overfitting test on a single fixed puzzle (from index 0 of dataset)."
+    )
 
     # --- 3. Agent Initialization ---
     obs_shape = 4  # agent_loc (2) + waypoint_loc (2)
@@ -189,7 +189,6 @@ def main():
                     )
 
             # Reset for next episode
-            env = PuzzleEnv(random.choice(training_puzzles))
             obs, _ = env.reset()
             processed_obs = agent.preprocess_obs(obs)
             episode_reward = 0

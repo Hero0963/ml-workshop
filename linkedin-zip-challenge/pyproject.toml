@@ -13,6 +13,8 @@ dependencies = [
     "pytest-html>=4.1.1",
     "pytest-reportlog>=0.4.0",
     "sortedcontainers>=2.4.0",
+    "stable-baselines3>=2.7.0",
+    "tensorboard>=2.20.0",
     "torch==2.4.1",
     "torchaudio==2.4.1",
     "torchvision==0.19.1",
