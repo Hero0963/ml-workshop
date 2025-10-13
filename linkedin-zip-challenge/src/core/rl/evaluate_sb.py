@@ -4,28 +4,137 @@ Script to evaluate a trained Stable-Baselines3 agent.
 
 This script loads a trained model (.zip), runs it on a puzzle,
 and saves the resulting path as a GIF for visualization.
+
+Enhanced version for detailed analysis:
+- Creates a detailed GIF showing current position and revisited paths.
+- Logs the exact path to a separate file.
+- Adapted for CNN-based models.
 """
 
 import argparse
 import pickle
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import List
+from datetime import datetime
 
 import torch
-from gymnasium.wrappers import FlattenObservation
 from loguru import logger
+from PIL import Image, ImageDraw, ImageFont
 from stable_baselines3 import DQN
 
 from src.core.puzzle_generator import generate_puzzle
 from src.core.rl.rl_env import PuzzleEnv
-from src.core.utils import Puzzle, save_animation_as_gif
+from src.core.utils import Puzzle
 
 # --- Add project root to sys.path for absolute imports ---
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 # --- End of path setup ---
+
+
+def save_detailed_animation_as_gif(
+    puzzle: Puzzle,
+    solution_path: list[tuple[int, int]] | None,
+    filename: str = "solution.gif",
+    speed: int = 250,
+) -> None:
+    """Generates and saves a detailed solution animation as a GIF file."""
+    if not solution_path:
+        logger.warning("No solution path to generate GIF.")
+        return
+
+    grid: list[list[int]] = puzzle["grid"]
+    walls: set[tuple[tuple[int, int], tuple[int, int]]] = puzzle.get("walls", set())
+    blocked_cells: set[tuple[int, int]] = puzzle.get("blocked_cells", set())
+    height, width = puzzle["grid_size"]
+    cell_size = 50
+    margin = 10
+    img_width = width * cell_size + 2 * margin
+    img_height = height * cell_size + 2 * margin
+
+    try:
+        font = ImageFont.truetype("arial.ttf", 15)
+    except IOError:
+        font = ImageFont.load_default()
+
+    frames: list[Image.Image] = []
+    for i in range(len(solution_path) + 1):
+        img = Image.new("RGB", (img_width, img_height), "white")
+        draw = ImageDraw.Draw(img)
+        partial_path = solution_path[:i]
+        path_counts = Counter(partial_path)
+
+        for r in range(height):
+            for c in range(width):
+                x0 = margin + c * cell_size
+                y0 = margin + r * cell_size
+                x1 = x0 + cell_size
+                y1 = y0 + cell_size
+                rect = [(x0, y0), (x1, y1)]
+                pos = (r, c)
+
+                fill_color = "white"
+                if pos in path_counts:
+                    if path_counts[pos] > 1:
+                        fill_color = "#FFC0CB"  # Pink for revisited
+                    else:
+                        fill_color = "#cccccc"  # Grey for path
+
+                # Current head of the path
+                if i > 0 and pos == solution_path[i - 1]:
+                    fill_color = "#90EE90"  # Light green for current head
+
+                draw.rectangle(rect, fill=fill_color)
+
+                if pos in blocked_cells:
+                    draw.rectangle(rect, fill="black")
+                    continue
+
+                draw.rectangle(rect, outline="black")
+
+                content = str(grid[r][c]) if grid[r][c] > 0 else "."
+                text_bbox = draw.textbbox((0, 0), content, font=font)
+                text_width = text_bbox[2] - text_bbox[0]
+                text_height = text_bbox[3] - text_bbox[1]
+                text_pos = (
+                    x0 + (cell_size - text_width) / 2,
+                    y0 + (cell_size - text_height) / 2,
+                )
+                draw.text(text_pos, content, fill="black", font=font)
+
+        # Draw walls
+        for wall in walls:
+            (r1, c1), (r2, c2) = wall
+            if r1 == r2:
+                line_x0 = margin + max(c1, c2) * cell_size
+                line_y0 = margin + r1 * cell_size
+                line_x1 = line_x0
+                line_y1 = line_y0 + cell_size
+                draw.line(
+                    [(line_x0, line_y0), (line_x1, line_y1)], fill="black", width=3
+                )
+            else:
+                line_x0 = margin + c1 * cell_size
+                line_y0 = margin + max(r1, r2) * cell_size
+                line_x1 = line_x0 + cell_size
+                line_y1 = line_y0
+                draw.line(
+                    [(line_x0, line_y0), (line_x1, line_y1)], fill="black", width=3
+                )
+
+        frames.append(img)
+
+    frames[0].save(
+        filename,
+        save_all=True,
+        append_images=frames[1:],
+        duration=speed,
+        loop=0,
+    )
+    logger.info(f"Detailed animation saved to {filename}")
 
 
 def load_puzzles_from_dataset(dataset_path: Path) -> List[Puzzle]:
@@ -47,8 +156,17 @@ def run_evaluation(
 ):
     """Loads a model and runs it on a puzzle."""
     # --- 1. Setup ---
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_dir = PROJECT_ROOT / "linkedin-zip-challenge" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    path_log_file = log_dir / f"evaluation_path_{timestamp}.log"
+
     logger.remove()
     logger.add(sys.stdout, level="INFO")
+    logger.add(
+        path_log_file, format="{message}", level="SUCCESS"
+    )  # Special logger for path
+
     logger.info(f"Starting evaluation with SB3 model: {model_path}")
 
     if not model_path.exists():
@@ -60,7 +178,6 @@ def run_evaluation(
 
     # --- 2. Get the puzzle for evaluation ---
     if use_training_puzzle:
-        # Use the exact puzzle from the overfitting training
         dataset_path = Path(
             "D:/it_project/github_sync/ml-workshop/linkedin-zip-challenge/datasets/rl_datasets/rl_dataset_2025-10-12_092521/puzzles.pkl"
         )
@@ -68,7 +185,6 @@ def run_evaluation(
         puzzle = puzzles[0]
         logger.info("Evaluating on the first puzzle from the training dataset.")
     else:
-        # Generate a new, random puzzle
         logger.info(f"Generating a new {puzzle_size}x{puzzle_size} puzzle...")
         result = generate_puzzle(
             m=puzzle_size, n=puzzle_size, num_blocked_cells=num_obstacles
@@ -79,55 +195,53 @@ def run_evaluation(
         puzzle, _ = result
 
     # --- 3. Load Agent and Environment ---
-    # The model needs the wrapped env, but we need the raw env for visualization info
-    # Pass a generous step limit to the environment constructor
-    max_eval_steps = (
-        puzzle["grid_size"][0] * puzzle["grid_size"][1] * 8
-    )  # Increased to 8x for safety
-    raw_env = PuzzleEnv(puzzle, max_steps=max_eval_steps)
-    wrapped_env = FlattenObservation(raw_env)
+    max_eval_steps = puzzle["grid_size"][0] * puzzle["grid_size"][1] * 2
+    env = PuzzleEnv(puzzle, max_steps=max_eval_steps)
 
-    model = DQN.load(model_path, device=device)
+    # No longer need FlattenObservation for our CustomCnn policy
+    model = DQN.load(model_path, env=env, device=device)
     logger.success("Model and evaluation environment are ready.")
 
     # --- 4. Run Inference Loop ---
-    obs, _ = wrapped_env.reset()
-    path_taken = [raw_env.waypoints[0]]  # Start with the first waypoint
+    obs, _ = env.reset()
+    path_taken = [env.start_pos]
     total_reward = 0
     done = False
     step_count = 0
 
-    # We still use max_eval_steps here as a safeguard against potential infinite loops.
     while not done and step_count < max_eval_steps:
         step_count += 1
-        # Use deterministic=True for pure exploitation
         action, _states = model.predict(obs, deterministic=True)
-
-        obs, reward, terminated, truncated, _ = wrapped_env.step(action)
+        obs, reward, terminated, truncated, _ = env.step(action)
         done = terminated or truncated
         total_reward += reward
-
-        # Get the agent's location from the underlying raw environment
-        path_taken.append(tuple(raw_env._agent_location))
+        path_taken.append(tuple(env._agent_location))
 
     logger.info(f"Evaluation finished in {step_count} steps.")
     logger.info(f"Total reward: {total_reward:.2f}")
 
-    # --- 5. Visualize and Save Result ---
+    # --- 5. Log, Visualize and Save Result ---
     if terminated:
         logger.success("Agent successfully completed the puzzle!")
     else:
         logger.warning("Agent did not complete the puzzle within the step limit.")
 
-    save_animation_as_gif(puzzle, path_taken, str(output_gif_path))
+    # Log the path to a separate file
+    logger.success(f"Saving evaluation path to {path_log_file}")
+    for pos in path_taken:
+        logger.log("SUCCESS", str(pos))
+
+    # Save the new detailed GIF
+    save_detailed_animation_as_gif(puzzle, path_taken, str(output_gif_path))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Evaluate a trained Stable-Baselines3 Agent."
     )
+    # Default to the new CNN model
     default_model_path = (
-        PROJECT_ROOT / "linkedin-zip-challenge" / "models" / "dqn_sb_single.zip"
+        PROJECT_ROOT / "linkedin-zip-challenge" / "models" / "dqn_sb_cnn_single.zip"
     )
     parser.add_argument(
         "--model_path",
@@ -147,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output",
         type=str,
-        default="evaluation_sb.gif",
+        default="evaluation_sb_detailed.gif",  # New default name
         help="Path to save the output GIF file.",
     )
     parser.add_argument(

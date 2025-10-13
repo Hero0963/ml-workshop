@@ -1,5 +1,30 @@
 # Development Log
 
+## 2025-10-13
+
+### Deep Dive into Deterministic Loop & Reward Shaping
+
+Following the successful overfitting of the MLP-based model during training and its subsequent failure in deterministic evaluation, a series of experiments were conducted to resolve the underlying "deterministic policy loop" issue with a new CNN-based model.
+
+-   **Problem Persistence & State Representation Fix**: Despite refactoring the environment to use a 6-channel image-like state representation (including separate layers for walls and obstacles) and switching to a `CnnPolicy`, the agent continued to fail during deterministic evaluation. It achieved high rewards during training (with exploration) but fell into inescapable loops when `deterministic=True`. This confirmed the issue was not the agent's "vision" but likely its "motivation".
+
+-   **Hypothesis 1: Insufficient Penalty for Inefficiency.** The first hypothesis was that the `-1.0` time penalty was not enough to discourage looping.
+    -   **Experiment:** A "soft constraint" was added to the reward function in `rl_env.py`, applying a `-2.0` penalty for revisiting any cell already in the `path_taken`.
+    -   **Result:** **Failure.** The evaluation log (`evaluation_path_2025-10-13_13-37-36.log`) showed that while the agent explored more territory, it ultimately still fell into a tight loop (`(4, 0) <-> (5, 0)`), indicating the revisit penalty was not sufficient to overcome the root cause.
+
+-   **Hypothesis 2: Dense Reward Traps.** The primary suspect shifted to the distance-based reward shaping (`(dist_before - dist_after) * weight`), which could be creating local optima ("reward traps") that are more attractive than exploring a path to the true goal.
+    -   **Experiment:** The reward shaping weight was reduced by an order of magnitude, from `0.1` to `0.01`. The parameter was also refactored into the `PuzzleEnv` constructor and the training script's `CONFIG` for easier tuning.
+    -   **Result:** **Failure.** The evaluation log (`evaluation_path_2025-10-13_14-05-36.log`) again showed the agent getting stuck in a terminal loop, proving that even a very small positive incentive towards the goal can create a powerful enough trap to derail the deterministic policy.
+
+-   **Final Diagnosis:** The distance-based reward shaping, even with a minimal weight, is fundamentally at odds with the sparse penalty system. It encourages a "greedy" local-optimization behavior that results in policy loops. The agent is unwilling to incur a small penalty (by moving away from the target) to find a path around an obstacle, as the dense reward signal is too dominant.
+
+### To-Do List
+
+-   **[Next Step]** Completely eliminate the dense reward signal by setting `DISTANCE_REWARD_WEIGHT` to `0` in `train_single_cnn_sb.py`.
+-   Re-train the model from scratch using the purely sparse reward function (only step/revisit/invalid penalties and waypoint/goal rewards).
+-   Perform a deterministic evaluation on the new model to verify if the looping issue is finally resolved.
+-   If the issue persists, the final recourse is to escalate the "soft constraint" on revisits to a "hard constraint" by making it an invalid move.
+
 ## 2025-10-12
 
 ### RL Agent Deep Debugging and Analysis
