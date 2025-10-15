@@ -1,5 +1,36 @@
 # Development Log
 
+## 2025-10-15
+
+### Reinforcement Learning Development Paused
+
+Due to the inherent challenges in reward function design and overall training complexity, the Reinforcement Learning (RL) development effort is being temporarily paused.
+
+Future work in this area will be resumed after a period of deeper research into advanced RL concepts and architectures. The planned areas of study include:
+-   Architectures of seminal models like **AlphaGo** and **AlphaZero**.
+-   Reviewing the hands-on examples in the local `more_simple_reinforcement_learning` directory.
+-   Studying the "Hands-on Reinforcement Learning" course materials (from `hrl.boyuai.com`).
+
+When RL development resumes, a revised approach will be considered to simplify the problem, such as:
+-   Reducing the `map_size` to a smaller dimension.
+-   Relaxing the environment's constraints (e.g., allowing the agent to revisit paths, transforming the problem from finding a single Hamiltonian path to a more flexible pathfinding task).
+
+### Project Pivot to Service-Oriented Architecture
+
+The project's immediate focus will shift from algorithmic development to building a user-facing service. The goal is to create an application with a UI that allows users to upload their own puzzles and receive a computed solution.
+
+### New To-Do List
+
+-   **Service Backend:** Implement a web backend using **FastAPI**.
+-   **User Interface:** Create an interactive web UI with **Gradio**.
+-   **Future Exploration:** Investigate the integration of **MCP (Model-View-Controller Pattern)** and **multi-modal** capabilities.
+
+### Archived Progress 
+
+*This section documents the last active development goal before the pivot.*
+
+The previous focus was on attempting to solve a 6x6 map using an RL approach. The strategy was to first test and solve the problem on a **single map** (i.e., achieve overfitting) as a proof of concept. The successful completion of this step would then serve as a foundation for the ultimate goal of **generalizing** the solution to arbitrary 6x6 maps. The starting point for this development was the implementation of the `src/core/rl/train_single_sb.py` script.
+
 ## 2025-10-13
 
 ### Deep Dive into Deterministic Loop & Reward Shaping
@@ -266,4 +297,5 @@ A summary of the RL agent's core mechanics was documented to clarify understandi
 -   Configured the logger to output to timestamped files (`log_[timestamp].log`) with UTC timestamps in the filename and local timezone information in the log messages.
 -   Engineered a system to automatically generate test reports that mirror the console output.
 -   After exploring `pytest.ini` and `conftest.py` hooks, finalized the reporting mechanism using a `run_tests.bat` script for maximum reliability and platform consistency. This script redirects all console output to a timestamped `test_report_[timestamp].txt` file.
--   The final workflow is simplified to a single command: `.\run_tests.bat`
+-   The final workflow is simplified to a single command: `.
+un_tests.bat`
