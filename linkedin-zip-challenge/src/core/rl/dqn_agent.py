@@ -1,4 +1,4 @@
-# src\core\rl\dqn_agent.py
+# src/core/rl/dqn_agent.py
 """
 This module contains the core components for a DQN Agent.
 Inspired by the structures in the user's chap_02_dqn notebooks.

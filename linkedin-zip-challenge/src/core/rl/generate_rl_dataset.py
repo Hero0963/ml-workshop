@@ -1,4 +1,4 @@
-# src\core\rl\generate_rl_dataset.py
+# src/core/rl/generate_rl_dataset.py
 """
 Generates a dataset of puzzles specifically for RL training.
 
@@ -30,7 +30,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 # --- End of path setup ---
 
-from src.core.puzzle_generator import generate_puzzle  # noqa: E402
+from src.core.puzzle_generation.puzzle_generator import generate_puzzle  # noqa: E402
 from src.core.utils import Puzzle  # noqa: E402
 
 # --- Configuration ---

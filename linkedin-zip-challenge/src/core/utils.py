@@ -2,7 +2,7 @@
 import os
 import sys
 import time
-from typing import Callable, TypedDict, Set, List, Tuple, Dict
+from typing import Callable, Dict, List, Set, Tuple, TypedDict
 
 import random
 from PIL import Image, ImageDraw, ImageFont
@@ -24,9 +24,9 @@ class Puzzle(TypedDict):
 
 
 def parse_puzzle_layout(grid_layout: list[list[str]]) -> Puzzle:
-    """
-    Parses a grid defined with 2-character string elements ('  ', 'xx', '01', '12')
-    into the standard puzzle dictionary format.
+    """Parses a grid defined with 2-character string elements.
+
+    Parses ('  ', 'xx', '01', '12') into the standard puzzle dictionary format.
     Also creates the 'num_map' for quick waypoint lookup.
     """
     grid: list[list[int]] = []
@@ -93,8 +93,8 @@ def _calculate_perfect_score(puzzle: Puzzle) -> int:
 def calculate_fitness_score(
     puzzle: Puzzle, path: list[tuple[int, int]]
 ) -> tuple[int, int]:
-    """
-    Calculates a fitness score for a given path against a puzzle.
+    """Calculates a fitness score for a given path against a puzzle.
+
     Higher scores are better. The score is designed to guide metaheuristic search.
 
     Returns:
@@ -391,6 +391,223 @@ def save_animation_as_gif(
     print(f"Animation saved to {filename}")
 
 
+def save_detailed_animation_as_gif(
+    puzzle_data: Puzzle,
+    solution_path: list[tuple[int, int]] | None,
+    filename: str = "solution_detailed.gif",
+    speed: int = 250,
+) -> None:
+    """Generates a detailed solution animation with path head and step numbers."""
+    if not solution_path:
+        print("No solution path to generate GIF.")
+        return
+
+    grid: list[list[int]] = puzzle_data["grid"]
+    walls: set[tuple[tuple[int, int], tuple[int, int]]] = puzzle_data.get(
+        "walls", set()
+    )
+    blocked_cells: set[tuple[int, int]] = puzzle_data.get("blocked_cells", set())
+    height, width = puzzle_data["grid_size"]
+    cell_size = 50
+    margin = 10
+    img_width = width * cell_size + 2 * margin
+    img_height = height * cell_size + 2 * margin
+
+    try:
+        main_font = ImageFont.truetype("arial.ttf", 15)
+        step_font = ImageFont.truetype("arial.ttf", 10)  # Smaller font for step numbers
+    except IOError:
+        main_font = ImageFont.load_default()
+        step_font = ImageFont.load_default(size=10)
+
+    frames: list[Image.Image] = []
+    for i in range(len(solution_path) + 1):
+        img = Image.new("RGB", (img_width, img_height), "white")
+        draw = ImageDraw.Draw(img)
+        partial_path = solution_path[:i]
+
+        # Draw cells, colors, and main numbers
+        for r in range(height):
+            for c in range(width):
+                x0 = margin + c * cell_size
+                y0 = margin + r * cell_size
+                x1 = x0 + cell_size
+                y1 = y0 + cell_size
+                rect = [(x0, y0), (x1, y1)]
+                pos = (r, c)
+
+                fill_color = "white"
+                if pos in partial_path:
+                    fill_color = "#cccccc"  # Grey for visited path
+                if i > 0 and pos == solution_path[i - 1]:
+                    fill_color = "#add8e6"  # Light blue for the current head
+
+                draw.rectangle(rect, fill=fill_color)
+
+                if pos in blocked_cells:
+                    draw.rectangle(rect, fill="black")
+                    continue
+
+                draw.rectangle(rect, outline="black")
+
+                content = str(grid[r][c]) if grid[r][c] > 0 else "."
+                text_bbox = draw.textbbox((0, 0), content, font=main_font)
+                text_width = text_bbox[2] - text_bbox[0]
+                text_height = text_bbox[3] - text_bbox[1]
+                text_pos = (
+                    x0 + (cell_size - text_width) / 2,
+                    y0 + (cell_size - text_height) / 2,
+                )
+                draw.text(text_pos, content, fill="black", font=main_font)
+
+        # Draw step numbers on top of the colored cells
+        for step, pos in enumerate(partial_path):
+            r, c = pos
+            x0 = margin + c * cell_size
+            y0 = margin + r * cell_size
+            step_text = str(step + 1)
+            text_bbox = draw.textbbox((0, 0), step_text, font=step_font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+            # Position in bottom-right corner
+            text_pos = (
+                x0 + cell_size - text_width - 3,  # 3px padding
+                y0 + cell_size - text_height - 3,
+            )
+            draw.text(text_pos, step_text, fill="green", font=step_font)
+
+        # Draw walls
+        for wall in walls:
+            (r1, c1), (r2, c2) = wall
+            if r1 == r2:
+                line_x0 = margin + max(c1, c2) * cell_size
+                line_y0 = margin + r1 * cell_size
+                line_x1 = line_x0
+                line_y1 = line_y0 + cell_size
+                draw.line(
+                    [(line_x0, line_y0), (line_x1, line_y1)], fill="black", width=3
+                )
+            else:
+                line_x0 = margin + c1 * cell_size
+                line_y0 = margin + max(r1, r2) * cell_size
+                line_x1 = line_x0 + cell_size
+                line_y1 = line_y0
+                draw.line(
+                    [(line_x0, line_y0), (line_x1, line_y1)], fill="black", width=3
+                )
+
+        frames.append(img)
+
+    frames[0].save(
+        filename,
+        save_all=True,
+        append_images=frames[1:],
+        duration=speed,
+        loop=0,
+    )
+    print(f"Detailed animation saved to {filename}")
+
+
+def save_solution_as_image(
+    puzzle_data: Puzzle,
+    solution_path: list[tuple[int, int]] | None,
+    filename: str = "solution_final.png",
+) -> None:
+    """Generates and saves a static image of the final solution."""
+    if not solution_path:
+        print("No solution path to generate image.")
+        return
+
+    grid: list[list[int]] = puzzle_data["grid"]
+    walls: set[tuple[tuple[int, int], tuple[int, int]]] = puzzle_data.get(
+        "walls", set()
+    )
+    blocked_cells: set[tuple[int, int]] = puzzle_data.get("blocked_cells", set())
+    height, width = puzzle_data["grid_size"]
+    cell_size = 50
+    margin = 10
+    img_width = width * cell_size + 2 * margin
+    img_height = height * cell_size + 2 * margin
+
+    try:
+        main_font = ImageFont.truetype("arial.ttf", 15)
+        step_font = ImageFont.truetype("arial.ttf", 10)
+    except IOError:
+        main_font = ImageFont.load_default()
+        step_font = ImageFont.load_default(size=10)
+
+    img = Image.new("RGB", (img_width, img_height), "white")
+    draw = ImageDraw.Draw(img)
+
+    # Draw cells, colors, and main numbers
+    for r in range(height):
+        for c in range(width):
+            x0 = margin + c * cell_size
+            y0 = margin + r * cell_size
+            rect = [(x0, y0), (x0 + cell_size, y0 + cell_size)]
+            pos = (r, c)
+
+            fill_color = "white"
+            if pos in solution_path:
+                fill_color = "#cccccc"  # Grey for visited path
+
+            draw.rectangle(rect, fill=fill_color)
+
+            if pos in blocked_cells:
+                draw.rectangle(rect, fill="black")
+                continue
+
+            draw.rectangle(rect, outline="black")
+
+            content = str(grid[r][c]) if grid[r][c] > 0 else "."
+            text_bbox = draw.textbbox((0, 0), content, font=main_font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+            text_pos = (
+                x0 + (cell_size - text_width) / 2,
+                y0 + (cell_size - text_height) / 2,
+            )
+            draw.text(text_pos, content, fill="black", font=main_font)
+
+    # Draw step numbers on top
+    for step, pos in enumerate(solution_path):
+        r, c = pos
+        x0 = margin + c * cell_size
+        y0 = margin + r * cell_size
+        step_text = str(step + 1)
+        text_bbox = draw.textbbox((0, 0), step_text, font=step_font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        text_pos = (
+            x0 + cell_size - text_width - 3,  # 3px padding
+            y0 + cell_size - text_height - 3,
+        )
+        draw.text(text_pos, step_text, fill="green", font=step_font)
+
+    # Draw walls
+    for wall in walls:
+        (r1, c1), (r2, c2) = wall
+        if r1 == r2:
+            line_x0 = margin + max(c1, c2) * cell_size
+            line_y0 = margin + r1 * cell_size
+            draw.line(
+                [(line_x0, line_y0), (line_x0, line_y0 + cell_size)],
+                fill="black",
+                width=3,
+            )
+        else:
+            line_x0 = margin + c1 * cell_size
+            line_y0 = margin + max(r1, r2) * cell_size
+            draw.line(
+                [(line_x0, line_y0), (line_x0 + cell_size, line_y0)],
+                fill="black",
+                width=3,
+            )
+
+    img.save(filename, "PNG")
+    print(f"Final solution image saved to {filename}")
+
+
 def generate_random_path(puzzle: Puzzle) -> list[tuple[int, int]]:
     """Generates a single random path through the puzzle."""
     walls = puzzle.get("walls", set())
@@ -442,8 +659,8 @@ def generate_random_path(puzzle: Puzzle) -> list[tuple[int, int]]:
 def generate_neighbor_path(
     path: list[tuple[int, int]], puzzle: Puzzle
 ) -> list[tuple[int, int]]:
-    """
-    Generates a neighbor path using a "truncate and regrow" strategy.
+    """Generates a neighbor path using a "truncate and regrow" strategy.
+
     This ensures the generated path is always contiguous on the grid.
     """
     if len(path) <= 2:

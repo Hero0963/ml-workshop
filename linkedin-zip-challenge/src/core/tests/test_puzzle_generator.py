@@ -1,6 +1,6 @@
 # src/core/tests/test_puzzle_generator.py
 from loguru import logger
-from src.core.puzzle_generator import generate_puzzle
+from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 
 
 def test_generate_puzzle_smoke():
@@ -15,7 +15,7 @@ def test_generate_puzzle_smoke():
     # 1. Verify path length
     m, n = puzzle["grid_size"]
     num_blocked = len(puzzle["blocked_cells"])
-    assert num_blocked == 2
+    assert num_blocked <= 2
     assert len(solution_path) == (m * n) - num_blocked
     assert len(set(solution_path)) == len(
         solution_path

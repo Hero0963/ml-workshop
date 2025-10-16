@@ -1,5 +1,46 @@
 # Development Log
 
+## 2025-10-16
+
+### Implementation of Service-Oriented Architecture (Phase 1)
+
+Following the pivot from pure algorithmic development, the first phase of the user-facing web service has been implemented. This phase establishes the core architecture and a functional user interface.
+
+-   **Web Service Backend (FastAPI):**
+    -   Initialized a FastAPI application (`src/app/main.py`) to serve as the backend.
+    -   Implemented a robust, layered configuration system using `pydantic-settings` (`src/settings.py`) that reads from a `.env` file, making settings like port numbers easily configurable.
+    -   Refactored the API structure into a scalable `routers` and `schemas` pattern. All API endpoints are now modularly organized (e.g., `src/app/routers/echo.py`, `src/app/routers/solver.py`).
+    -   Created a `/api/solver/solve` endpoint that receives puzzle data, calls the appropriate core solver, and returns a JSON response containing the solution path and Base64-encoded images.
+    -   Improved code quality by replacing magic numbers for HTTP status codes with `fastapi.status` constants.
+
+-   **Web User Interface (Gradio):**
+    -   Developed a multi-tab Gradio interface (`src/ui/gradio_app.py`) for user interaction.
+    -   The UI is mounted directly within the FastAPI application, creating a single, unified service.
+    -   Implemented a "Puzzle Solver naive version" tab that allows users to paste puzzle layouts and walls, select a solver, and receive a visual solution.
+    -   The UI now displays both an animated GIF of the solution process and a static image of the final result.
+
+-   **Visualization Enhancements:**
+    -   Created a new `save_detailed_animation_as_gif` function in `utils.py` to generate GIFs with enhanced visuals, including a highlighted path head (blue) and sequential step numbers (green).
+    -   Added a `save_solution_as_image` function to generate a static PNG of the final solved puzzle.
+    -   The backend now uses these new functions to provide richer visual feedback to the user.
+
+-   **Bug Fixes & Refinements:**
+    -   Standardized file path comments in `.py` files to use forward slashes (`/`) for cross-platform consistency.
+    -   Resolved a `PermissionError` on Windows related to `tempfile` by implementing a more robust file handling pattern in the solver API.
+    -   Corrected multiple `IndentationError` syntax issues that arose during refactoring.
+    -   Standardized type hint styles in Pydantic schemas to the modern `|` union operator as per project conventions.
+
+### Quality Assurance and Refactoring
+
+-   **Unit Test Implementation**: Added a comprehensive suite of unit tests for the new service-oriented architecture. This includes API endpoint tests using `TestClient` (`src/app/tests/`), UI logic tests using `unittest.mock` (`src/ui/tests/`), and smoke tests for new visualization utilities in `src/core/tests/`.
+-   **Project Structure Refactoring**: To improve modularity, moved `puzzle_generator.py` and `generate_dataset.py` into a new dedicated `src/core/puzzle_generation/` directory and updated all corresponding import paths across the project.
+-   **Performance Tuning**: Modified the `generate_dataset.py` script to limit the multiprocessing pool to 75% of available CPU cores, ensuring system responsiveness during heavy computation.
+
+### Next Steps
+
+-   **Interactive UI**: Implement the "Puzzle Solver interact version" tab in the Gradio UI.
+-   **Containerization**: Introduce a `Dockerfile` to allow the entire web service to be built and run as a container.
+
 ## 2025-10-15
 
 ### Reinforcement Learning Development Paused

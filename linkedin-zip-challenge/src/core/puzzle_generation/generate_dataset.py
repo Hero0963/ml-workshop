@@ -1,4 +1,5 @@
-# src/core/generate_dataset.py
+# src/core/puzzle_generation/generate_dataset.py
+
 import os
 import random
 from datetime import datetime
@@ -8,7 +9,7 @@ from pathlib import Path
 from loguru import logger
 
 # --- Configuration ---
-NUM_TO_GENERATE = 10
+NUM_TO_GENERATE = 6
 TIMEOUT_PER_PUZZLE_ATTEMPT = 20  # Max time for a single pathfinding attempt
 
 # Grid size parameters
@@ -29,7 +30,7 @@ def worker_generate_and_save(task_params: dict) -> dict | None:
     import pprint
     from pathlib import Path
     from loguru import logger
-    from src.core.puzzle_generator import generate_puzzle
+    from src.core.puzzle_generation.puzzle_generator import generate_puzzle
     from src.core.utils import save_animation_as_gif
 
     task_id = task_params["task_id"]
@@ -142,7 +143,11 @@ def main():
     # 3. Execute tasks in parallel using imap_unordered
     logger.info(f"Starting parallel generation of {len(tasks)} puzzles...")
     results = []
-    with Pool(processes=os.cpu_count()) as pool:
+    num_processes = max(1, int(os.cpu_count() * 0.75))
+    logger.info(
+        f"Creating a pool with {num_processes} processes (75% of available cores)."
+    )
+    with Pool(processes=num_processes) as pool:
         results_iterator = pool.imap_unordered(worker_generate_and_save, tasks)
 
         for result in results_iterator:

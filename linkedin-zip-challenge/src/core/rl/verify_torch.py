@@ -1,4 +1,4 @@
-# srv/core/rl/verify_torch.py
+# src/core/rl/verify_torch.py
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-

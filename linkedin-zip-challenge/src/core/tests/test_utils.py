@@ -1,5 +1,8 @@
 # src/core/tests/test_utils.py
 
+import os
+import tempfile
+
 import pytest
 
 from src.core.tests.conftest import puzzle_01_data, solution_01
@@ -8,7 +11,38 @@ from src.core.utils import (
     generate_neighbor_path,
     generate_random_path,
     parse_puzzle_layout,
+    save_detailed_animation_as_gif,
+    save_solution_as_image,
 )
+
+
+def test_save_detailed_animation_as_gif_smoke_test():
+    """Smoke test to ensure the detailed GIF generator runs without errors."""
+    with tempfile.NamedTemporaryFile(suffix=".gif", delete=True) as tmpfile:
+        gif_path = tmpfile.name
+        # The file is created, but we need to run the function which will overwrite it
+
+    try:
+        save_detailed_animation_as_gif(puzzle_01_data, solution_01, gif_path)
+        assert os.path.exists(gif_path)
+        assert os.path.getsize(gif_path) > 0
+    finally:
+        if os.path.exists(gif_path):
+            os.remove(gif_path)
+
+
+def test_save_solution_as_image_smoke_test():
+    """Smoke test to ensure the static image generator runs without errors."""
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=True) as tmpfile:
+        img_path = tmpfile.name
+
+    try:
+        save_solution_as_image(puzzle_01_data, solution_01, img_path)
+        assert os.path.exists(img_path)
+        assert os.path.getsize(img_path) > 0
+    finally:
+        if os.path.exists(img_path):
+            os.remove(img_path)
 
 
 def test_parse_puzzle_layout_real():

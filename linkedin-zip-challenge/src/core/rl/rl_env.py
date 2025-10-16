@@ -1,4 +1,4 @@
-# src\core\rl\rl_env.py
+# src/core/rl/rl_env.py
 """
 This module requires the following packages to be installed:
 - gymnasium

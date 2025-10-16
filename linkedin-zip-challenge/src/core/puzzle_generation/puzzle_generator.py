@@ -1,4 +1,5 @@
-# src/core/puzzle_generator.py
+# src/core/puzzle_generation/puzzle_generator.py
+
 import random
 import time
 from loguru import logger

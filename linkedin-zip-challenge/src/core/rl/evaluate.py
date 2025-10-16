@@ -1,4 +1,4 @@
-# src\core\rl\evaluate.py
+# src/core/rl/evaluate.py
 """
 Script to evaluate a trained DQN agent.
 
@@ -13,7 +13,7 @@ from pathlib import Path
 import torch
 from loguru import logger
 
-from src.core.puzzle_generator import generate_puzzle
+from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.dqn_agent import DQNAgent
 from src.core.rl.rl_env import PuzzleEnv
 from src.core.utils import save_animation_as_gif

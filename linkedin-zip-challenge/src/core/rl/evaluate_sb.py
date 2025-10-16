@@ -24,7 +24,7 @@ from loguru import logger
 from PIL import Image, ImageDraw, ImageFont
 from stable_baselines3 import DQN
 
-from src.core.puzzle_generator import generate_puzzle
+from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.rl_env import PuzzleEnv
 from src.core.utils import Puzzle
 
