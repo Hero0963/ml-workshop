@@ -1,5 +1,29 @@
 # Development Log
 
+## 2025-10-20
+
+### Gradio UI Overhaul and Interactive Solver Implementation
+
+This phase focused on building a highly interactive and user-friendly puzzle editor within the Gradio web UI, moving from a text-based input to a full "What You See Is What You Get" (WYSIWYG) experience.
+
+-   **Interactive Puzzle Editor ("V2")**:
+    -   Replaced the initial text-based "naive" solver tab with a new "Interactive" tab.
+    -   Implemented a dynamic grid creation system where users can specify puzzle dimensions (`m x n`).
+    -   **Refactored Wall Editor**: Based on user feedback regarding the initial confusing checkbox-based UI, the wall editor was completely redesigned.
+        -   Users now input wall coordinates using four simple number boxes (`r1, c1, r2, c2`).
+        -   A list view displays all current walls, with a proper "select-then-click" button to delete walls.
+    -   **Live Image Preview**: Added a new preview panel that generates and displays an image of the puzzle in real-time. The preview automatically updates whenever the user edits the puzzle grid (adding numbers/obstacles) or modifies the wall list.
+    -   **New UI Controls**: Implemented a "Reset" button to clear all interactive components to their default state.
+
+-   **Debugging and Stability**:
+    -   **Extensive Bug Fixing**: Resolved a long series of bugs discovered during iterative development, including `IndentationError`, `NameError`, `AttributeError`, `UnboundLocalError`, and several data format mismatches between the frontend and backend (e.g., `'x'` vs `'xx'`, `dict` vs `set`).
+    -   **Enhanced Logging**: Added detailed `loguru` logging to both the frontend (`gradio_app.py`) and backend (`solver.py`). These logs capture the raw UI payload and the parsed puzzle data, which was critical in diagnosing the data flow issues. Also added logging for temporary file deletion in the backend.
+    -   **Code Maintenance**: Fixed a `FutureWarning` from the `pandas` library by migrating from the deprecated `Styler.applymap` to `Styler.map`.
+
+-   **Architectural Refinements**:
+    -   The frontend `gradio_app.py` was refactored multiple times to serve as a robust "Adapter", translating intuitive user actions into the precise data formats expected by the backend API.
+    -   The core backend logic in `utils.py` and `solver.py` was validated and corrected to ensure it properly handles obstacles and other puzzle constraints.
+
 ## 2025-10-16
 
 ### Implementation of Service-Oriented Architecture (Phase 1)

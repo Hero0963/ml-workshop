@@ -16,7 +16,7 @@ The game's objective is to draw a single, continuous path that visits every empt
 *   **Interactive Web UI**: Built with Gradio, allowing users to easily input puzzles and visualize solutions.
 *   **RESTful API**: A backend powered by FastAPI, providing a programmatic interface to the solvers.
 *   **Multiple Solver Algorithms**: A wide variety of solvers, from exact algorithms to metaheuristics.
-*   **Procedural Puzzle Generation**: A powerful script to generate vast datasets of new puzzles.
+*   **Procedural Puzzle Generation**: A powerful script to generate vast datasets of new puzzles, located in `src/core/puzzle_generation/`.
 *   **Rich Visualization**: Generates detailed animated GIFs and static images of the solution process.
 
 ### Solver Algorithms
@@ -33,6 +33,7 @@ linkedin-zip-challenge/
 │   │   ├── schemas/           # Pydantic data models
 │   │   └── main.py            # Main FastAPI app definition and startup
 │   ├── core/                  # Core puzzle logic and solvers
+│   │   ├── puzzle_generation/ # Scripts for procedural puzzle generation
 │   │   ├── solvers/           # All solver algorithm implementations
 │   │   ├── tests/             # Pytest unit tests for all components
 │   │   └── utils.py           # Shared utilities (parsing, visualization)
@@ -63,7 +64,7 @@ linkedin-zip-challenge/
 ### Running the Web Application
 
 1.  **(Optional) Configure the port:**
-    Create a `.env` file in the project root and add the following line to change the default port (8000):
+    Create a `.env` file in the project root and add the following line to change the default port (8008):
     ```
     APP_PORT=7440
     ```
@@ -76,6 +77,39 @@ linkedin-zip-challenge/
 
 3.  **Access the UI:**
     Open your web browser and navigate to `http://127.0.0.1:7440` (or your configured port).
+
+### Using the Interface
+
+The application provides three tabs. The most powerful one is the **"Puzzle Solver (Interactive)"** tab.
+
+#### How to Use the Interactive Solver:
+
+1.  **Define Grid Size**:
+    -   Set the desired number of `Rows (m)` and `Columns (n)`.
+    -   Click the **"Create Grid"** button. An empty grid editor will appear below.
+
+2.  **Edit Puzzle Cells**:
+    -   In the "Puzzle Cells" grid, click on cells to input values:
+        -   **Numbers** (e.g., `1`, `2`, `12`): Define the waypoints the path must follow in order.
+        -   **Obstacles** (e.g., `x`): Define blocked cells the path cannot enter.
+    -   As you edit, the **"Live Puzzle Preview"** on the right will update in real-time.
+
+3.  **Define Walls**:
+    -   In the "Define Walls" section, specify the coordinates of two **adjacent** cells to place a wall between them.
+    -   For example, to place a wall between `(0,0)` and `(0,1)`, enter `0`, `0` in the first row of boxes and `0`, `1` in the second.
+    -   Click **"Add Wall"**. The wall will be added to the "Current Walls" list and will appear as a red line on the live preview.
+
+4.  **Delete Walls**:
+    -   In the "Current Walls" list, **click on the row** corresponding to the wall you wish to remove.
+    -   Click the **"Delete Selected Wall"** button.
+
+5.  **Solve the Puzzle**:
+    -   Select your desired algorithm from the **"Select Solver"** dropdown.
+    -   Click the **"Solve Puzzle"** button.
+    -   The animated solution and final result will be displayed on the right.
+
+6.  **Reset**:
+    -   Click the **"重設 (Reset)"** button at any time to clear all inputs and start over.
 
 ## Development
 

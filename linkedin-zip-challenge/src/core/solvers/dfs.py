@@ -70,9 +70,9 @@ def _backtrack(
     next_waypoint: int,
 ) -> list[tuple[int, int]] | None:
     """Recursive helper function for the backtracking algorithm."""
-    logger.debug(
-        f"Enter backtrack: path_len={len(path)}, next_waypoint={next_waypoint}, last_pos={path[-1]}"
-    )
+    # logger.debug(
+    #     f"Enter backtrack: path_len={len(path)}, next_waypoint={next_waypoint}, last_pos={path[-1]}"
+    # )
 
     # Base case: if all visitable cells have been visited
     if len(path) == visitable_cells:

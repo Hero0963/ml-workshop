@@ -3,8 +3,10 @@ import ast
 import base64
 import os
 import tempfile
+import pprint
 
 from fastapi import APIRouter, HTTPException, status
+from loguru import logger
 
 from src.app.schemas.solver import SolverRequest, SolverResponse
 from src.core.solvers.a_star import solve_puzzle_a_star
@@ -52,7 +54,12 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
             detail=f"Error parsing input: {e}. Ensure layout and walls are valid Python literals.",
         )
 
-    # 2. Get the selected solver function
+    # 2. Log the parsed input and get the selected solver function
+    logger.debug("--- Parsed Puzzle Input for Solver ---")
+    logger.debug(f"Solver: {request.solver_name}")
+    logger.debug(f"Puzzle Data:\n{pprint.pformat(puzzle_data)}")
+    logger.debug("------------------------------------")
+
     solver_func = SOLVERS.get(request.solver_name)
     if not solver_func:
         raise HTTPException(
@@ -64,6 +71,8 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
     try:
         solution_path = solver_func(puzzle_data)
     except Exception as e:
+        # Log the exception for more detailed server-side debugging
+        logger.error(f"Exception during puzzle solving: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred during solving: {e}",
@@ -98,6 +107,7 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
             img_binary_data = f.read()
 
     except Exception as e:
+        logger.error(f"Failed to generate solution images: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate solution image: {e}",
@@ -106,8 +116,10 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
         # Ensure the temporary files are always deleted
         if os.path.exists(gif_path):
             os.remove(gif_path)
+            logger.debug(f"Deleted temporary file: {gif_path}")
         if os.path.exists(img_path):
             os.remove(img_path)
+            logger.debug(f"Deleted temporary file: {img_path}")
 
     gif_b64 = base64.b64encode(gif_binary_data).decode("utf-8")
     img_b64 = base64.b64encode(img_binary_data).decode("utf-8")
