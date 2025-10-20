@@ -1,5 +1,16 @@
 # Development Log
 
+## 2025-10-20 (another commit)
+
+### Svelte Frontend UX and Test Suite Refinements
+
+This commit enhances the Svelte frontend's user experience and ensures the stability of the existing test suite.
+
+-   **Svelte UI Enhancements**:
+    -   **In-place Cell Editing**: The cell editing UX was significantly improved by replacing the browser's default `prompt()` dialog. A new, dynamic in-place editing mechanism was implemented. Now, clicking a cell overlays an `<input>` element directly onto the canvas grid, allowing for a more seamless and intuitive editing workflow.
+-   **Test Suite Maintenance**:
+    -   **Gradio Test Fix**: Corrected a failing test case in `test_gradio_app.py`. The assertion was updated to correctly handle the HTML-formatted error messages now returned by the Gradio UI, bringing the test suite back to a passing state.
+
 ## 2025-10-20
 
 ### Gradio UI Overhaul and Interactive Solver Implementation

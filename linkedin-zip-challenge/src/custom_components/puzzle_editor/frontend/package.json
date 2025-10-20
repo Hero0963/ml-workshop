@@ -1,0 +1,27 @@
+{
+  "name": "puzzle_editor",
+  "version": "0.0.1",
+  "description": "Gradio custom component for a puzzle editor",
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "main": "src/index.js",
+
+  "devDependencies": {
+    "@gradio/preview": "^0.2.2",
+    "@sveltejs/vite-plugin-svelte": "^3.0.2",
+    "svelte": "^4.2.12",
+    "vite": "^5.2.6",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.2"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@gradio/utils": "^0.2.1"
+  }
+}

@@ -78,6 +78,30 @@ linkedin-zip-challenge/
 3.  **Access the UI:**
     Open your web browser and navigate to `http://127.0.0.1:7440` (or your configured port).
 
+### Alternative Svelte Frontend (Advanced)
+
+In addition to the Gradio UI, a more advanced, experimental frontend is available, built with Svelte. It offers a richer, canvas-based WYSIWYG editor for creating puzzles.
+
+**Note:** This frontend is a pure client and requires the main FastAPI backend to be running simultaneously.
+
+1.  **Navigate to the frontend directory:**
+    ```powershell
+    cd src\custom_components\puzzle_editor\frontend
+    ```
+
+2.  **Install Node.js dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Run the Svelte development server:**
+    ```bash
+    npm run dev
+    ```
+
+4.  **Access the Svelte UI:**
+    The server will typically be available at `http://localhost:5173`. You can use this interface to create puzzles and solve them using the running backend.
+
 ### Using the Interface
 
 The application provides three tabs. The most powerful one is the **"Puzzle Solver (Interactive)"** tab.

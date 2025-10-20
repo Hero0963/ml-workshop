@@ -52,5 +52,5 @@ def test_solve_puzzle_ui_api_error(mock_post):
     gif_html, final_image_html = solve_puzzle_ui("layout", "walls", "BadSolver")
 
     # Assert
-    assert "API call failed: Solver not found" in gif_html
-    assert "API call failed: Solver not found" in final_image_html
+    assert "Solver not found" in gif_html
+    assert "Solver not found" in final_image_html

@@ -78,6 +78,30 @@ linkedin-zip-challenge/
 3.  **訪問 UI 介面：**
     打開您的網頁瀏覽器，並前往 `http://127.0.0.1:7440` (或您自訂的 Port)。
 
+### 替代方案：Svelte 前端 (進階)
+
+除了 Gradio UI 之外，本專案還提供一個使用 Svelte 建構的、更進階的實驗性前端。它提供了一個功能更豐富、基於 Canvas 的所見即所得 (WYSIWYG) 編輯器來建立謎題。
+
+**請注意：** 此前端為純客戶端應用，需要主要的 FastAPI 後端服務同時在背景執行。
+
+1.  **前往前端目錄：**
+    ```powershell
+    cd src\custom_components\puzzle_editor\frontend
+    ```
+
+2.  **安裝 Node.js 依賴套件：**
+    ```bash
+    npm install
+    ```
+
+3.  **執行 Svelte 開發伺服器：**
+    ```bash
+    npm run dev
+    ```
+
+4.  **訪問 Svelte UI 介面：**
+    開發伺服器通常會在 `http://localhost:5173` 上啟動。您可以使用此介面來建立謎題，並透過執行中的後端服務來求解。
+
 ### 如何使用操作介面
 
 應用程式提供了三個分頁，功能最強大的是 **"Puzzle Solver (Interactive)"** (互動式求解器) 分頁。
