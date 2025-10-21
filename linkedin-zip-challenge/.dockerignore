@@ -1,0 +1,27 @@
+# .dockerignore
+
+# Git
+.git
+.gitignore
+
+# Python 虛擬環境
+.venv
+venv
+*.venv
+env/
+.env
+
+# Python 緩存
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node.js (最可能的錯誤來源)
+# 排除所有 node_modules 目錄，尤其是 Svelte 前端的
+**/node_modules
+node_modules/
+
+# IDE / OS 特定檔案
+.vscode/
+.idea/
+*.DS_Store

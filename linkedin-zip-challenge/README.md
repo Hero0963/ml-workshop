@@ -47,6 +47,33 @@ linkedin-zip-challenge/
 
 ## Getting Started
 
+### Running with Docker (Recommended)
+
+For the most streamlined setup, you can run the entire development environment using Docker. This method automatically builds the necessary container images, starts the backend and frontend services, and handles all internal networking.
+
+**Prerequisites:**
+*   [Docker](https://www.docker.com/get-started)
+*   [Docker Compose](https://docs.docker.com/compose/install/)
+
+**Launch with one command:**
+
+Simply run the provided Python script from the project root:
+
+```bash
+python run_docker_dev.py
+```
+
+This script will:
+1.  Stop any old containers.
+2.  Build and start the FastAPI backend and Svelte frontend services.
+3.  Automatically start the main application process inside the backend container.
+
+Once the script is finished, the Gradio UI will be accessible at `http://127.0.0.1:7440` and the Svelte UI at `http://localhost:5173` (or your configured ports).
+
+### Manual Setup
+
+If you prefer to run the application without Docker, follow these steps.
+
 ### Prerequisites
 *   Python 3.11
 *   [uv](https://github.com/astral-sh/uv) (for package management)

@@ -47,6 +47,33 @@ linkedin-zip-challenge/
 
 ## 開始使用
 
+### 使用 Docker 執行 (建議)
+
+為了最簡化的設定流程，您可以使用 Docker 來執行整個開發環境。此方法會自動建構所需的容器映像檔、啟動後端與前端服務，並處理所有內部網路設定。
+
+**環境需求:**
+*   [Docker](https://www.docker.com/get-started)
+*   [Docker Compose](https://docs.docker.com/compose/install/)
+
+**一鍵啟動:**
+
+只需在專案根目錄執行提供的 Python 腳本：
+
+```bash
+python run_docker_dev.py
+```
+
+這個腳本將會：
+1.  停止並移除舊的容器。
+2.  建構並啟動 FastAPI 後端與 Svelte 前端服務。
+3.  在後端容器內自動執行主應用程式。
+
+腳本執行完畢後，Gradio UI 將會運行在 `http://127.0.0.1:7440`，而 Svelte UI 將運行在 `http://localhost:5173` (或您自訂的 Port)。
+
+### 手動設定
+
+如果您不想使用 Docker，請依照以下步驟執行。
+
 ### 環境需求
 *   Python 3.11
 *   [uv](https://github.com/astral-sh/uv) (用於套件管理)

@@ -1,5 +1,28 @@
 # Development Log
 
+## 2025-10-21
+
+### Dockerized Development Workflow Automation
+
+To streamline the development process and simplify the startup of the containerized environment, this commit introduces a new automation script and enhances the project's containerization strategy.
+
+-   **Docker Compose Enhancement**:
+    -   The `docker-compose.yml` file was updated to define a complete, multi-service development environment, including the FastAPI backend (`zip-challenge-app`) and the Svelte frontend (`svelte-frontend`).
+    -   Configuration was refined to ensure proper volume mounting for live code reloading and inter-container communication.
+
+-   **Automated Startup Script**:
+    -   Created a new Python script, `run_docker_dev.py`, to provide a one-command solution for launching the entire development stack.
+    -   The script automates the following sequence:
+        1.  Stops and removes any existing containers (`docker compose down`).
+        2.  Builds fresh images and starts all services in the background (`docker compose up --build -d`).
+        3.  Waits briefly for the main application container to initialize.
+        4.  Executes the command to start the FastAPI server inside the running container, ensuring the virtual environment is activated.
+    -   This script eliminates the need for manual `docker exec` commands and simplifies the developer onboarding experience.
+
+-   **Documentation Update**:
+    -   Updated the `README.md` and `README_zh-TW.md` files with a new "Running with Docker" section, explaining how to use the `run_docker_dev.py` script.
+    -   This ensures that the documentation is synchronized with the latest, most efficient development workflow.
+
 ## 2025-10-20 (another commit)
 
 ### Svelte Frontend UX and Test Suite Refinements

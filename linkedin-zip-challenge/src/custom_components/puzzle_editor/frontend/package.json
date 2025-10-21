@@ -7,7 +7,6 @@
   "license": "ISC",
   "private": true,
   "main": "src/index.js",
-
   "devDependencies": {
     "@gradio/preview": "^0.2.2",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
@@ -20,8 +19,5 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
-  },
-  "dependencies": {
-    "@gradio/utils": "^0.2.1"
   }
 }
