@@ -1,7 +1,7 @@
 # docker-compose.yml
 
 services:
-  zip-challenge-app:
+  zip-challenge-app:  
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
@@ -16,7 +16,7 @@ services:
     tty: true
     restart: on-failure
 
-  svelte-frontend:
+  svelte-frontend:  
     build:
       context: ./src/custom_components/puzzle_editor/frontend
       dockerfile: Dockerfile
@@ -37,6 +37,24 @@ services:
     tty: true
     restart: on-failure
 
+  ollama:  
+    image: ollama/ollama  # 官方 Ollama 映像
+    container_name: ollama_server
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=8192
+    ports:
+      - "11434:11434" 
+    restart: on-failure
+    volumes:
+      - ollama_data:/root/.ollama  # 儲存模型資料，避免重啟後遺失
+    # NVIDIA GPU support configuration (uncomment if GPU is available)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
 volumes:
   ollama_data:
-

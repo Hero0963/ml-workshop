@@ -11,10 +11,15 @@ class Settings(BaseSettings):
     """
 
     # pydantic-settings will automatically look for a .env file and load it.
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", frozen=True
+    )
 
     # Define settings variables with type hints and default values.
     app_port: int = 8000
+
+    OLLAMA_MODEL_NAME: str
+    OLLAMA_PROVIDER_URL: str
 
 
 @cache

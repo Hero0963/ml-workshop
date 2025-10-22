@@ -1,5 +1,142 @@
 # Development Log
 
+
+## 2025-10-22 (Fourth Entry)
+
+### VL Model Strategy Refinement & Tool-Calling Explained
+
+Building on the experimental plan from the "Third Entry," this entry refines the VL model validation strategy and provides a deep dive into "Tool-Calling" to clarify why it is core to `pydantic_ai`'s structured output.
+
+-   **Important Clarification: Experimental Phase**
+    -   All current Vision-Language (VL) model integration work is in an **experimental phase**.
+    -   All code within the `src/core/vl_models/` directory (including `vl_extractor.py`, `hf_parser.py`, and the new PoC scripts) should be considered a **"Scratchpad"**.
+    -   The purpose of these scripts is to rapidly validate model capabilities and integration feasibility. They should not be considered final production code until the features are proven and standardized.
+
+-   **Phase 1: Vision Sanity Check (Refined)**
+    -   **Objective:** To validate the basic visual understanding of the new model (`bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`).
+    -   **Test Assets:** The test images will be updated to `cat.jpg` and `bird.jpg`.
+    -   **Methodology:** Continue using the `vision_sanity_check.py` script, asking the model a question (e.g., "Please describe the animal in the image and its primary color"), and expecting a reasonable natural language string response.
+
+-   **Phase 2: Tool-Calling Proof of Concept (PoC)**
+    -   **Objective:** To strictly verify if the model supports the "Tool-Calling" feature required by `pydantic_ai` for structured data output.
+    -   **Methodology:** Use the `tool_calling_poc.py` script, which defines an `IdentifiedAnimal` Pydantic model and configures the `pydantic_ai` Agent with `output_type=IdentifiedAnimal`. This will directly test if the model can return a JSON object compliant with the Pydantic model, rather than just a `str`.
+
+### Technical Deep Dive: "Tool-Calling" & `pydantic_ai`
+
+-   **What is "Tool Support" (Tool-Calling)?**
+    -   This is a key capability of an LLM (or VLM). **It does not mean the model "executes" code itself**.
+    -   Instead, it means the model is trained to understand the "tool" definitions (i.e., a function's schema, including its name, parameters, and parameter types).
+    -   When the model believes it needs to use a tool to answer a query (e.g., user asks "What's the weather in Miami?"), it **outputs a structured JSON request**, such as: `{"name": "get_weather", "arguments": {"city": "Miami"}}`.
+    -   Our application (e.g., the Python script) receives this JSON and *then* the application *itself* executes the corresponding `get_weather("Miami")` function.
+    -   This capability allows the model to interact with external APIs, databases, or local functions to retrieve real-time information or perform actions.
+
+-   **How does `pydantic_ai` use Tool-Calling for `output_type`?**
+    -   `pydantic_ai` cleverly abstracts this "Tool-Calling" mechanism.
+    -   When we set `output_type=IdentifiedAnimal` in a `pydantic_ai` Agent:
+        1.  `pydantic_ai` automatically reads the structure of the `IdentifiedAnimal` Pydantic model.
+        2.  It converts this Pydantic structure into a "Tool" schema that the LLM can understand (something like: `{"name": "IdentifiedAnimal", "parameters": {"animal_name": "string", "color": "string", ...}}`).
+        3.  `pydantic_ai` sends this schema, along with our prompt, to the VL model.
+        4.  **If** the model supports tool-calling (like the `...-Instruct` version), it will recognize that we want it to "call" the `IdentifiedAnimal` tool and will generate a JSON string matching that schema.
+        5.  **If** the model does not support it (like our previous `qwen2.5vl:7b`), it will ignore the schema and just return whatever natural language `str` it wants, causing `pydantic_ai` to fail parsing.
+    -   This is precisely why the `bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh` model is critical; it claims to support this feature, which is the core hypothesis the Phase 2 PoC is designed to test.
+
+### References
+
+-   [1] IBM (2025). *What Is Tool Calling?*. Retrieved 2025-10-22, from: `https://www.ibm.com/think/topics/tool-calling`
+-   [2] Analytics Vidhya (2025). *Guide to Tool Calling in LLMs*. Retrieved 2025-10-22, from: `https://www.analyticsvidhya.com/blog/2024/08/tool-calling-in-llms/`
+-   [3] Medium (2025). *Understanding LLM Tool Calling*. Retrieved 2025-10-22, from: `https://medium.com/garantibbva-teknoloji/understanding-llm-tool-calling-traditional-vs-embedded-approaches-fc7e576d05de`
+-   [4] Medium (2024). *Tool Calling for LLMs: A Detailed Tutorial*. Retrieved 2025-10-22, from: `https://medium.com/@yasir_siddique/tool-calling-for-llms-a-detailed-tutorial-a2b4d78633e2`
+-   [5] PromptLayer Blog (2024). *Tool Calling with LLMs: How and when to use it?*. Retrieved 2025-10-22, from: `https://blog.promptlayer.com/tool-calling-with-llms-how-and-when-to-use-it/`
+-   [6] LangChain Docs (2025). *Tool calling*. Retrieved 2025-10-22, from: `https://python.langchain.com/docs/concepts/tool_calling/`
+
+### To-Do / Next Steps
+
+1.  **[User]** Prepare `cat.jpg` and `bird.jpg` image files and place them in the `illustrations/` directory.
+2.  **[Dev]** Ensure the `src/core/vl_models/vision_sanity_check.py` script is updated to use `cat.jpg` and `bird.jpg` for testing.
+3.  **[User]** Execute the Phase 1 test: `python src/core/vl_models/vision_sanity_check.py` and report the results.
+4.  **[User]** If Phase 1 is successful, execute the Phase 2 test: `python src/core/vl_models/tool_calling_poc.py` and report the results.
+5.  **[Dev]** Based on the results of Phase 1 and Phase 2, jointly decide on the next implementation strategy for Puzzle extraction.
+
+## 2025-10-22 (Third Entry)
+
+### VL Model Experimental Plan
+
+Finalized a two-phase experimental plan to validate the capabilities of the newly selected VL model (`bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`) before integrating it into the main puzzle-solving workflow. This approach defers the decision on the final implementation (manual JSON parsing vs. direct tool-calling) until the model's capabilities are confirmed.
+
+-   **User-Provided Research:** The new model was selected based on user research indicating that it is an instruction-tuned vision model that explicitly supports the "tool-calling" feature, which was the blocker for the previous model.
+
+-   **Phase 1: Vision Sanity Check**
+    -   **Objective:** To perform a basic test of the model's core visual understanding.
+    -   **Implementation:** A new script, `src/core/vl_models/vision_sanity_check.py`, was created.
+    -   **Methodology:** This script uses the existing `VLExtractor` (which expects a `str` output) to ask the model to identify the animal and its primary color from `cat.jpg` and `dog.jpg`. This tests the model's ability to follow simple instructions and describe an image without complex formatting requirements.
+
+-   **Phase 2: Tool-Calling Proof of Concept (PoC)**
+    -   **Objective:** To verify if the new model truly supports the `pydantic_ai` tool-calling feature for structured data output.
+    *   **Implementation:** A second new script, `src/core/vl_models/tool_calling_poc.py`, was created.
+    *   **Methodology:** This script defines a simple `IdentifiedAnimal` Pydantic model with `animal_name`, `color`, and `confidence` fields. It then configures a `pydantic_ai` Agent with `output_type=IdentifiedAnimal`, directly testing if the model can return a structured Pydantic object instead of a raw string.
+
+-   **To-Do / Next Steps:**
+    1.  The user will prepare the `cat.jpg` and `dog.jpg` image files in the `illustrations` directory.
+    2.  The user will execute the Phase 1 test: `python src/core/vl_models/vision_sanity_check.py`.
+    3.  If Phase 1 is successful, the user will execute the Phase 2 test: `python src/core/vl_models/tool_calling_poc.py`.
+    4.  The results of these experiments will determine the final implementation strategy for the puzzle extraction feature.
+
+
+
+## 2025-10-22 (Second Entry)
+
+### VL Model Debugging and Strategy Pivot
+
+Conducted a deep debugging session on the Ollama-based Vision-Language model integration (Strategy B) and established a new, phased experimental plan.
+
+-   **Initial State:** The test script (`run_pydantic_ai_test.py`) was failing with various errors, preventing successful communication with the VL model.
+
+-   **Debugging Journey & Discoveries:**
+    1.  **`ImportError` Resolution:** A series of `ImportError` and `NameError` issues were traced back to version differences in the `pydantic_ai` library. By inspecting the locally installed package files, the correct import paths and class names (`OpenAIChatModel`, `OllamaProvider`) were identified and fixed.
+    2.  **Networking `404` Error:** A `404 Not Found` error was diagnosed as a mismatch between the Docker-internal hostname (`ollama_server`) defined in the `.env` file and the required `localhost` for scripts run from the host machine. The test script was updated to explicitly use `http://localhost:11434/v1`.
+    3.  **Pydantic Validation Error:** A `ValidationError` for `extra_forbidden` was resolved by configuring the `Settings` class in `src/settings.py` to ignore extra fields from the `.env` file (e.g., `svelte_port`).
+    4.  **`does not support tools` Error:** The final and most critical error was a `400 Bad Request` from the Ollama server, explicitly stating that the model (`qwen2.5vl:7b`) does not support the "tool-calling" feature. This is the core mechanism `pydantic_ai` uses for structured JSON output.
+
+-   **Analysis of External Resources:** Based on user-provided research, it was confirmed that:
+    *   Instruction-tuned model variants (e.g., `...-Instruct`) are critical for complex tasks.
+    *   A community-provided model on Ollama Hub (`bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`) explicitly claims to support tool-calling.
+
+-   **Revised Strategy & Next Steps:**
+    1.  **Pause on "Tool-Calling":** Per user instruction, the current "manual JSON parsing" implementation in `vl_extractor.py` will be kept as a baseline. The more advanced tool-calling implementation is deferred.
+    2.  **New Model Preparation:** The immediate next step is for the user to prepare the new, more capable model (`bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`) in their Ollama instance.
+    3.  **Sanity Check:** A new test script (`vision_sanity_check.py`) will be created to perform a basic vision test (e.g., identifying a cat/dog) using the new model. This validates the model's core visual processing before attempting complex extraction.
+    4.  **Proof of Concept:** A separate script (`tool_calling_poc.py`) will be created to demonstrate and validate the "tool-calling" capability of the new model in isolation.
+
+
+
+## 2025-10-22
+
+### Vision-Language Model Integration Strategy
+
+Analyzed the new requirement to parse puzzles from uploaded images using a Vision-Language (VL) model. Two parallel implementation strategies were identified in the existing codebase (`src/core/vl_models/`).
+
+-   **Strategy A: Integrated Hugging Face Transformers (`hf_parser.py`)**
+    -   **Architecture:** Loads and runs a VL model (e.g., `Qwen/Qwen3-VL-4B-Thinking`) directly within the main application process using the `transformers` library.
+    -   **Pros:** Self-contained, simplifies the end-to-end testing of the core extraction logic. The existing script appears more mature and includes a runnable test block.
+    -   **Cons:** Tightly couples the main application with the resource-intensive VL model, potentially leading to high memory (VRAM) consumption.
+
+-   **Strategy B: Microservice with Ollama (`vl_extractor.py`, `docker-compose.yml`)**
+    -   **Architecture:** Defines a separate `ollama` service in Docker Compose to host the VL model. The main application communicates with it via an API, using `pydantic_ai` as a client.
+    -   **Pros:** Superior service-oriented design. Decouples the VL model from the main application, improving scalability and reducing the main application's resource footprint. This is the preferred final architecture.
+    -   **Cons:** The current implementation is more preliminary and introduces the complexity of inter-service communication and dependency on an external service.
+
+-   **Identified Issues & Decisions:**
+    -   A key inconsistency was found: the term for walls is `walls` in `hf_parser.py` but `blocked_cells` in other files. This must be standardized to `walls` to match the existing solver framework.
+    -   **Decision:** The development will proceed in a phased approach. First, **Strategy A** will be completed to quickly deliver a functional end-to-end feature. Subsequently, this implementation can be refactored to follow the more robust **Strategy B** microservice architecture.
+
+### Next Steps
+
+-   Proceed with completing Strategy A (`hf_parser.py`).
+-   Standardize all data structures and prompts in the `vl_models` directory to use the `walls` keyword and the `WallPair` Pydantic model for consistency.
+-   Develop a standalone test script to validate the image-to-dictionary conversion before API and UI integration.
+
+
+
 ## 2025-10-21
 
 ### Dockerized Development Workflow Automation

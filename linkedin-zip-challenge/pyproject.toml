@@ -4,20 +4,27 @@ version = "0.1.0"
 description = "A solver for the LinkedIn Zip Challenge."
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "accelerate>=1.11.0",
     "fastapi>=0.119.0",
     "gradio>=5.49.1",
     "gymnasium>=1.2.1",
+    "hf-xet>=1.1.10",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
     "numpy>=1.26.4,<2.0",
+    "ollama>=0.6.0",
     "ortools>=9.14.6206",
     "pandas>=2.3.2",
     "pillow>=11.3.0",
+    "pydantic>=2.11.10",
+    "pydantic-ai>=1.2.1",
     "pydantic-settings>=2.11.0",
     "pytest>=8.4.2",
     "pytest-html>=4.1.1",
     "pytest-reportlog>=0.4.0",
     "python-multipart>=0.0.20",
+    "requests>=2.32.5",
+    "sentencepiece>=0.2.1",
     "sortedcontainers>=2.4.0",
     "stable-baselines3>=2.7.0",
     "tensorboard>=2.20.0",
@@ -25,6 +32,7 @@ dependencies = [
     "torchaudio==2.4.1",
     "torchvision==0.19.1",
     "tqdm>=4.67.1",
+    "transformers>=4.57.1",
     "uvicorn[standard]>=0.37.0",
 ]
 
