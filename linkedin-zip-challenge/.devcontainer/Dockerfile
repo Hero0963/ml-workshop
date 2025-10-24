@@ -1,7 +1,7 @@
 # .devcontainer/Dockerfile
 
 # 步驟 1: 選擇基礎映像
-FROM python:3.11-slim
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
 
 # 步驟 2: 安裝 uv
 RUN pip install --no-cache-dir uv

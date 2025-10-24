@@ -1,4 +1,4 @@
-# src/core/vl_models/run_pydantic_ai_test.py
+# src/core/vl_models/experiment_pydantic_ai_extraction.py
 import json
 import sys
 from pathlib import Path

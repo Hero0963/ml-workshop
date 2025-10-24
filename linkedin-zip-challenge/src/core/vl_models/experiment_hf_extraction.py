@@ -1,4 +1,4 @@
-# src/core/vl_models/run_extraction_test.py
+# src/core/vl_models/experiment_hf_extraction.py
 import json
 from pathlib import Path
 import sys
@@ -59,7 +59,6 @@ def run_test(model_name: str, image_name: str):
             model=model,
             processor=processor,
             target_image_path=target_image_path,
-            illustrations_dir=illustrations_dir,
         )
 
         # 4. Print the results

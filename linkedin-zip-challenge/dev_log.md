@@ -1,6 +1,53 @@
 # Development Log
 
 
+## 2025-10-24 (Second Entry)
+
+### Environment Deep Dive: Resolving Fine-Tuning Dependencies
+
+With the decision made to proceed with fine-tuning, the next phase involved setting up the development environment to handle the complex dependencies required by Unsloth. This process revealed several layers of platform and package incompatibilities.
+
+-   **Initial `xformers` Failure:** An attempt to install `unsloth` on the host Windows machine failed due to the `xformers` package lacking compatible wheels for Windows. This validated the necessity of using the project's Dockerized Linux environment for all fine-tuning tasks.
+
+-   **Dependency Resolution in Docker:** Moving into the Docker container revealed a series of deeper dependency conflicts when trying to install `unsloth` into the project's existing environment:
+    1.  A `numpy` version conflict arose due to `uv`'s default index strategy, which was resolved by using the `--index-strategy unsafe-best-match` flag.
+    2.  A subsequent, more complex conflict was discovered between the project's pinned versions of `torch` and `transformers`, and the different versions required by `unsloth`.
+
+-   **Root Cause Analysis: Build-time vs. Runtime Environment:** The final installation attempt failed while trying to build the `flash-attn` package. The error `OSError: CUDA_HOME environment variable is not set` and the warning `nvcc was not found` led to the root cause: the service's base Docker image (`python:3.11-slim`) was a **runtime** image, lacking the NVIDIA CUDA development toolkit required to **compile** custom CUDA extensions.
+
+-   **Solution: Environment Isolation and `devel` Image:**
+    1.  The `.devcontainer/Dockerfile` was modified to use `pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel` as its base image, which includes the full CUDA toolkit.
+    2.  A new workflow was established: create a separate, isolated virtual environment (`unsloth_env`) inside the rebuilt Docker container to prevent any conflicts with the main project's dependencies.
+    3.  A robust, multi-step `pip install` process was defined to first install `torch` from its specific index, followed by installing `unsloth` and its dependencies using the `--no-build-isolation` flag to ensure the build process could find the pre-installed `torch`.
+
+-   **Next Step:** With a correctly configured and isolated environment, the next step is to execute the SFT training script (`train_puzzle_sft.py`) inside the new container setup.
+
+
+## 2025-10-24
+
+### Final VL Model Validation & Success of the Hybrid Strategy
+
+Following the previous entry, the initial plan to pivot to Strategy A was revised to conduct a final, conclusive test of Strategy B (`pydantic-ai`).
+
+-   **Final Capability Test of Model 1 (`bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`)**
+    -   The test script was modified to request a structured Pydantic object (`AnimalInfo`) as the `output_type`.
+    -   **Finding:** The model successfully returned a **structurally correct but empty** Pydantic object.
+    -   **Conclusion:** This definitively proved that the `bsahane` model **supports tool-calling**, but its core **vision module is defective**, preventing it from providing any content.
+
+-   **Capability Test of Model 2 (`openbmb/minicpm-o2.6`)**
+    -   After replacing the model with `openbmb/minicpm-o2.6`, the same structured output test was performed.
+    -   **Finding:** Received a definitive `400 Bad Request` error from the Ollama server with the message: `...does not support tools`.
+    -   **Conclusion:** This proved that the `minicpm` model **does not support** the tool-calling API required by `pydantic-ai`.
+
+-   **The Hybrid Strategy: Proposal and Success**
+    -   Faced with a dilemma where one model had tool support but broken vision, and the other had working vision but no tool support, a new "hybrid strategy" was adopted. This approach continues to use `pydantic-ai` for its convenient API, but sets the `output_type` to `str` and leverages **Prompt Engineering** to instruct the model to generate a JSON-formatted string in its raw text response.
+    -   The `experiment_minicpm_json_prompt.py` script was created to validate this strategy.
+    -   **Result:** **Complete success.** The `minicpm` model correctly identified the image content (cat, bird) and returned a perfectly formatted JSON string, which was then successfully parsed in Python.
+
+-   **Final Conclusion**
+    -   A complete and viable technical pipeline has been established. The combination of a **vision-capable model (`minicpm`)** with the **`pydantic-ai` + Prompt Engineering** software pattern will serve as the foundation for the actual puzzle parser development.
+
+
 ## 2025-10-22 (Fourth Entry)
 
 ### VL Model Strategy Refinement & Tool-Calling Explained
@@ -72,13 +119,13 @@ Finalized a two-phase experimental plan to validate the capabilities of the newl
 
 -   **Phase 2: Tool-Calling Proof of Concept (PoC)**
     -   **Objective:** To verify if the new model truly supports the `pydantic_ai` tool-calling feature for structured data output.
-    *   **Implementation:** A second new script, `src/core/vl_models/tool_calling_poc.py`, was created.
-    *   **Methodology:** This script defines a simple `IdentifiedAnimal` Pydantic model with `animal_name`, `color`, and `confidence` fields. It then configures a `pydantic_ai` Agent with `output_type=IdentifiedAnimal`, directly testing if the model can return a structured Pydantic object instead of a raw string.
+    -   **Implementation:** A second new script, `src/core/vl_models/tool_calling_poc.py`, was created.
+    -   **Methodology:** This script defines a simple `IdentifiedAnimal` Pydantic model with `animal_name`, `color`, and `confidence` fields. It then configures a `pydantic_ai` Agent with `output_type=IdentifiedAnimal`, directly testing if the model can return a structured Pydantic object instead of a raw string.
 
 -   **To-Do / Next Steps:**
     1.  The user will prepare the `cat.jpg` and `dog.jpg` image files in the `illustrations` directory.
     2.  The user will execute the Phase 1 test: `python src/core/vl_models/vision_sanity_check.py`.
-    3.  If Phase 1 is successful, the user will execute the Phase 2 test: `python src/core/vl_models/tool_calling_poc.py`.
+    3.  If Phase 1 is successful, the user will execute the Phase 2 test: `python src.core/vl_models/tool_calling_poc.py`.
     4.  The results of these experiments will determine the final implementation strategy for the puzzle extraction feature.
 
 
@@ -106,7 +153,6 @@ Conducted a deep debugging session on the Ollama-based Vision-Language model int
     2.  **New Model Preparation:** The immediate next step is for the user to prepare the new, more capable model (`bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`) in their Ollama instance.
     3.  **Sanity Check:** A new test script (`vision_sanity_check.py`) will be created to perform a basic vision test (e.g., identifying a cat/dog) using the new model. This validates the model's core visual processing before attempting complex extraction.
     4.  **Proof of Concept:** A separate script (`tool_calling_poc.py`) will be created to demonstrate and validate the "tool-calling" capability of the new model in isolation.
-
 
 
 ## 2025-10-22
@@ -273,7 +319,7 @@ The previous focus was on attempting to solve a 6x6 map using an RL approach. Th
 
 Following the successful overfitting of the MLP-based model during training and its subsequent failure in deterministic evaluation, a series of experiments were conducted to resolve the underlying "deterministic policy loop" issue with a new CNN-based model.
 
--   **Problem Persistence & State Representation Fix**: Despite refactoring the environment to use a 6-channel image-like state representation (including separate layers for walls and obstacles) and switching to a `CnnPolicy`, the agent continued to fail during deterministic evaluation. It achieved high rewards during training (with exploration) but fell into inescapable loops when `deterministic=True`. This confirmed the issue was not the agent's "vision" but likely its "motivation".
+-   **Problem Persistence & State Representation Fix**: Despite refactoring the environment to use a 6-channel image-like state representation (including separate layers for walls and obstacles) and switching to a `CnnPolicy`, the agent continued to fail during deterministic evaluation. It achieved high rewards during training (with exploration) but fell into inescapable loops when `deterministic=True`.
 
 -   **Hypothesis 1: Insufficient Penalty for Inefficiency.** The first hypothesis was that the `-1.0` time penalty was not enough to discourage looping.
     -   **Experiment:** A "soft constraint" was added to the reward function in `rl_env.py`, applying a `-2.0` penalty for revisiting any cell already in the `path_taken`.
@@ -533,5 +579,4 @@ A summary of the RL agent's core mechanics was documented to clarify understandi
 -   Configured the logger to output to timestamped files (`log_[timestamp].log`) with UTC timestamps in the filename and local timezone information in the log messages.
 -   Engineered a system to automatically generate test reports that mirror the console output.
 -   After exploring `pytest.ini` and `conftest.py` hooks, finalized the reporting mechanism using a `run_tests.bat` script for maximum reliability and platform consistency. This script redirects all console output to a timestamped `test_report_[timestamp].txt` file.
--   The final workflow is simplified to a single command: `.
-un_tests.bat`
+-   The final workflow is simplified to a single command: `.\run_tests.bat`
