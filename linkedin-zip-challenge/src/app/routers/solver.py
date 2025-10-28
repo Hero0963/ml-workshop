@@ -72,7 +72,7 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
         solution_path = solver_func(puzzle_data)
     except Exception as e:
         # Log the exception for more detailed server-side debugging
-        logger.error(f"Exception during puzzle solving: {e}")
+        logger.exception("Exception during puzzle solving")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred during solving: {e}",
@@ -107,7 +107,7 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
             img_binary_data = f.read()
 
     except Exception as e:
-        logger.error(f"Failed to generate solution images: {e}")
+        logger.exception("Failed to generate solution images")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate solution image: {e}",

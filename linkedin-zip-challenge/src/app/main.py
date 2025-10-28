@@ -1,6 +1,8 @@
 # src/app/main.py
 import gradio as gr
+from pathlib import Path
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.app.routers import echo, solver
@@ -25,6 +27,51 @@ app.add_middleware(
 )
 
 
+# --- Mount Static Frontend (Svelte UI) ---
+def find_project_root_from_main(marker: str = "pyproject.toml") -> Path:
+    """Finds the project root by searching upwards from this main.py file."""
+    current_path = Path(__file__).resolve()
+    while current_path != current_path.parent:
+        if (current_path / marker).exists():
+            return current_path
+        current_path = current_path.parent
+    raise FileNotFoundError(
+        f"Could not find project root. Marker '{marker}' not found."
+    )
+
+
+try:
+    PROJECT_ROOT = find_project_root_from_main()
+    SVELTE_UI_DIR = (
+        PROJECT_ROOT
+        / "src"
+        / "custom_components"
+        / "puzzle_editor"
+        / "frontend"
+        / "dist"
+    )
+
+    if SVELTE_UI_DIR.exists() and SVELTE_UI_DIR.is_dir():
+        app.mount(
+            "/svelte-ui",
+            StaticFiles(directory=SVELTE_UI_DIR, html=True),
+            name="svelte-ui",
+        )
+        print(f"INFO: Svelte UI mounted successfully from '{SVELTE_UI_DIR}'.")
+    else:
+        # This is not a runtime error, just a warning for the developer.
+        print(
+            f"INFO: Svelte UI 'dist' directory not found at '{SVELTE_UI_DIR}'. The UI will not be available at /svelte-ui."
+        )
+        print(
+            "      (This is expected if you haven't run 'npm run build' in the frontend directory.)"
+        )
+
+except FileNotFoundError:
+    print("WARNING: Could not find project root. Svelte UI will not be mounted.")
+# --- End Mount Static Frontend ---
+
+
 # Include API routers
 app.include_router(echo.router, prefix="/api", tags=["Echo"])
 app.include_router(solver.router, prefix="/api/solver", tags=["Solver"])
@@ -33,7 +80,7 @@ app.include_router(solver.router, prefix="/api/solver", tags=["Solver"])
 @app.get("/", tags=["Root"])
 def read_root():
     return {
-        "message": "Welcome to the Zip Puzzle Solver API. Visit /docs for API documentation or /ui for the Gradio interface."
+        "message": "Welcome to the Zip Puzzle Solver API. Visit /docs for API documentation, /ui for the Gradio interface, or /svelte-ui for the advanced puzzle editor."
     }
 
 

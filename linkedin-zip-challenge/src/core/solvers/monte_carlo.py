@@ -3,11 +3,11 @@
 
 from loguru import logger
 
-from src.core.utils import calculate_fitness_score, generate_random_path
+from src.core.utils import Puzzle, calculate_fitness_score, generate_random_path
 
 
 def solve_puzzle_monte_carlo(
-    puzzle: dict, attempts: int = 1000
+    puzzle: Puzzle, attempts: int = 1000
 ) -> list[tuple[int, int]] | None:
     """
     Solves a puzzle by generating a large number of random paths and

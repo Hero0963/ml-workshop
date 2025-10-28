@@ -16,10 +16,11 @@ class Settings(BaseSettings):
     )
 
     # Define settings variables with type hints and default values.
-    app_port: int = 8000
+    app_port: int = 7440
+    app_host: str = "127.0.0.1"
 
-    OLLAMA_MODEL_NAME: str
-    OLLAMA_PROVIDER_URL: str
+    ollama_model_name: str
+    ollama_provider_url: str
 
 
 @cache

@@ -5,9 +5,10 @@ import urllib.request
 import os
 
 # --- Configuration ---
+APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
 APP_PORT = os.getenv("APP_PORT", "7440")
-SVELTE_PORT = os.getenv("SVELTE_PORT", "5173")
-HEALTHCHECK_URL = f"http://127.0.0.1:{APP_PORT}/api/echo/health"
+SVELTE_PORT = os.getenv("SVELTE_PORT", "5173")  # Restored for dev environment
+HEALTHCHECK_URL = f"http://{APP_HOST}:{APP_PORT}/api/echo/health"
 HEALTHCHECK_TIMEOUT = 30  # seconds
 HEALTHCHECK_INTERVAL = 3  # seconds
 # ---
@@ -15,6 +16,12 @@ HEALTHCHECK_INTERVAL = 3  # seconds
 
 def run_command(command: str, description: str):
     """Runs a command and prints its description, streaming output in real-time."""
+    # Prepend the docker-compose command with the dev file flag
+    if command.startswith("docker compose"):
+        command = command.replace(
+            "docker compose", "docker compose -f docker-compose.dev.yml"
+        )
+
     print(f"--- {description} ---")
     try:
         # Using shell=True to handle complex commands. Output is streamed directly.
@@ -82,11 +89,12 @@ def main():
 
     print("\n🚀 Deployment script finished successfully! 🚀")
     print("The application is now running in the background.")
-    print(f"- Gradio UI (main app): http://127.0.0.1:{APP_PORT}")
-    print(f"- Svelte UI (advanced): http://127.0.0.1:{SVELTE_PORT}")
+    print(f"- Gradio UI (main app): http://{APP_HOST}:{APP_PORT}/ui")
+    print(f"- Svelte UI (hot-reload): http://{APP_HOST}:{SVELTE_PORT}")
+    print(f"- Svelte UI (integrated): http://{APP_HOST}:{APP_PORT}/svelte-ui")
     print("\nTo monitor logs, run:")
-    print("docker compose logs -f zip-challenge-app")
-    print("docker compose logs -f svelte_frontend_dev")
+    print("docker compose -f docker-compose.dev.yml logs -f zip-challenge-app")
+    print("docker compose -f docker-compose.dev.yml logs -f svelte_frontend_dev")
 
 
 if __name__ == "__main__":

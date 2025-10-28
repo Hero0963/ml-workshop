@@ -6,6 +6,8 @@ import itertools
 from loguru import logger
 from sortedcontainers import SortedList
 
+from src.core.utils import Puzzle, prepare_solver_input
+
 
 # Heuristic function (Manhattan distance to the next waypoint)
 def _heuristic(
@@ -19,24 +21,24 @@ def _heuristic(
     )
 
 
-def solve_puzzle_a_star(puzzle: dict) -> list[tuple[int, int]] | None:
+def solve_puzzle_a_star(puzzle: Puzzle) -> list[tuple[int, int]] | None:
     """
     Solves a Zip puzzle using the A* search algorithm with heapq.
     """
-    grid = puzzle["grid"]
-    walls = puzzle.get("walls", set())
-    blocked_cells = puzzle.get("blocked_cells", set())
-    height = len(grid)
-    width = len(grid[0])
-    visitable_cells = (height * width) - len(blocked_cells)
-    num_map = puzzle["num_map"]
-
-    if 1 not in num_map:
-        return None  # No starting point
-
-    start_pos = num_map[1]
-    if start_pos in blocked_cells:
+    solver_input = prepare_solver_input(puzzle)
+    if solver_input is None:
         return None
+
+    (
+        grid,
+        walls,
+        blocked_cells,
+        height,
+        width,
+        visitable_cells,
+        num_map,
+        start_pos,
+    ) = solver_input
 
     # The priority queue will store tuples of:
     # (f_cost, unique_counter, g_cost, path, visited_set, next_waypoint_num)
@@ -134,23 +136,24 @@ def solve_puzzle_a_star(puzzle: dict) -> list[tuple[int, int]] | None:
     return None
 
 
-def solve_puzzle_a_star_sortedlist(puzzle: dict) -> list[tuple[int, int]] | None:
+def solve_puzzle_a_star_sortedlist(puzzle: Puzzle) -> list[tuple[int, int]] | None:
     """
     Solves a Zip puzzle using the A* search algorithm with SortedList.
     """
-    grid = puzzle["grid"]
-    walls = puzzle.get("walls", set())
-    blocked_cells = puzzle.get("blocked_cells", set())
-    height = len(grid)
-    width = len(grid[0])
-    visitable_cells = (height * width) - len(blocked_cells)
-    num_map = puzzle["num_map"]
-    if 1 not in num_map:
+    solver_input = prepare_solver_input(puzzle)
+    if solver_input is None:
         return None
 
-    start_pos = num_map[1]
-    if start_pos in blocked_cells:
-        return None
+    (
+        grid,
+        walls,
+        blocked_cells,
+        height,
+        width,
+        visitable_cells,
+        num_map,
+        start_pos,
+    ) = solver_input
 
     counter = itertools.count()
     g_cost = 1

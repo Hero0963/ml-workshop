@@ -1,6 +1,63 @@
 # Development Log
 
 
+# Development Log
+
+## 2025-10-28
+
+### Project Production-Ready Refactoring
+
+Conducted a major refactoring initiative to improve code quality, streamline the user interface, and professionalize the deployment workflow. This effort touched upon configuration management, code duplication, error handling, and the entire Docker setup.
+
+#### Phase 1: Code Quality and Consistency
+
+-   **Settings Centralization**:
+    -   Standardized all core application settings in `src/settings.py`.
+    -   Centralized `app_port` and `app_host` to remove hardcoded values in the UI and utility scripts.
+    -   Formalized `ollama_model_name` and `ollama_provider_url` to use Python's `snake_case` convention for internal consistency.
+    -   Identified and removed the obsolete `svelte_port` setting after the frontend integration.
+
+-   **DRY Principle Refactoring**:
+    -   Identified significant code duplication in the setup phase of various solvers.
+    -   Created a new `prepare_solver_input` utility function in `src/core/utils.py` to consolidate common logic for puzzle parameter extraction and validation.
+    -   Refactored the `dfs.py` and `a_star.py` solvers to use the new utility function, significantly reducing their boilerplate code.
+    -   Extended the refactoring to `generate_random_path` in `utils.py`, benefiting all metaheuristic solvers that depend on it.
+
+-   **Error Handling and Logging**:
+    -   Reviewed the API endpoint (`src/app/routers/solver.py`) and the Gradio UI (`src/ui/gradio_app.py`).
+    -   Enhanced exception logging by replacing `logger.error(f"...")` with `logger.exception("...")` in the main solver API, ensuring full stack traces are captured for unexpected errors.
+    -   Added error logging to the Gradio UI's API calling functions, which previously failed silently in the server logs.
+
+#### Phase 2: UI Enhancements and Frontend Integration
+
+-   **Svelte UI Integration**:
+    -   Successfully integrated the standalone Svelte frontend into the main FastAPI application.
+    -   Modified `vite.config.ts` to set the `base` path to `/svelte-ui/`, fixing asset loading issues.
+    -   The FastAPI application in `src/app/main.py` now serves the built static files (`dist` directory) from the `/svelte-ui` path.
+
+-   **New "Generate Puzzle" Feature**:
+    -   Added a new "Generate Puzzle" tab to the Gradio UI.
+    -   Implemented the UI with a dropdown to select the number of blocked cells (0, 1, or 2) and a button to trigger generation.
+    -   The UI displays a preview image of the generated puzzle and provides the layout/walls in a copy-paste friendly format.
+    -   Added a new unit test (`test_generate_puzzle_ui_success`) for this feature, using mocking to ensure its reliability.
+
+#### Phase 3: Docker Workflow Overhaul
+
+-   **Dual-Environment Strategy**:
+    -   To balance development convenience with production-readiness, a dual-environment Docker setup was implemented.
+    -   **Development (`docker-compose.dev.yml`)**: A new configuration was created to restore the two-container (backend + Svelte dev server) setup, enabling full hot-reloading for both frontend and backend development.
+    -   **Production (`docker-compose.yml`)**: The main compose file was streamlined to define a single, self-contained service for production.
+
+-   **Multi-Stage Production Dockerfile**:
+    -   The main `.devcontainer/Dockerfile` was converted into a multi-stage build file.
+    -   A `node:lts-alpine` stage is now used to build the production-optimized Svelte frontend (`npm run build`).
+    -   The final Python stage copies the application code and the compiled frontend `dist` directory, creating a single, efficient, and immutable production image.
+
+-   **Workflow Automation**:
+    -   The `run_docker_dev.py` script was updated to default to using the new `docker-compose.dev.yml`, ensuring the best out-of-the-box experience for developers.
+    -   Obsolete files (`frontend/Dockerfile`) and settings (`svelte_port`) were identified and removed to maintain project cleanliness.
+
+
 ## 2025-10-24 (Second Entry)
 
 ### Environment Deep Dive: Resolving Fine-Tuning Dependencies

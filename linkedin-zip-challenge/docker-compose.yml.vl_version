@@ -1,0 +1,60 @@
+# docker-compose.yml
+
+services:
+  zip-challenge-app:  
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: zip_challenge_dev_app
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    env_file:
+      - ./.env
+    volumes:
+      - ./src:/app/src
+    stdin_open: true
+    tty: true
+    restart: on-failure
+
+  svelte-frontend:  
+    build:
+      context: ./src/custom_components/puzzle_editor/frontend
+      dockerfile: Dockerfile
+    container_name: svelte_frontend_dev
+    ports:
+      - "${SVELTE_PORT}:${SVELTE_PORT}"
+    environment:
+      - VITE_API_URL=http://zip-challenge-app:${APP_PORT} # Svelte 前端連接 FastAPI 後端
+      - SVELTE_PORT=${SVELTE_PORT} # 傳遞端口給 Svelte 應用
+    env_file:
+      - ./.env # 讀取 APP_PORT 和 SVELTE_PORT
+    volumes:
+      - ./src/custom_components/puzzle_editor/frontend:/app # 掛載 Svelte 原始碼
+      - /app/node_modules # 匿名卷，防止主機的 node_modules 覆蓋容器內的
+    depends_on:
+      - zip-challenge-app # 確保後端先啟動
+    stdin_open: true
+    tty: true
+    restart: on-failure
+
+  ollama:  
+    image: ollama/ollama  # 官方 Ollama 映像
+    container_name: ollama_server
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=8192
+    ports:
+      - "11434:11434" 
+    restart: on-failure
+    volumes:
+      - ollama_data:/root/.ollama  # 儲存模型資料，避免重啟後遺失
+    # NVIDIA GPU support configuration (uncomment if GPU is available)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:

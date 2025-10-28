@@ -12,12 +12,13 @@ from PIL import Image, ImageDraw, ImageFont
 from src.core.solvers.a_star import solve_puzzle_a_star
 from src.core.solvers.cp import solve_puzzle_cp
 from src.core.solvers.dfs import solve_puzzle as solve_puzzle_dfs
+from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.tests.conftest import puzzle_04_data, puzzle_04_layout
 from src.settings import get_settings
 
 # --- Settings and API Config ---
 settings = get_settings()
-API_BASE_URL = f"http://127.0.0.1:{settings.app_port}"
+API_BASE_URL = f"http://{settings.app_host}:{settings.app_port}"
 
 # --- Solver Mapping ---
 SOLVERS = {
@@ -43,6 +44,7 @@ def echo_from_api(message: str) -> str:
         response.raise_for_status()
         return response.json().get("response", "Invalid response format")
     except requests.exceptions.RequestException as e:
+        logger.error(f"API call to /api/echo failed: {e}")
         return f"API call failed: {e}"
 
 
@@ -84,8 +86,90 @@ def solve_puzzle_ui(puzzle_layout_str: str, walls_str: str, solver_name: str):
             error_detail = e.response.json().get("detail", str(e))
         except (AttributeError, ValueError):
             pass
+        logger.error(f"API call to /api/solver/solve failed: {error_detail}")
         error_html = f"<p style='color:red;'>{error_detail}</p>"
         return error_html, error_html
+
+
+def draw_puzzle_from_data(puzzle_data: dict | None) -> Image.Image | None:
+    """Draws a puzzle from a puzzle data dictionary."""
+    if not puzzle_data:
+        return None
+
+    height, width = puzzle_data["grid_size"]
+    grid = puzzle_data["grid"]
+    blocked_cells = puzzle_data.get("blocked_cells", set())
+    walls = puzzle_data.get("walls", set())
+
+    cell_size, margin = 50, 10
+    img_width = width * cell_size + 2 * margin
+    img_height = height * cell_size + 2 * margin
+
+    try:
+        font = ImageFont.truetype("arial.ttf", 15)
+    except IOError:
+        font = ImageFont.load_default()
+
+    img = Image.new("RGB", (img_width, img_height), "white")
+    draw = ImageDraw.Draw(img)
+
+    for r in range(height):
+        for c in range(width):
+            x0, y0 = margin + c * cell_size, margin + r * cell_size
+            rect = [(x0, y0), (x0 + cell_size, y0 + cell_size)]
+
+            if (r, c) in blocked_cells:
+                draw.rectangle(rect, fill="black")
+            else:
+                draw.rectangle(rect, outline="black", fill="white")
+                content = str(grid[r][c]) if grid[r][c] > 0 else ""
+                if content:
+                    text_bbox = draw.textbbox((0, 0), content, font=font)
+                    text_width = text_bbox[2] - text_bbox[0]
+                    text_height = text_bbox[3] - text_bbox[1]
+                    text_pos = (
+                        x0 + (cell_size - text_width) / 2,
+                        y0 + (cell_size - text_height) / 2,
+                    )
+                    draw.text(text_pos, content, fill="black", font=font)
+
+    for wall in walls:
+        (r1, c1), (r2, c2) = wall
+        if r1 == r2:  # Vertical wall
+            line_x = margin + max(c1, c2) * cell_size
+            line_y0, line_y1 = margin + r1 * cell_size, margin + (r1 + 1) * cell_size
+            draw.line([(line_x, line_y0), (line_x, line_y1)], fill="red", width=3)
+        else:  # Horizontal wall
+            line_x0, line_x1 = margin + c1 * cell_size, margin + (c1 + 1) * cell_size
+            line_y = margin + max(r1, r2) * cell_size
+            draw.line([(line_x0, line_y), (line_x1, line_y)], fill="red", width=3)
+
+    return img
+
+
+def generate_puzzle_ui(num_blocks: int):
+    """UI backend function to generate a new puzzle."""
+    logger.info(f"Generating a new 6x6 puzzle with {num_blocks} blocked cells...")
+
+    # The generator can sometimes fail, so we wrap it in a try-except
+    try:
+        result = generate_puzzle(m=6, n=6, has_walls=True, num_blocked_cells=num_blocks)
+        if not result:
+            raise ValueError("Generator returned None")
+        puzzle_data, _ = result
+    except Exception as e:
+        logger.error(f"Failed to generate puzzle: {e}")
+        gr.Warning("Failed to generate a puzzle. Please try again.")
+        return None, "", ""
+
+    logger.success("Successfully generated a new puzzle.")
+    preview_image = draw_puzzle_from_data(puzzle_data)
+
+    # Format for text output
+    layout_str = pprint.pformat(puzzle_data["puzzle_layout"])
+    walls_str = pprint.pformat(puzzle_data["walls"])
+
+    return preview_image, layout_str, walls_str
 
 
 # --- Interactive Tab Functions ---
@@ -289,6 +373,33 @@ with gr.Blocks() as demo:
             echo_output = gr.Textbox(label="Response from API", interactive=False)
         echo_button = gr.Button("Send to API")
 
+    with gr.Tab("Generate Puzzle"):
+        gr.Markdown(
+            "Generate a new 6x6 puzzle. The generated layout and walls can be copied to the other tabs to be solved."
+        )
+        with gr.Row():
+            gen_blocks_input = gr.Dropdown(
+                label="Number of Blocked Cells",
+                choices=[0, 1, 2],
+                value=1,
+                interactive=True,
+            )
+            gen_button = gr.Button("Generate New Puzzle", variant="primary")
+
+        with gr.Row():
+            with gr.Column(scale=1):
+                gen_layout_output = gr.Textbox(
+                    label="Generated Puzzle Layout",
+                    lines=10,
+                )
+                gen_walls_output = gr.Textbox(
+                    label="Generated Walls",
+                    lines=5,
+                )
+            with gr.Column(scale=2):
+                gr.Markdown("### Generated Puzzle Preview")
+                gen_image_output = gr.Image(label="Preview", interactive=False)
+
     with gr.Tab("Puzzle Solver (Naive)"):
         gr.Markdown(
             "Enter the puzzle layout and walls as Python literals and select a solver."
@@ -374,6 +485,12 @@ with gr.Blocks() as demo:
         outputs=[solution_gif_html_naive, solution_final_html_naive],
     )
     echo_button.click(fn=echo_from_api, inputs=echo_input, outputs=echo_output)
+
+    gen_button.click(
+        fn=generate_puzzle_ui,
+        inputs=[gen_blocks_input],
+        outputs=[gen_image_output, gen_layout_output, gen_walls_output],
+    )
 
     # Interactive Tab Handlers
     create_grid_btn.click(

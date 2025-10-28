@@ -1,0 +1,40 @@
+# docker-compose.dev.yml
+# This docker-compose file is for DEVELOPMENT.
+# It uses volume mounts for hot-reloading both frontend and backend.
+
+services:
+  zip-challenge-app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile.dev  # <--- Points to the .dev Dockerfile
+    container_name: zip_challenge_dev_app
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    env_file:
+      - ./.env
+    volumes:
+      - ./src:/app/src
+    stdin_open: true
+    tty: true
+    restart: on-failure
+
+  svelte-frontend:
+    build:
+      context: ./src/custom_components/puzzle_editor/frontend
+      dockerfile: Dockerfile
+    container_name: svelte_frontend_dev
+    ports:
+      - "${SVELTE_PORT}:${SVELTE_PORT}"
+    environment:
+      - VITE_API_URL=http://zip-challenge-app:${APP_PORT}
+      - SVELTE_PORT=${SVELTE_PORT}
+    env_file:
+      - ./.env
+    volumes:
+      - ./src/custom_components/puzzle_editor/frontend:/app
+      - /app/node_modules
+    depends_on:
+      - zip-challenge-app
+    stdin_open: true
+    tty: true
+    restart: on-failure

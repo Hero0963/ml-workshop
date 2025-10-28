@@ -13,161 +13,174 @@ The game's objective is to draw a single, continuous path that visits every empt
 
 ## Features
 
-*   **Interactive Web UI**: Built with Gradio, allowing users to easily input puzzles and visualize solutions.
+*   **Multiple User Interfaces**:
+    *   **Gradio UI**: A comprehensive interface for solving puzzles, generating new ones, and testing the API.
+    *   **Svelte UI**: An advanced, experimental frontend with a rich, canvas-based WYSIWYG editor for creating puzzles.
 *   **RESTful API**: A backend powered by FastAPI, providing a programmatic interface to the solvers.
 *   **Multiple Solver Algorithms**: A wide variety of solvers, from exact algorithms to metaheuristics.
-*   **Procedural Puzzle Generation**: A powerful script to generate vast datasets of new puzzles, located in `src/core/puzzle_generation/`.
+*   **Procedural Puzzle Generation**: A powerful script and UI to generate vast datasets of new puzzles.
 *   **Rich Visualization**: Generates detailed animated GIFs and static images of the solution process.
 
-### Solver Algorithms
-- **Exact Solvers**: DFS, A* Search, Constraint Programming (CP-SAT).
-- **Metaheuristic Solvers**: Monte Carlo, Simulated Annealing, Genetic Algorithm, Tabu Search, PSO, and more.
-
 ## Project Structure
+
+The project structure has been organized to separate concerns between the core logic, the API application, and the user interfaces.
 
 ```
 linkedin-zip-challenge/
 ├── src/
-│   ├── app/                   # FastAPI backend application
-│   │   ├── routers/           # API endpoint routers (e.g., solver, echo)
-│   │   ├── schemas/           # Pydantic data models
-│   │   └── main.py            # Main FastAPI app definition and startup
-│   ├── core/                  # Core puzzle logic and solvers
+│   ├── app/                # FastAPI backend application
+│   │   ├── routers/        # API endpoint definitions
+│   │   └── main.py         # Main FastAPI app definition and startup
+│   ├── core/               # Core puzzle logic and solvers
 │   │   ├── puzzle_generation/ # Scripts for procedural puzzle generation
-│   │   ├── solvers/           # All solver algorithm implementations
-│   │   ├── tests/             # Pytest unit tests for all components
-│   │   └── utils.py           # Shared utilities (parsing, visualization)
-│   ├── ui/                    # Gradio UI application
-│   │   └── gradio_app.py      # Gradio interface definition
-│   └── settings.py            # Global application settings
-├── .env                       # Environment variables (e.g., APP_PORT)
-├── pyproject.toml             # Project dependencies for `uv`
-└── README.md                  # This file
+│   │   ├── solvers/        # All solver algorithm implementations
+│   │   └── utils.py        # Shared utilities (parsing, visualization)
+│   ├── custom_components/  # Contains the source for the Svelte UI
+│   │   └── puzzle_editor/
+│   │       └── frontend/   # Svelte source code
+│   ├── ui/                 # Gradio UI application
+│   │   └── gradio_app.py   # Gradio interface definition
+│   └── settings.py         # Global application settings
+├── .devcontainer/
+│   ├── Dockerfile          # Multi-stage Dockerfile for PRODUCTION
+│   └── Dockerfile.dev      # Dockerfile for DEVELOPMENT
+├── .env                    # Environment variables (user-created)
+├── docker-compose.yml      # Docker Compose file for PRODUCTION
+├── docker-compose.dev.yml  # Docker Compose file for DEVELOPMENT
+├── run_docker_dev.py       # Automation script for launching the dev environment
+├── pyproject.toml          # Project dependencies for `uv`
+└── README.md               # This file
 ```
 
 ## Getting Started
 
-### Running with Docker (Recommended)
+This project supports two primary workflows: a Docker-based environment (recommended for ease of use and consistency) and a manual local setup.
 
-For the most streamlined setup, you can run the entire development environment using Docker. This method automatically builds the necessary container images, starts the backend and frontend services, and handles all internal networking.
+### Workflow 1: Docker Environment (Recommended)
+
+The Docker setup has been designed to support both rapid development (with hot-reloading) and production-grade builds.
+
+#### For Development (with Hot-Reloading)
+
+This is the **recommended workflow for active development**. It uses `docker-compose.dev.yml` to launch two containers (backend and frontend dev server) with volume mounts, enabling instant code changes.
 
 **Prerequisites:**
-*   [Docker](https://www.docker.com/get-started)
-*   [Docker Compose](https://docs.docker.com/compose/install/)
+*   [Docker](https://www.docker.com/get-started) & [Docker Compose](https://docs.docker.com/compose/install/)
 
-**Launch with one command:**
+**Steps:**
 
-Simply run the provided Python script from the project root:
+1.  **Configure Environment:**
+    Create a file named `.env` in the project root with the following content. This file configures ports and service URLs.
+    ```.env
+    # Main application port
+    APP_PORT=7440
 
-```bash
-python run_docker_dev.py
-```
+    # Svelte dev server port (for hot-reloading)
+    SVELTE_PORT=5173
 
-This script will:
-1.  Stop any old containers.
-2.  Build and start the FastAPI backend and Svelte frontend services.
-3.  Automatically start the main application process inside the backend container.
+    # For Docker, use the service name 'ollama_server'
+    OLLAMA_PROVIDER_URL=http://ollama_server:11434/v1
+    OLLAMA_MODEL_NAME=your_model_name_here
+    ```
 
-Once the script is finished, the Gradio UI will be accessible at `http://127.0.0.1:7440` and the Svelte UI at `http://localhost:5173` (or your configured ports).
-
-### Manual Setup
-
-If you prefer to run the application without Docker, follow these steps.
-
-### Prerequisites
-*   Python 3.11
-*   [uv](https://github.com/astral-sh/uv) (for package management)
-
-### Installation
-
-1.  **Clone the repository**
-
-2.  **Create a virtual environment and install dependencies:**
+2.  **Launch with One Command:**
+    Run the provided automation script. It handles everything for you.
     ```bash
-    # This will install all dependencies from pyproject.toml and uv.lock
+    python run_docker_dev.py
+    ```
+
+3.  **Access the Services:**
+    *   **Gradio UI**: `http://localhost:7440/ui`
+    *   **Svelte UI (with Hot-Reload)**: `http://localhost:5173`
+    *   **Svelte UI (Integrated)**: `http://localhost:7440/svelte-ui` (Note: This view only updates after a Docker rebuild).
+
+    When developing the frontend, use the `5173` port to see your changes instantly. When developing the backend, changes to Python files will trigger an automatic server reload.
+
+#### For Production Simulation
+
+This workflow builds a single, optimized, self-contained Docker image, just as you would for a real deployment.
+
+**Steps:**
+
+1.  **Use the Production Compose File:**
+    Run the following command from the project root:
+    ```bash
+    # -f points to the production config file
+    # --build forces a new build, running the multi-stage Dockerfile
+    docker compose -f docker-compose.yml up --build -d
+    ```
+
+2.  **Access the Service:**
+    Everything is served from a single port.
+    *   **Gradio UI**: `http://localhost:7440/ui`
+    *   **Svelte UI**: `http://localhost:7440/svelte-ui`
+
+### Workflow 2: Manual Local Setup
+
+This method runs the services directly on your machine without Docker.
+
+**Prerequisites:**
+*   Python 3.11 & `uv`
+*   Node.js & `npm`
+
+**Steps:**
+
+1.  **Install Python Dependencies:**
+    ```bash
     uv sync
     ```
 
-### Running the Web Application
-
-1.  **(Optional) Configure the port:**
-    Create a `.env` file in the project root and add the following line to change the default port (8008):
-    ```
-    APP_PORT=7440
-    ```
-
-2.  **Launch the server:**
-    Run the following command from the project root directory:
+2.  **Build Frontend:**
+    The Svelte UI must be compiled into static files first.
     ```bash
-    python -m src.app.main
-    ```
-
-3.  **Access the UI:**
-    Open your web browser and navigate to `http://127.0.0.1:7440` (or your configured port).
-
-### Alternative Svelte Frontend (Advanced)
-
-In addition to the Gradio UI, a more advanced, experimental frontend is available, built with Svelte. It offers a richer, canvas-based WYSIWYG editor for creating puzzles.
-
-**Note:** This frontend is a pure client and requires the main FastAPI backend to be running simultaneously.
-
-1.  **Navigate to the frontend directory:**
-    ```powershell
-    cd src\custom_components\puzzle_editor\frontend
-    ```
-
-2.  **Install Node.js dependencies:**
-    ```bash
+    cd src/custom_components/puzzle_editor/frontend
     npm install
+    npm run build
+    cd ../../../../  # Return to project root
     ```
 
-3.  **Run the Svelte development server:**
+3.  **Configure Environment:**
+    Create a `.env` file in the project root. Note the `OLLAMA_PROVIDER_URL` is different from the Docker setup.
+    ```.env
+    APP_PORT=7440
+
+    # For local, use localhost
+    OLLAMA_PROVIDER_URL=http://localhost:11434/v1
+    OLLAMA_MODEL_NAME=your_model_name_here
+    ```
+
+4.  **Run the Application:**
+    Use `uv run` to execute the application within the virtual environment.
     ```bash
-    npm run dev
+    uv run python -m src.app.main
     ```
 
-4.  **Access the Svelte UI:**
-    The server will typically be available at `http://localhost:5173`. You can use this interface to create puzzles and solve them using the running backend.
+5.  **Access the UIs:**
+    *   **Gradio UI**: `http://localhost:7440/ui`
+    *   **Svelte UI**: `http://localhost:7440/svelte-ui`
 
-### Using the Interface
+## Using the Interface
 
-The application provides three tabs. The most powerful one is the **"Puzzle Solver (Interactive)"** tab.
+The main interface is the Gradio UI, accessible at `/ui`. It provides several tabs:
 
-#### How to Use the Interactive Solver:
+*   **Generate Puzzle**: Create a new, random 6x6 puzzle. You can select the number of blocked cells.
+*   **Puzzle Solver (Naive)**: Paste a puzzle layout and walls as text to solve it.
+*   **Puzzle Solver (Interactive)**: A powerful WYSIWYG editor to create or edit puzzles by clicking on a grid, adding waypoints, obstacles, and walls.
+*   **Echo Test**: A simple utility to confirm the backend API is responsive.
 
-1.  **Define Grid Size**:
-    -   Set the desired number of `Rows (m)` and `Columns (n)`.
-    -   Click the **"Create Grid"** button. An empty grid editor will appear below.
+## Future Work
 
-2.  **Edit Puzzle Cells**:
-    -   In the "Puzzle Cells" grid, click on cells to input values:
-        -   **Numbers** (e.g., `1`, `2`, `12`): Define the waypoints the path must follow in order.
-        -   **Obstacles** (e.g., `x`): Define blocked cells the path cannot enter.
-    -   As you edit, the **"Live Puzzle Preview"** on the right will update in real-time.
+The following areas are planned for future development and are currently not integrated into the main application:
 
-3.  **Define Walls**:
-    -   In the "Define Walls" section, specify the coordinates of two **adjacent** cells to place a wall between them.
-    -   For example, to place a wall between `(0,0)` and `(0,1)`, enter `0`, `0` in the first row of boxes and `0`, `1` in the second.
-    -   Click **"Add Wall"**. The wall will be added to the "Current Walls" list and will appear as a red line on the live preview.
-
-4.  **Delete Walls**:
-    -   In the "Current Walls" list, **click on the row** corresponding to the wall you wish to remove.
-    -   Click the **"Delete Selected Wall"** button.
-
-5.  **Solve the Puzzle**:
-    -   Select your desired algorithm from the **"Select Solver"** dropdown.
-    -   Click the **"Solve Puzzle"** button.
-    -   The animated solution and final result will be displayed on the right.
-
-6.  **Reset**:
-    -   Click the **"重設 (Reset)"** button at any time to clear all inputs and start over.
+*   **Reinforcement Learning (RL) Solvers**: The code under `src/core/rl/` is an experimental framework for training RL agents to solve puzzles.
+*   **Vision Language (VL) Models**: The code under `src/core/vl_models/` is an experimental area for parsing puzzles from images using multi-modal AI models.
 
 ## Development
 
 ### Running Tests
 To run the entire test suite and generate a report:
 ```powershell
-.\run_tests.bat
+.un_tests.bat
 ```
 Test results and detailed logs will be saved in the `src/core/tests/reports/` directory.
 

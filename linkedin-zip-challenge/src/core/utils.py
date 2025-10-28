@@ -2,7 +2,7 @@
 import os
 import sys
 import time
-from typing import Callable, Dict, List, Set, Tuple, TypedDict
+from typing import Callable, Dict, List, Set, Tuple, TypedDict, NamedTuple
 
 import random
 from PIL import Image, ImageDraw, ImageFont
@@ -21,6 +21,51 @@ class Puzzle(TypedDict):
     num_map: Dict[int, Tuple[int, int]]
     start: Tuple[int, int] | None
     end: Tuple[int, int] | None
+
+
+class SolverInput(NamedTuple):
+    grid: list[list[int]]
+    walls: set[tuple[tuple[int, int], tuple[int, int]]]
+    blocked_cells: set[tuple[int, int]]
+    height: int
+    width: int
+    visitable_cells: int
+    num_map: dict[int, tuple[int, int]]
+    start_pos: tuple[int, int]
+
+
+def prepare_solver_input(puzzle: Puzzle) -> SolverInput | None:
+    """
+    Extracts and validates common parameters needed by solver algorithms.
+
+    Returns a NamedTuple with all necessary components, or None if the
+    puzzle is unsolvable from the start (e.g., no start point, start is blocked).
+    """
+    grid = puzzle["grid"]
+    walls = puzzle.get("walls", set())
+    blocked_cells = puzzle.get("blocked_cells", set())
+    height = len(grid)
+    width = len(grid[0])
+    visitable_cells = (height * width) - len(blocked_cells)
+    num_map = puzzle["num_map"]
+
+    if 1 not in num_map:
+        return None  # No starting point
+
+    start_pos = num_map[1]
+    if start_pos in blocked_cells:
+        return None
+
+    return SolverInput(
+        grid=grid,
+        walls=walls,
+        blocked_cells=blocked_cells,
+        height=height,
+        width=width,
+        visitable_cells=visitable_cells,
+        num_map=num_map,
+        start_pos=start_pos,
+    )
 
 
 def parse_puzzle_layout(grid_layout: list[list[str]]) -> Puzzle:
@@ -610,17 +655,20 @@ def save_solution_as_image(
 
 def generate_random_path(puzzle: Puzzle) -> list[tuple[int, int]]:
     """Generates a single random path through the puzzle."""
-    walls = puzzle.get("walls", set())
-    blocked_cells = puzzle.get("blocked_cells", set())
-    num_map = puzzle["num_map"]
-    height, width = puzzle["grid_size"]
-
-    if 1 not in num_map:
+    solver_input = prepare_solver_input(puzzle)
+    if solver_input is None:
         return []
 
-    start_pos = num_map[1]
-    if start_pos in blocked_cells:
-        return []
+    (
+        _,
+        walls,
+        blocked_cells,
+        height,
+        width,
+        _,
+        _,
+        start_pos,
+    ) = solver_input
 
     path = [start_pos]
     visited = {start_pos}
