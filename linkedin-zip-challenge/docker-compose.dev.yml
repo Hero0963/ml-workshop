@@ -24,10 +24,10 @@ services:
       dockerfile: Dockerfile
     container_name: svelte_frontend_dev
     ports:
-      - "${SVELTE_PORT}:${SVELTE_PORT}"
+      - "5173:5173"
     environment:
       - VITE_API_URL=http://zip-challenge-app:${APP_PORT}
-      - SVELTE_PORT=${SVELTE_PORT}
+      - SVELTE_PORT=5173
     env_file:
       - ./.env
     volumes:

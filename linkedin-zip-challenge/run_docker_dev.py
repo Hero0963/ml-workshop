@@ -80,7 +80,7 @@ def main():
         '''bash -c "source .venv/bin/activate && python -m src.app.main"'''
     )
     run_command(
-        f"docker compose exec -d zip-challenge-app {app_start_command}",
+        f"docker compose exec zip-challenge-app {app_start_command}",
         "Starting FastAPI server in the background",
     )
 

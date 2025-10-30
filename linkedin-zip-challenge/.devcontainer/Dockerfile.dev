@@ -17,3 +17,5 @@ COPY src ./src
 ENV APP_PORT=7440
 
 EXPOSE 7440
+
+CMD ["tail", "-f", "/dev/null"]

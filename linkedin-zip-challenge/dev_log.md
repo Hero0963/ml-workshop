@@ -3,6 +3,34 @@
 
 # Development Log
 
+## 2025-10-30
+
+### Documentation Refinement and Environment Verification
+
+Conducted a comprehensive review and update of project documentation (`README.md`, `README_zh-TW.md`), alongside a thorough verification of local and Dockerized development environments. This phase focused on improving clarity, consistency, and ensuring the project's operational readiness.
+
+-   **Documentation Enhancement**:
+    -   Updated Svelte UI descriptions to accurately reflect its Canvas-based WYSIWYG editing capabilities.
+    -   Clarified service access instructions, emphasizing unified access via `APP_PORT` and segregating developer-specific hot-reloading details.
+    -   Added "Highlights" and "Technologies Used" sections to `README.md` for a comprehensive project overview.
+    -   Integrated a note directing users to the `illustrations/` directory for visual aids and UI screenshots.
+
+-   **Environment Operationalization & Debugging**:
+    -   **Unified Settings Management**: Migrated `SVELTE_PORT` to `src/settings.py` for centralized configuration. Its reliance on the `.env` file for `docker-compose.dev.yml` was removed by hardcoding the value in the compose file.
+    -   **`run_docker_dev.py` Debugging**:
+        -   Resolved initial `SVELTE_PORT` not set errors (addressed by ensuring `.env` was correctly configured).
+        -   Diagnosed and fixed FastAPI application startup failures within Docker containers.
+        -   Identified that `Dockerfile.dev` initially lacked a `CMD`, causing containers to exit prematurely (addressed by adding `CMD ["tail", "-f", "/dev/null"]`).
+        -   Discovered `docker compose exec -d` suppressed FastAPI startup logs (addressed by removing the `-d` flag).
+        -   Pinpointed `pydantic.ValidationError` for `ollama_model_name` and `ollama_provider_url` (due to `.env` not being copied into the container).
+        -   Corrected `Dockerfile.dev` to copy the `.env` file into the container, ensuring environment variables are properly loaded by `pydantic-settings`.
+        -   (Note: Temporarily set default empty strings for `ollama_model_name` and `ollama_provider_url` in `src/settings.py` as a workaround for startup.)
+
+-   **Environment Verification**:
+    -   Confirmed the local environment setup instructions are accurate.
+    -   Confirmed the Docker development environment (`run_docker_dev.py`) is operational after resolving startup issues.
+    -   Confirmed the Docker production environment (`docker-compose.yml`) instructions are accurate.
+
 ## 2025-10-28
 
 ### Project Production-Ready Refactoring

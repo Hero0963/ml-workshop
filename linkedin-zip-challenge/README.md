@@ -1,6 +1,6 @@
-# Zip Puzzle Solver Challenge
+# LinkedIn Zip Puzzle Solver Challenge
 
-This project is dedicated to exploring, developing, and comparing various algorithmic approaches to solve the "Zip" puzzle game. It includes a suite of solvers, procedural puzzle generation, and a modern web interface for interaction.
+This project is dedicated to exploring, developing, and comparing various algorithmic approaches to solve the "LinkedIn Zip" puzzle game. It includes a suite of solvers, procedural puzzle generation, and a modern web interface for interaction.
 
 ## About The "Zip" Puzzle
 
@@ -15,11 +15,12 @@ The game's objective is to draw a single, continuous path that visits every empt
 
 *   **Multiple User Interfaces**:
     *   **Gradio UI**: A comprehensive interface for solving puzzles, generating new ones, and testing the API.
-    *   **Svelte UI**: An advanced, experimental frontend with a rich, canvas-based WYSIWYG editor for creating puzzles.
+    *   **Svelte UI**: A modern frontend interface, with a Canvas-based "What You See Is What You Get" (WYSIWYG) editor at its core. Users can directly click cells on the canvas to edit, achieving a smooth and intuitive puzzle creation and modification workflow.
 *   **RESTful API**: A backend powered by FastAPI, providing a programmatic interface to the solvers.
 *   **Multiple Solver Algorithms**: A wide variety of solvers, from exact algorithms to metaheuristics.
 *   **Procedural Puzzle Generation**: A powerful script and UI to generate vast datasets of new puzzles.
 *   **Rich Visualization**: Generates detailed animated GIFs and static images of the solution process.
+
 
 ## Project Structure
 
@@ -70,18 +71,8 @@ This is the **recommended workflow for active development**. It uses `docker-com
 **Steps:**
 
 1.  **Configure Environment:**
-    Create a file named `.env` in the project root with the following content. This file configures ports and service URLs.
-    ```.env
-    # Main application port
-    APP_PORT=7440
-
-    # Svelte dev server port (for hot-reloading)
-    SVELTE_PORT=5173
-
-    # For Docker, use the service name 'ollama_server'
-    OLLAMA_PROVIDER_URL=http://ollama_server:11434/v1
-    OLLAMA_MODEL_NAME=your_model_name_here
-    ```
+    Create a file named `.env` in the project root with the following content.   
+    Details in  `.env.example`.  
 
 2.  **Launch with One Command:**
     Run the provided automation script. It handles everything for you.
@@ -90,11 +81,16 @@ This is the **recommended workflow for active development**. It uses `docker-com
     ```
 
 3.  **Access the Services:**
-    *   **Gradio UI**: `http://localhost:7440/ui`
-    *   **Svelte UI (with Hot-Reload)**: `http://localhost:5173`
-    *   **Svelte UI (Integrated)**: `http://localhost:7440/svelte-ui` (Note: This view only updates after a Docker rebuild).
+    After the application starts, you can access the following interfaces uniformly provided by the main service (port `7440`) through your browser:
 
-    When developing the frontend, use the `5173` port to see your changes instantly. When developing the backend, changes to Python files will trigger an automatic server reload.
+    *   **Gradio Console**: `http://localhost:7440/ui`
+        *   A comprehensive interface for solving puzzles, generating new ones, and testing the API.
+    *   **Svelte Interactive Editor**: `http://localhost:7440/svelte-ui`
+        *   A modern "What You See Is What You Get" editor, providing a smooth puzzle creation experience.
+
+    ---
+    **Tip for Developers:**
+    When using development mode (`run_docker_dev.py`), the Svelte frontend will have an independent development server. To get instant **Hot-Reload** effects, please visit `http://localhost:5173` directly. In this mode, when backend Python code changes, the FastAPI service will also automatically reload.
 
 #### For Production Simulation
 
@@ -140,14 +136,8 @@ This method runs the services directly on your machine without Docker.
     ```
 
 3.  **Configure Environment:**
-    Create a `.env` file in the project root. Note the `OLLAMA_PROVIDER_URL` is different from the Docker setup.
-    ```.env
-    APP_PORT=7440
-
-    # For local, use localhost
-    OLLAMA_PROVIDER_URL=http://localhost:11434/v1
-    OLLAMA_MODEL_NAME=your_model_name_here
-    ```
+    Create a `.env` file in the project root.  
+    Details in  `.env.example`.
 
 4.  **Run the Application:**
     Use `uv run` to execute the application within the virtual environment.
@@ -160,6 +150,8 @@ This method runs the services directly on your machine without Docker.
     *   **Svelte UI**: `http://localhost:7440/svelte-ui`
 
 ## Using the Interface
+
+For more details and UI screenshots, please refer to the `illustrations/` directory.
 
 The main interface is the Gradio UI, accessible at `/ui`. It provides several tabs:
 
@@ -180,7 +172,8 @@ The following areas are planned for future development and are currently not int
 ### Running Tests
 To run the entire test suite and generate a report:
 ```powershell
-.un_tests.bat
+.
+un_tests.bat
 ```
 Test results and detailed logs will be saved in the `src/core/tests/reports/` directory.
 

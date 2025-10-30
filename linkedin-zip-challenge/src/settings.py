@@ -18,9 +18,10 @@ class Settings(BaseSettings):
     # Define settings variables with type hints and default values.
     app_port: int = 7440
     app_host: str = "127.0.0.1"
+    svelte_port: int = 5173
 
-    ollama_model_name: str
-    ollama_provider_url: str
+    ollama_model_name: str = ""
+    ollama_provider_url: str = ""
 
 
 @cache
