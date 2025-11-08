@@ -1,0 +1,32 @@
+# docker-compose.dev.yml
+
+services:
+  app:
+    # Build the image using Dockerfile.dev
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile.dev
+    container_name: lingua-tutor-app-dev
+    
+    # Mount the current directory on the host to /app in the container
+    # This allows for live code reloading without rebuilding the image
+    volumes:
+      - ./src:/app/src
+      - ./test_data:/app/test_data
+      - ./output:/app/output
+
+    # Keep the container running for interactive development
+    tty: true
+    stdin_open: true
+    
+    # Set the default working directory
+    working_dir: /app
+    
+    # Enable GPU access for the service
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

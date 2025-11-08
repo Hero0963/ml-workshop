@@ -1,0 +1,17 @@
+# .devcontainer/Dockerfile.dev
+# A concise Dockerfile for DEVELOPMENT, mirroring the linkedin-zip-challenge setup.
+
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /app
+
+# Copy dependency files. We assume pytest.ini exists as per the reference project.
+COPY pyproject.toml uv.lock* pytest.ini* ./
+
+# Run uv sync. This is the step we expect might fail without a cache.
+RUN uv sync
+
+# Set the PYTHONPATH to allow `python -m src.module` imports
+ENV PYTHONPATH="${PYTHONPATH}:/app"
