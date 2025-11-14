@@ -1,0 +1,7 @@
+https://www.bilibili.com/video/BV1MPCxBZEZC/
+
+https://gemini.google.com/share/023629886389
+
+https://www.geeksforgeeks.org/dsa/pattern-searching/
+
+https://github.com/python/cpython/blob/main/Objects/stringlib/stringlib_find_two_way_notes.txt
