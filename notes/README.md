@@ -7,7 +7,8 @@ This directory serves as a personal collection of notes, references, and code sn
 - **faiss.md**: Notes on Faiss (Facebook AI Similarity Search).
 - **hnsw.md**: Notes on Hierarchical Navigable Small World (HNSW) graphs for approximate nearest neighbor search.
 - **jieba_implement.md**: Details on Jieba, a Chinese text segmentation library.
-- **main.py**: (Description if known, otherwise leave as generic)
+- **lc_1039_extensions.md**: Extensions and variations of LeetCode 1039 (Minimum Score Triangulation of Polygon).
+- **main.py**: (Description if known, otherwise generic)
 - **monte_carlo_area_check.md**: Notes on using Monte Carlo methods for area estimation.
 - **pattern_in_text.ipynb**: Jupyter notebook exploring pattern recognition in text.
 - **pyproject.toml**: Project dependencies and metadata.
