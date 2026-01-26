@@ -13,6 +13,7 @@
 原題為 `[1, n]`，我擴展成 `[left, right]` 。  
 提供腳本輸出 **.md** file ，以 **Mermaid** 語法繪製 **Minimax 策略樹**。    
 希望透過可視化，幫助我們理解決策過程。  
+**範例輸出**：[Minimax Strategy Tree [5, 31]](./illustrations/lc_375/decision_tree_5_31.md)  
 
 ```python
 
