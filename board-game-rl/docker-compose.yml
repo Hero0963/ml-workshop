@@ -1,0 +1,17 @@
+services:
+  play:
+    build: .
+    ports:
+      - "8000:8000"
+      - "7860:7860"
+    volumes:
+      - ./src:/app/src
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
