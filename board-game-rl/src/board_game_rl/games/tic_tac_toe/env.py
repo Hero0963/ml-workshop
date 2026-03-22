@@ -8,7 +8,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-from board_game_rl.core.engine import TicTacToeEngine
+from board_game_rl.games.tic_tac_toe.engine import TicTacToeEngine
 
 
 class TicTacToeEnv(gym.Env):

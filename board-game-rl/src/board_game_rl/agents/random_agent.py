@@ -3,9 +3,7 @@ Random Agent implementation for baseline testing.
 """
 
 import random
-
 import numpy as np
-
 from board_game_rl.agents.base import BaseAgent
 
 

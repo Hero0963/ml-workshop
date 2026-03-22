@@ -9,7 +9,7 @@ from pathlib import Path
 # Add src to python path for relative imports to work
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
-from board_game_rl.envs.tic_tac_toe_env import TicTacToeEnv
+from board_game_rl.games.tic_tac_toe.env import TicTacToeEnv
 from board_game_rl.agents.random_agent import RandomAgent
 
 

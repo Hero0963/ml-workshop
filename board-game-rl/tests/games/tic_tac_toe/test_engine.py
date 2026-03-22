@@ -2,7 +2,7 @@
 Tests for Tic-Tac-Toe Game Engine.
 """
 
-from board_game_rl.core.engine import TicTacToeEngine
+from board_game_rl.games.tic_tac_toe.engine import TicTacToeEngine
 
 
 def test_engine_initialization():

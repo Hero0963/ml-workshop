@@ -4,7 +4,7 @@ Tests for Tic-Tac-Toe Gymnasium Environment.
 
 import numpy as np
 
-from board_game_rl.envs.tic_tac_toe_env import TicTacToeEnv
+from board_game_rl.games.tic_tac_toe.env import TicTacToeEnv
 
 
 def test_env_initialization():

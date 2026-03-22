@@ -1,6 +1,6 @@
 import numpy as np
 
-from board_game_rl.agents.alphabeta_agent import AlphaBetaAgent
+from board_game_rl.games.tic_tac_toe.alphabeta_agent import AlphaBetaAgent
 
 
 def test_alphabeta_first_move():
