@@ -6,6 +6,9 @@ services:
       - "7860:7860"
     volumes:
       - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+      - ./models:/app/models
     stdin_open: true
     tty: true
     deploy:

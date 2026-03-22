@@ -17,6 +17,7 @@ app = FastAPI(
 class GameStateRequest(BaseModel):
     board: list[list[int]]
     current_player: int
+    agent_type: str = "Alpha-Beta Pruning (完美大師)"
 
 
 class MoveResponse(BaseModel):
@@ -35,7 +36,7 @@ async def predict(request: GameStateRequest):
     """
     Endpoint to get predictions (optimal moves) from the RL model.
     """
-    action = get_optimal_move(request.board, request.current_player)
+    action = get_optimal_move(request.board, request.current_player, request.agent_type)
     return MoveResponse(action=action)
 
 
