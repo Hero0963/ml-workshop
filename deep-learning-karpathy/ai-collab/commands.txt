@@ -69,3 +69,6 @@ uv run pytest
 - 使用 Conventional Commits，必須包含 scope
 - 範例：`feat(tokenizer): add BPE basics tutorial`
 - 禁止在 main 分支直接 commit
+
+
+claude --dangerously-skip-permissions
