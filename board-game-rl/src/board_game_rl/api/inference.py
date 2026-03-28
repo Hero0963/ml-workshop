@@ -33,7 +33,7 @@ def get_optimal_move(
     info = {"legal_actions": [r * 3 + c for r, c in legal_actions]}
 
     if "Q-Learning" in agent_type:
-        agent = QLearningAgent()
+        agent = QLearningAgent(player=current_player)
 
         # Try to load the trained model
         # Default path relative to this file

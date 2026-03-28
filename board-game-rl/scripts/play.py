@@ -1,5 +1,5 @@
 """
-Play Tic-Tac-Toe in terminal against a Random Agent.
+Play Tic-Tac-Toe in terminal against a Q-Learning Agent (unbeatable).
 """
 
 import sys
@@ -10,12 +10,14 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from board_game_rl.games.tic_tac_toe.env import TicTacToeEnv
-from board_game_rl.agents.random_agent import RandomAgent
+from board_game_rl.agents.q_learning_agent import QLearningAgent
 
 
 def play_game():
     env = TicTacToeEnv(render_mode="human")
-    agent = RandomAgent()
+    agent = QLearningAgent(player=-1, epsilon=0)
+    model_path = Path(__file__).parent.parent / "models" / "q_table.json"
+    agent.load_model(str(model_path))
 
     observation, info = env.reset()
     env.render()
@@ -40,10 +42,10 @@ def play_game():
                     print("Please enter a number.")
         else:
             # Agent turn (O)
-            print("Agent is thinking...")
-            time.sleep(0.5)
-            action = agent.act(observation, info)
-            print(f"Agent played: {action}")
+            print("Q-Agent is thinking...")
+            time.sleep(0.3)
+            action = agent.act(observation, info, is_training=False)
+            print(f"Q-Agent played: {action}")
 
         observation, reward, terminated, truncated, info = env.step(action)
         env.render()
@@ -55,7 +57,7 @@ def play_game():
             if winner == 1:
                 print("Congratulations, you (X) win!")
             elif winner == -1:
-                print("Agent (O) wins!")
+                print("Q-Agent (O) wins!")
             else:
                 print("It's a draw!")
             break
