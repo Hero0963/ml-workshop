@@ -1,0 +1,71 @@
+# Onboarding Commands (上手指南)
+# Last Updated: 2026-03-28
+
+---
+
+## For AI Agent (給 AI 助手的初始 Prompt)
+
+### 第一步：了解規範與架構
+1. 去看 ai-collab/rules.md，了解核心合作開發模式
+2. 去看 ai-collab/project_guide.md，了解專案架構
+3. 去看 ai-collab/dev_log.md，了解最新開發進度
+
+### 第二步：建立心智模型
+4. 去看 pyproject.toml，了解 Python 依賴
+5. 去看 tutorials/ 目錄結構，了解教材架構
+6. 去看 references/ 了解參考 repo 內容
+
+### 第三步：環境檢查
+7. 確認 Python + uv 已安裝
+8. 執行 `uv sync` 確認依賴正確
+
+### 第四步：確認最新狀態
+9. 去看 git branch name 以及 git log
+10. 綜合以上資訊，向 Developer 回報並詢問下一步
+
+### 當前重點任務 (2026-03-28)
+- **分支**：`deep-learning-tutorial`
+- **狀態**：教材撰寫
+- **TODO**：
+  1. 完成 Tokenizer 教材
+  2. 完成 nanoGPT 教材
+  3. 建立工具腳本
+  4. 測試所有範例程式碼
+
+---
+
+## For Human Developer
+
+1. 閱讀 `ai-collab/rules.md`
+2. 閱讀 `ai-collab/project_guide.md`
+3. 閱讀 `README.md`
+4. 執行：`cd deep-learning-karpathy/ && uv sync`
+
+---
+
+## Common Workflows
+
+```bash
+# 安裝依賴
+cd deep-learning-karpathy/
+uv sync
+
+# 執行教學腳本
+uv run python scripts/train_tokenizer.py      # 訓練 tokenizer
+uv run python scripts/compare_tokenizers.py   # 比較不同 tokenizer
+uv run python scripts/train_nanogpt.py        # 訓練 nanoGPT
+uv run python scripts/sample_text.py          # 生成文字
+
+# Jupyter Notebook
+uv run jupyter notebook notebooks/
+
+# 測試
+uv run pytest
+```
+
+---
+
+## Commit 規範提醒
+- 使用 Conventional Commits，必須包含 scope
+- 範例：`feat(tokenizer): add BPE basics tutorial`
+- 禁止在 main 分支直接 commit
