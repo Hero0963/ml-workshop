@@ -1,0 +1,80 @@
+# Onboarding Commands (上手指南)
+# Last Updated: 2026-03-28
+
+---
+
+## For AI Agent (給 AI 助手的初始 Prompt)
+
+### 第一步：了解規範與架構
+1. 去看 ai-collab/rules.md，了解核心合作開發模式
+2. 去看 ai-collab/project_guide.md，了解專案架構
+3. 去看 ai-collab/dev_log.md，了解最新開發進度
+4. 去看 ai-collab/handover.md，了解交接狀態與下一步
+
+### 第二步：建立心智模型
+5. 去看 pyproject.toml，了解 Python 依賴
+6. 去看 src/board_game_rl/ 目錄結構，了解程式碼架構
+7. 去看 docs/ 了解已有的演算法教材
+8. 去看 README.md 了解對外文件
+
+### 第三步：環境檢查
+9. 確認 Python 3.13 + uv 已安裝
+10. 執行 `uv sync` 確認依賴正確
+11. 執行 `uv run pytest tests/ -v` 確認 12 個測試通過
+12. 確認 models/q_table.json 與 models/alphabeta_cache.json 存在
+
+### 第四步：確認最新狀態
+13. 去看 git branch name 以及 git log
+14. 綜合以上資訊，向 Developer 回報並詢問下一步
+
+### 當前重點任務 (2026-03-28)
+- **分支**：`research/board-game-rl`（已 merge 至 main）
+- **狀態**：Q-Learning 不敗達成，文件完備
+- **TODO**：
+  1. DQN (Deep Q-Network) — 將查表法升級為神經網路
+  2. MCTS (蒙地卡羅樹搜尋) — AlphaZero 核心
+  3. 新遊戲擴充 — Connect Four 或圍棋
+
+---
+
+## For Human Developer
+
+1. 閱讀 `ai-collab/rules.md`
+2. 閱讀 `ai-collab/project_guide.md`
+3. 閱讀 `README.md`
+4. 執行：`cd board-game-rl/ && uv sync`
+
+---
+
+## Common Workflows
+
+```bash
+# 安裝依賴
+cd board-game-rl/
+uv sync
+
+# Web UI 對弈 (localhost:7860)
+uv run python src/board_game_rl/ui/gradio_app.py
+
+# 終端對戰
+uv run python scripts/play.py
+
+# 訓練 Q-Learning (150K 場，自動產出報告)
+uv run python scripts/train_q_learning.py
+
+# 預計算 Alpha-Beta 快取
+uv run python scripts/precompute_alphabeta.py
+
+# 測試
+uv run pytest tests/ -v
+
+# Docker 啟動 (含 FastAPI + Gradio)
+docker compose up -d
+```
+
+---
+
+## Commit 規範提醒
+- 使用 Conventional Commits，必須包含 scope
+- 範例：`feat(rl): add DQN agent implementation`
+- 禁止 force push
