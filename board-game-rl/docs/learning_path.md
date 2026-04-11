@@ -14,13 +14,14 @@
   - **Minimax Algorithm & Alpha-Beta Pruning (剪枝)**：完美的數學解法，如何建立 Game Tree 並進行 Minimax 搜索。
   - **Q-Learning (Tabular RL)**：當狀態空間極小（$3^9$）時，如何使用查表法讓 AI 自己學會下棋。
   - **Deep Q-Network (DQN)**：將 Q-Table 替換成神經網路的基礎概念。
-- **Implementation (實作 - `ipynb`)**
-  - 使用現有的 `TicTacToeEnv` 介面。
-  - 實作 `MinimaxAgent` 確保能下出不敗棋局。
-  - 實作 `DQNAgent` 與 Pytorch，並讓 AI 透過 self-play 學習。
+- **Implementation (實作)**
+  - ~~使用現有的 `TicTacToeEnv` 介面~~ ✅
+  - ~~實作 `MinimaxAgent` (Alpha-Beta) 確保能下出不敗棋局~~ ✅
+  - ~~實作 Tabular Q-Learning 並達到不敗~~ ✅
+  - ~~實作 `DQNAgent` 與 PyTorch (MLP + Replay Buffer + Target Network)~~ ✅
 - **Experiment (實驗)**
-  - 比較 DQN 學習出的 Policy 和 Minimax 完美 Policy 的勝率差距。
-  - 調整 DQN 的 epsilon-greedy 策略觀察收斂速度。
+  - ~~比較 DQN 與 Tabular Q-Learning 的勝率差距~~ ✅ (DQN vs Random 後手 ~2.5% 敗率，Q-Learning 零敗)
+  - ~~調整 epsilon-greedy 策略觀察收斂速度~~ ✅
 
 ---
 
@@ -95,5 +96,5 @@
 ---
 
 ## 🎯 Next Steps
-我們目前已經完成了 **Stage 1** 的環境鋪墊 (`envs/tic_tac_toe_env.py`)。
-接下來我們可以在 `docs/` 下開一個 Jupyter Notebook 來實施 **Alpha-Beta Pruning** 或 **DQN** 進行 Stage 1 的實作！
+**Stage 1 已完成！** Alpha-Beta、Q-Learning (不敗)、DQN 全部實作完畢。
+下一步進入 **Stage 2/3** — MCTS 與 AlphaZero。

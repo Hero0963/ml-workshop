@@ -1,6 +1,6 @@
 # 專案指南 (Project Guide)
 
-> **Last Updated:** 2026-03-28
+> **Last Updated:** 2026-04-11
 
 本文件紀錄 `board-game-rl` 專案的整體架構、核心設計與啟動方式。
 
@@ -21,7 +21,7 @@
 board-game-rl/
 ├── src/board_game_rl/
 │   ├── games/tic_tac_toe/      # 井字遊戲專屬 (Engine, Env, Alpha-Beta)
-│   ├── agents/                 # 通用 AI 大腦 (Q-Learning, Random)
+│   ├── agents/                 # 通用 AI 大腦 (Q-Learning, DQN, Random)
 │   ├── api/                    # FastAPI 後端 (支援多 Agent 預測)
 │   ├── ui/                     # Gradio 前端 (分頁對弈介面)
 │   └── utils/                  # 共用工具 (Logger 等)
@@ -46,8 +46,15 @@ board-game-rl/
 - Minimax + Alpha-Beta Pruning，井字遊戲的數學最優解
 - 預計算快取 `models/alphabeta_cache.json`（O(1) 查表）
 
-### 3. Web UI 對弈介面
-- Gradio 分頁式 UI，支援 Alpha-Beta / Q-Learning / Random 三種對手
+### 3. DQN Agent（Deep RL）
+- PyTorch MLP (9→128→128→9)，Q-value function approximation
+- Experience Replay Buffer (50K) + Target Network (500 步同步)
+- vs Alpha-Beta 零敗，vs Random 後手 ~2.5% 敗率
+- 訓練報告: `ai-collab/reports/dqn_training_report_2026-04-11.md`
+
+### 4. Web UI 對弈介面
+- Gradio 分頁式 UI，支援 Alpha-Beta / DQN / Q-Learning / Random 四種對手
+- 支援先後手選擇（先手 X / 後手 O）
 
 ## 啟動方式
 

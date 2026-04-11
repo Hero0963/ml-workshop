@@ -42,3 +42,18 @@
   - Hybrid 對手是最有效的解法（Random 提供覆蓋 + AB 提供品質）
   - 訓練不需 GPU，純 CPU + dict 查表
 - **下一步**: 見 `ai-collab/handover.md`
+
+## 2026-04-11: DQN (Deep Q-Network) 實作
+- **任務**: 將查表法升級為神經網路，完成 Stage 1 的 Deep RL 里程碑
+- **進度**:
+  - **DQN Agent** (`agents/dqn_agent.py`): MLP (9→128→128→9) + Experience Replay + Target Network
+  - **訓練腳本** (`scripts/train_dqn.py`): 混合對手訓練 + 即時 log + 定期驗證 + best model 自動儲存
+  - **單元測試**: 12 個 DQN 測試（網路、Buffer、Agent、save/load）
+  - **API/UI 整合**: inference.py 支援 DQN、Gradio 新增 DQN 分頁 + 先後手選擇
+  - **inference.py 快取**: 修復每次 API call 重新載入模型的效能問題
+  - **訓練結果**: 100K 場，vs Alpha-Beta 先後手零敗，vs Random 後手 2.5% 敗率
+- **關鍵決策**:
+  - 井字遊戲狀態空間小，DQN 的泛化能力反而不如 Q-Learning 的精確查表
+  - vs Random 的敗率是 neural approximation 的本質限制，可透過增加 Random 對手比例改善
+  - Best model 儲存用 `<=`（不嚴格大於），確保後期更穩定的模型能覆蓋早期版本
+- **下一步**: 見 `ai-collab/handover.md`
