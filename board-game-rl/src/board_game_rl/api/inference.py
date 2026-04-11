@@ -1,16 +1,56 @@
+# src/board_game_rl/api/inference.py
 """
 Inference logic for Tic-Tac-Toe.
 """
 
-import os
 from pathlib import Path
 
 import numpy as np
 
-from board_game_rl.agents.random_agent import RandomAgent
 from board_game_rl.agents.q_learning_agent import QLearningAgent
+from board_game_rl.agents.random_agent import RandomAgent
 from board_game_rl.games.tic_tac_toe.alphabeta_agent import AlphaBetaAgent
 from board_game_rl.games.tic_tac_toe.engine import TicTacToeEngine
+from board_game_rl.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+_agent_cache: dict[str, QLearningAgent | AlphaBetaAgent | RandomAgent] = {}
+
+
+def _resolve_q_table_path() -> Path:
+    """Resolve Q-table model path (Docker or local)."""
+    docker_path = Path("/app/models/q_table.json")
+    if docker_path.exists():
+        return docker_path
+    return Path(__file__).parent.parent.parent.parent / "models" / "q_table.json"
+
+
+def _get_agent(
+    agent_type: str, player: int
+) -> QLearningAgent | AlphaBetaAgent | RandomAgent:
+    """Return a cached agent instance, creating and loading on first access."""
+    cache_key = f"{agent_type}:{player}"
+
+    if cache_key in _agent_cache:
+        return _agent_cache[cache_key]
+
+    if "Q-Learning" in agent_type:
+        agent = QLearningAgent(player=player)
+        model_path = _resolve_q_table_path()
+        if model_path.exists():
+            agent.load_model(str(model_path))
+        else:
+            logger.warning(
+                f"Q-Table not found at {model_path}. Agent will play randomly."
+            )
+    elif "Random" in agent_type:
+        agent = RandomAgent()
+    else:
+        agent = AlphaBetaAgent(player=player)
+
+    _agent_cache[cache_key] = agent
+    return agent
 
 
 def get_optimal_move(
@@ -26,39 +66,12 @@ def get_optimal_move(
     engine.current_player = current_player
     legal_actions = engine.get_legal_actions()
 
-    # If no legal actions, return an invalid move indicator or handle it
     if not legal_actions:
         return -1
 
     info = {"legal_actions": [r * 3 + c for r, c in legal_actions]}
+    agent = _get_agent(agent_type, current_player)
 
-    if "Q-Learning" in agent_type:
-        agent = QLearningAgent(player=current_player)
-
-        # Try to load the trained model
-        # Default path relative to this file
-        model_path = (
-            Path(__file__).parent.parent.parent.parent / "models" / "q_table.json"
-        )
-
-        # If running in docker, the path is /app/models/q_table.json
-        if os.path.exists("/app/models/q_table.json"):
-            model_path = Path("/app/models/q_table.json")
-
-        if model_path.exists():
-            agent.load_model(str(model_path))
-        else:
-            print(
-                f"Warning: Q-Table not found at {model_path}. Agent will play randomly."
-            )
-
-        action = agent.act(np.array(board_state), info, is_training=False)
-    elif "Random" in agent_type:
-        agent = RandomAgent()
-        action = agent.act(np.array(board_state), info)
-    else:
-        # Default to AlphaBetaAgent
-        agent = AlphaBetaAgent(player=current_player)
-        action = agent.act(np.array(board_state), info)
-
-    return action
+    if isinstance(agent, QLearningAgent):
+        return agent.act(np.array(board_state), info, is_training=False)
+    return agent.act(np.array(board_state), info)
