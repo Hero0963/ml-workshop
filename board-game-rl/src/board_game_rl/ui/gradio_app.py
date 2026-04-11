@@ -13,53 +13,75 @@ def get_board_values(engine: TicTacToeEngine) -> list[str]:
     return [chars[engine.board[i // 3][i % 3]] for i in range(9)]
 
 
-def get_winner_msg(engine: TicTacToeEngine) -> str:
-    if engine.winner == 1:
-        return "You (X) Win!"
-    if engine.winner == -1:
-        return "Agent (O) Wins!"
+def get_winner_msg(engine: TicTacToeEngine, human_player: int) -> str:
+    if engine.winner == human_player:
+        return "You Win!"
+    if engine.winner == -human_player:
+        return "Agent Wins!"
     if engine.winner == 0:
         return "It's a Draw!"
     return ""
 
 
-def parse_action(engine: TicTacToeEngine, agent_type: str, cell_idx: int) -> list:
+def parse_action(
+    engine: TicTacToeEngine,
+    agent_type: str,
+    human_player: int,
+    cell_idx: int,
+) -> list:
     if engine.winner is not None:
-        return [engine, "Game over! Click New Game."] + get_board_values(engine)
+        return [engine, human_player, "Game over! Click New Game."] + get_board_values(
+            engine
+        )
 
-    # Human turn (X, which is 1)
+    if engine.current_player != human_player:
+        return [engine, human_player, "Not your turn!"] + get_board_values(engine)
+
     r, c = cell_idx // 3, cell_idx % 3
     valid = engine.step((r, c))
     if not valid:
-        return [engine, "Invalid move!"] + get_board_values(engine)
+        return [engine, human_player, "Invalid move!"] + get_board_values(engine)
 
     if engine.winner is not None:
-        return [engine, get_winner_msg(engine)] + get_board_values(engine)
+        return [
+            engine,
+            human_player,
+            get_winner_msg(engine, human_player),
+        ] + get_board_values(engine)
 
-    # Agent turn (O, which is -1)
+    # Agent turn
     action = get_optimal_move(engine.board, engine.current_player, agent_type)
     if action != -1:
         engine.step((action // 3, action % 3))
 
-    msg = f"Your turn (X). Playing against: {agent_type}"
+    side = "X" if human_player == 1 else "O"
+    msg = f"Your turn ({side})."
     if engine.winner is not None:
-        msg = get_winner_msg(engine)
+        msg = get_winner_msg(engine, human_player)
 
-    return [engine, msg] + get_board_values(engine)
+    return [engine, human_player, msg] + get_board_values(engine)
 
 
-def reset_game(agent_type: str) -> list:
+def reset_game(agent_type: str, side_choice: str) -> list:
     engine = TicTacToeEngine()
+    human_player = 1 if side_choice == "先手 (X)" else -1
+
+    if human_player == -1:
+        action = get_optimal_move(engine.board, engine.current_player, agent_type)
+        if action != -1:
+            engine.step((action // 3, action % 3))
+
+    side = "X" if human_player == 1 else "O"
     return [
         engine,
-        f"New Game Started. Your turn (X). Playing against: {agent_type}",
-    ] + [" "] * 9
+        human_player,
+        f"New Game! You are {side}. Playing against: {agent_type}",
+    ] + get_board_values(engine)
 
 
-# Factory for event handlers to capture the loop variable
 def make_handler(idx: int):
-    def handler(engine: TicTacToeEngine, agent_type: str):
-        return parse_action(engine, agent_type, idx)
+    def handler(engine: TicTacToeEngine, agent_type: str, human_player: int):
+        return parse_action(engine, agent_type, human_player, idx)
 
     return handler
 
@@ -112,8 +134,17 @@ def create_tic_tac_toe_ui(agent_type_name: str) -> gr.Blocks:
 
         agent_state = gr.State(agent_type_name)
         engine_state = gr.State(TicTacToeEngine)
+        human_player_state = gr.State(1)
+
+        with gr.Row(elem_classes="row-container"):
+            side_selector = gr.Radio(
+                choices=["先手 (X)", "後手 (O)"],
+                value="先手 (X)",
+                label="選擇先後手",
+            )
+
         status_text = gr.Textbox(
-            label="遊戲狀態", value="對局開始。輪到你 (X)。", interactive=False
+            label="遊戲狀態", value="選好先後手後按「開始」。", interactive=False
         )
 
         buttons = []
@@ -121,26 +152,25 @@ def create_tic_tac_toe_ui(agent_type_name: str) -> gr.Blocks:
             for r in range(3):
                 with gr.Row(elem_classes="row-container"):
                     for c in range(3):
-                        idx = r * 3 + c
                         btn = gr.Button(
                             " ", elem_classes="square-btn", variant="secondary"
                         )
                         buttons.append(btn)
 
         with gr.Row(elem_classes="row-container"):
-            new_game_btn = gr.Button("🔄 重新開始", variant="primary", scale=0)
+            new_game_btn = gr.Button("🔄 開始 / 重新開始", variant="primary", scale=0)
 
         for i, btn in enumerate(buttons):
             btn.click(
                 fn=make_handler(i),
-                inputs=[engine_state, agent_state],
-                outputs=[engine_state, status_text] + buttons,
+                inputs=[engine_state, agent_state, human_player_state],
+                outputs=[engine_state, human_player_state, status_text] + buttons,
             )
 
         new_game_btn.click(
             fn=reset_game,
-            inputs=[agent_state],
-            outputs=[engine_state, status_text] + buttons,
+            inputs=[agent_state, side_selector],
+            outputs=[engine_state, human_player_state, status_text] + buttons,
         )
     return demo
 
@@ -151,6 +181,8 @@ if __name__ == "__main__":
         gr.Markdown("# 🏆 Board Game RL 訓練場")
         with gr.Tab("🆚 Alpha-Beta (完美大師)"):
             create_tic_tac_toe_ui("Alpha-Beta Pruning (完美大師)")
+        with gr.Tab("🆚 DQN (深度Q)"):
+            create_tic_tac_toe_ui("DQN (深度Q網路)")
         with gr.Tab("🆚 Q-Learning (小Q)"):
             create_tic_tac_toe_ui("Q-Learning (從零學習的小Q)")
         with gr.Tab("🆚 Random (小白)"):

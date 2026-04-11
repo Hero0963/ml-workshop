@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
+from board_game_rl.agents.dqn_agent import DQNAgent
 from board_game_rl.agents.q_learning_agent import QLearningAgent
 from board_game_rl.agents.random_agent import RandomAgent
 from board_game_rl.games.tic_tac_toe.alphabeta_agent import AlphaBetaAgent
@@ -15,29 +16,40 @@ from board_game_rl.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_agent_cache: dict[str, QLearningAgent | AlphaBetaAgent | RandomAgent] = {}
+_agent_cache: dict[str, DQNAgent | QLearningAgent | AlphaBetaAgent | RandomAgent] = {}
+
+_MODELS_DIR = Path(__file__).parent.parent.parent.parent / "models"
 
 
-def _resolve_q_table_path() -> Path:
-    """Resolve Q-table model path (Docker or local)."""
-    docker_path = Path("/app/models/q_table.json")
+def _resolve_model_path(filename: str) -> Path:
+    """Resolve model path (Docker or local)."""
+    docker_path = Path("/app/models") / filename
     if docker_path.exists():
         return docker_path
-    return Path(__file__).parent.parent.parent.parent / "models" / "q_table.json"
+    return _MODELS_DIR / filename
 
 
 def _get_agent(
     agent_type: str, player: int
-) -> QLearningAgent | AlphaBetaAgent | RandomAgent:
+) -> DQNAgent | QLearningAgent | AlphaBetaAgent | RandomAgent:
     """Return a cached agent instance, creating and loading on first access."""
     cache_key = f"{agent_type}:{player}"
 
     if cache_key in _agent_cache:
         return _agent_cache[cache_key]
 
-    if "Q-Learning" in agent_type:
+    if "DQN" in agent_type:
+        agent = DQNAgent(player=player, device="cpu")
+        model_path = _resolve_model_path("dqn_model.pth")
+        if model_path.exists():
+            agent.load_model(str(model_path))
+        else:
+            logger.warning(
+                f"DQN model not found at {model_path}. Agent will play randomly."
+            )
+    elif "Q-Learning" in agent_type:
         agent = QLearningAgent(player=player)
-        model_path = _resolve_q_table_path()
+        model_path = _resolve_model_path("q_table.json")
         if model_path.exists():
             agent.load_model(str(model_path))
         else:
@@ -72,6 +84,6 @@ def get_optimal_move(
     info = {"legal_actions": [r * 3 + c for r, c in legal_actions]}
     agent = _get_agent(agent_type, current_player)
 
-    if isinstance(agent, QLearningAgent):
+    if isinstance(agent, (DQNAgent, QLearningAgent)):
         return agent.act(np.array(board_state), info, is_training=False)
     return agent.act(np.array(board_state), info)
