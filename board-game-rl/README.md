@@ -54,6 +54,7 @@ uv run python scripts/play.py
 
 專案內含精心編寫的雙版本教學文件（高中生版 + 專業版，含圖解與實際推演）：
 
+- [深入了解 DQN：從查表到神經網路](docs/dqn_tutorial_2026-04-11.md) **NEW**
 - [從零到不敗：Q-Learning 訓練方法論](docs/q_learning_unbeatable_tutorial_2026-03-28.md)
 - [深入了解 Alpha-Beta 剪枝法](docs/alphabeta_tutorial_2026-03-22.md)
 - [深入了解 Q-Learning 演算法](docs/q_learning_tutorial_2026-03-22.md)
