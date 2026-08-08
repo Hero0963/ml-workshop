@@ -1,0 +1,112 @@
+# linkedin-zip-challenge Commands — 常用提示語（咒語）
+# Last Updated: 2026-08-08
+# 日常只複製 [1]、[2] 或 [6] 貼給助理，<...> 填空。
+# [3][4][5] 是常設規範，被咒語引用，不用每次貼。
+# 規範全文：AGENTS.md（子專案根）；現況：ai-collab/roadmap.md；架構：ai-collab/project_guide.md
+
+=====================================================================
+[1] 上線 — 助理接手 / 開始新對話
+=====================================================================
+
+我要處理 linkedin-zip-challenge 的 <主題>。
+
+1. 讀 AGENTS.md（規範）與 ai-collab/roadmap.md（現況、下一步、已定案決策）
+2. 要動程式再讀 ai-collab/project_guide.md（架構、關鍵函式）
+3. 同步狀態：git log --oneline -10、git status
+4. 本專案休眠約 9 個月，先跑 uv sync + uv run pytest 建立基線，貼實際輸出
+5. 回報：現在做到哪、下一步是什麼、有什麼卡住或待補，＋你的下一步建議，等我確認
+
+今天重點：<填>
+
+=====================================================================
+[2] 自主執行咒語 — 開發 + 驗證 + 文件全自動（本咒語＝本任務的 commit 授權，不含 push）
+=====================================================================
+
+先讀 AGENTS.md；驗證照 §4、任務地圖照 §5、交付檢核依 commands.txt [5]。
+
+【任務】<一句話目標＋待辦清單>
+【範圍】<可以動哪些檔／不要動什麼>
+【交付】<程式改動＋文件更新＋要不要出報告>
+
+執行：
+- 自主拆 subtask、自己驗證、自己定義 done；可拆解又獨立的重活自行派 subagent 並行
+- 每完成一個 subtask 就 commit（Conventional Commits 含 scope，一件事一個 commit）；**不要 push**
+- 做完繼續，直到待辦清空；最後更新 ai-collab/roadmap.md 與 ai-collab/dev_log.md，並更新你的 memory
+- 回報：改了哪些檔、uv run pytest 的實際輸出、done 條件逐項確認
+
+=====================================================================
+[3] 新增 / 掛載 solver
+=====================================================================
+
+我想加一個 <演算法名> solver（或把 <既有 solver> 掛上 API）。
+
+照 AGENTS.md §5 的任務地圖：
+- 新增：src/core/solvers/<name>.py ＋ src/core/tests/solvers/test_<name>.py
+- 上 API：src/app/routers/solver.py 的 SOLVERS ＋ src/app/schemas/solver.py
+  （啟發式 solver 需要 attempts 參數，且要考慮逾時）
+- 精確解要比對 conftest.py 的 6 題 ground truth；啟發式做 smoke test（驗格式與路徑合法性）
+- 共用邏輯放 src/core/utils.py，不要在 solver 裡重寫 parser 或 fitness
+- 回報時附 uv run pytest 的實際輸出
+
+=====================================================================
+[4] 修 bug
+=====================================================================
+
+發現問題：<操作步驟 + 預期 vs 實際 + 錯誤訊息>
+
+- 先找根因，不要貼藥膏；先寫一個會失敗的測試再修
+- ⚠ 測試失敗不一定是演算法錯：先確認 (a) 環境有沒有漂移 (b) conftest.py 的 ground truth 對不對
+  （2025-09-23 曾為此查很久，最後是參考答案打錯）
+- 修完跑對應層級的測試：solver → src/core/tests/solvers/；API → src/app/tests/；UI → src/ui/tests/
+- 回報：根因是什麼、改了哪裡、測試輸出；值得記的教訓寫進 ai-collab/dev_log.md
+
+=====================================================================
+[5] 交付前檢核（自己跑一遍再回報）
+=====================================================================
+
+- [ ] cd linkedin-zip-challenge && uv run pytest 全過（貼實際輸出，沒跑就說沒跑）
+- [ ] uv run ruff check . 乾淨
+- [ ] 動到 API/UI → 起服務實際點過一次（uv run python -m src.app.main → localhost:7440/ui）
+- [ ] 動到 Svelte → npm run build 後確認 /svelte-ui 有反映
+- [ ] 解法優雅：最小改動、不過度設計、沒留 debug log 與臨時註解
+- [ ] 文件更新：ai-collab/roadmap.md（現況＋下一步）＋ ai-collab/dev_log.md（加一則）
+- [ ] 沒有把 .env、models/、logs/、datasets/ 加進版控
+- [ ] repo 內無真名／公司名／個人聯絡方式
+- [ ] done 條件逐項列出確認
+
+=====================================================================
+[6] 收尾咒語 — 告一段落貼這句
+=====================================================================
+
+告一段落了，照 AGENTS.md §3 第 5 步收尾：
+總結做了什麼／決定什麼／待辦
+→ 更新 ai-collab/roadmap.md（現況＋下一步＋進度日誌加一列）
+→ ai-collab/dev_log.md 加一則（技術細節）
+→ 私人細節寫 ../hi-collab/worklog/；較大任務出 ai-collab/reports/
+→ 更新你的 memory（含修正過時條目）→ 最後問我要不要 commit（我沒說就不要動 git）
+
+=====================================================================
+[7] 常用指令
+=====================================================================
+
+cd linkedin-zip-challenge
+
+uv sync                              # 建立/同步環境（Python 3.11）
+uv run pytest                        # 全部測試
+uv run pytest src/core/tests -v      # 只跑核心演算法
+uv run ruff check .                  # lint
+uv run python -m src.app.main        # 起服務 → http://localhost:7440/ui
+python run_docker_dev.py             # Docker 開發環境（hot-reload → localhost:5173）
+docker compose -f docker-compose.yml up --build -d   # 生產模擬
+.\run_tests.bat                      # 跑測試並輸出報告到 src/core/tests/reports/
+
+# Svelte 前端
+cd src/custom_components/puzzle_editor/frontend
+npm install && npm run build
+
+=====================================================================
+[8] 高手啟動指令
+=====================================================================
+
+claude --dangerously-skip-permissions     # 在 D:\it_project\github_sync\ml-workshop 開（讀 repo 級 CLAUDE.md）
+                                          # 或在 linkedin-zip-challenge/ 開（讀本專案 CLAUDE.md）
