@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python D:/it_project/github_sync/ml-workshop/.claude/session-brief.py",
+            "timeout": 20,
+            "statusMessage": "ml-workshop 現況…"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(uv sync*)",
+      "Bash(uv run pytest*)",
+      "Bash(uv run ruff*)",
+      "Bash(uv run pre-commit run*)",
+      "Bash(uv tree*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git ls-files*)",
+      "PowerShell(uv sync*)",
+      "PowerShell(uv run pytest*)",
+      "PowerShell(uv run ruff*)",
+      "PowerShell(uv run pre-commit run*)",
+      "PowerShell(uv tree*)",
+      "PowerShell(git status*)",
+      "PowerShell(git diff*)",
+      "PowerShell(git log*)",
+      "PowerShell(git show*)",
+      "PowerShell(git branch*)",
+      "PowerShell(git ls-files*)"
+    ]
+  }
+}

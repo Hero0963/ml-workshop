@@ -194,6 +194,15 @@ cython_debug/
 .cursorindexingignore
 
 
+# Claude Code：.claude/settings.json 有進版控（共用設定＋SessionStart hook），個人覆寫不進
+.claude/settings.local.json
+
+# 本機協作工作區（私人工作日誌、失敗實驗、暫存腳本）；公開面是各子專案的 ai-collab/
+hi-collab/
+
+# 軟刪除暫存區（依全域規範，移除的東西放這裡，不進版控也不清空）
+soft-delete/
+
 my_personal_note.txt
 more_simple_reinforcement_learning/chap02/best_model.pth
 *.pth
