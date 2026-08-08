@@ -33,7 +33,12 @@
 
 ## 下一步
 
-1. **把 9 種 solver 全部掛進 API**（最高優先——功能已經寫好且測過，只差沒接出來）
+> **★ 2026-08-08 本人定案的執行順序：先做 #2（VLM），再做 #3（RL），之後才換 `board-game-rl`。**
+> 本專案已被指定為當前的 side project 主菜（取代原排的 Transformer 0→1 教材）。
+> **#1 明確被跳過**——它最快見效，但本人選擇先做 VLM／RL。這是明示決定，開工時直接從 #2 起手，
+> 不必再重提 #1；要順手做由本人開口。下面的編號維持技術優先序，不代表執行順序。
+
+1. **把 9 種 solver 全部掛進 API**（技術上最划算，但**本人已決定暫緩**）
    - 為什麼：`src/core/solvers/` 有 9 種實作、每種都有測試，但 `src/app/routers/solver.py` 的 `SOLVERS` dict 只暴露 3 種。
      2026-08-08 實測佐證：打 `POST /api/solver/solve` 指定 `Simulated Annealing` → **404 `Solver 'Simulated Annealing' not found.`**；
      Svelte 前端 bundle 內的下拉選項字串也只有 `DFS`／`A* (heapq)`／`CP-SAT`。**六種啟發式解法目前完全無法從介面觸及。**
@@ -41,11 +46,16 @@
      改完 Svelte 的下拉要重新 `npm run build` 才會反映。
    - Done 條件：`SOLVERS` 含全部 9 種、schema 支援 `attempts`、Gradio 與 Svelte 兩邊下拉都可選、新增對應 API 測試且全綠。
 
-2. **VL 圖片解析整合進主流程**
+2. **VL 圖片解析整合進主流程** ← **★ 現在做這個**
    - 現況：`src/core/vl_models/` 是實驗腳本堆，技術路線已驗證（見下方決策），但沒有正式的 parser 進 API／UI。
-   - Done 條件：一個穩定的 `image → Puzzle dict` 函式 ＋ 單元測試 ＋ Gradio 上傳分頁；實驗腳本移進 `ai-collab/` 或標明為 scratchpad。
+   - 起手處：`final_puzzle_parser.py`／`parser.py`／`prompts.py` 是最接近成品的三支；
+     `experiment_*.py` 是驗證用的 scratchpad，不要當生產程式碼改。
+   - ⚠ 需要本機 Ollama 跑得起來（`ollama_model_name`／`ollama_provider_url` 在 `.env`，不進版控）。
+     模型不在時要有明確的失敗訊息，不要讓 API 靜默壞掉。
+   - Done 條件：一個穩定的 `image → Puzzle dict` 函式 ＋ 單元測試（VL 呼叫要能 mock，測試不依賴 Ollama）
+     ＋ Gradio 上傳分頁；實驗腳本標明為 scratchpad。
 
-3. **RL 重啟前置研究**（不急）
+3. **RL 重啟前置研究** ← **★ VLM 之後接這個**
    - 先讀 `../more_simple_reinforcement_learning/` 的 DQN 與 PPO 章節，再看 AlphaGo／AlphaZero 架構。
    - 重啟時的簡化方向（2025-10-15 已想好）：縮小 `map_size`、放寬環境限制（允許重走，從 Hamiltonian path 降級為一般尋路）。
    - Done 條件：寫一份「RL 重啟方案」到 `ai-collab/reports/`，說明改哪些設計、為什麼這次不會再掉進 policy loop。
