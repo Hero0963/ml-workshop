@@ -31,7 +31,11 @@ MAX_DIRTY_SHOWN = 5
 
 
 def git(*args: str) -> str:
-    """跑一次 git，失敗就回空字串（例如不是 git repo）。"""
+    """跑一次 git，失敗就回空字串（例如不是 git repo）。
+
+    只 rstrip：`status --porcelain` 的每行是 `XY 路徑`，**前導空格是狀態欄的一部分**，
+    用 strip() 會吃掉第一行的狀態欄空格，害後續 `ln[3:]` 多切一個字元。
+    """
     try:
         return subprocess.run(
             ["git", "-C", str(ROOT), *args],
@@ -40,7 +44,7 @@ def git(*args: str) -> str:
             encoding="utf-8",
             errors="replace",
             timeout=10,
-        ).stdout.strip()
+        ).stdout.rstrip()
     except (OSError, subprocess.SubprocessError):
         return ""
 
