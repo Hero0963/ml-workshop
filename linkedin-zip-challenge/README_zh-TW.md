@@ -25,6 +25,11 @@
 
 ```
 linkedin-zip-challenge/
+├── ai-collab/              # 開發文件（現況、架構指南、開發日誌）
+│   ├── roadmap.md          # 現況與下一步 —— 從這裡開始
+│   ├── project_guide.md    # 架構、模組職責、啟動方式
+│   ├── dev_log.md          # 完整開發歷程
+│   └── commands.txt        # 常用咒語與指令速查
 ├── src/
 │   ├── app/                # FastAPI 後端應用程式
 │   │   ├── routers/        # API 端點定義
@@ -46,6 +51,7 @@ linkedin-zip-challenge/
 ├── docker-compose.yml      # 用於 PRODUCTION 的 Docker Compose 檔案
 ├── docker-compose.dev.yml  # 用於 DEVELOPMENT 的 Docker Compose 檔案
 ├── run_docker_dev.py       # 用於啟動開發環境的自動化腳本
+├── .python-version         # Python 3.11（供 `uv sync` 決定性挑版本）
 ├── pyproject.toml          # `uv` 的專案依賴性設定
 └── README.md               
 ```
@@ -143,11 +149,19 @@ Docker 設定經過精心設計，以同時支援快速開發（具備熱重載�
 ## 開發
 
 ### 執行測試
-若要執行完整的測試套件並生成報告：
+本專案用 `uv` 管理自己的虛擬環境（Python 3.11），指令一律在本目錄下執行：
+```powershell
+cd linkedin-zip-challenge
+uv sync
+uv run pytest
+```
+若要執行完整的測試套件並生成帶時間戳的報告：
 ```powershell
 .\run_tests.bat
 ```
 測試結果和詳細日誌將會儲存在 `src/core/tests/reports/` 目錄下。
 
-### 開發日誌
-若要查看詳細的專案開發時程記錄，請參閱 [開發日誌](./dev_log.md)。
+### 開發文件
+- **[現況與下一步](./ai-collab/roadmap.md)** —— 目前進度、下一步、已定案的決策。從這裡開始。
+- **[專案指南](./ai-collab/project_guide.md)** —— 架構、模組職責、三種啟動方式。
+- **[開發日誌](./ai-collab/dev_log.md)** —— 詳細的專案開發時程記錄。

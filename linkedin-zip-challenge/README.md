@@ -28,6 +28,11 @@ The project structure has been organized to separate concerns between the core l
 
 ```
 linkedin-zip-challenge/
+├── ai-collab/              # Development docs (roadmap, architecture guide, dev log)
+│   ├── roadmap.md          # Current status and next steps — start here
+│   ├── project_guide.md    # Architecture, module responsibilities, how to run
+│   ├── dev_log.md          # Chronological development history
+│   └── commands.txt        # Common prompts / command cheatsheet
 ├── src/
 │   ├── app/                # FastAPI backend application
 │   │   ├── routers/        # API endpoint definitions
@@ -49,6 +54,7 @@ linkedin-zip-challenge/
 ├── docker-compose.yml      # Docker Compose file for PRODUCTION
 ├── docker-compose.dev.yml  # Docker Compose file for DEVELOPMENT
 ├── run_docker_dev.py       # Automation script for launching the dev environment
+├── .python-version         # Python 3.11 (pinned for `uv sync`)
 ├── pyproject.toml          # Project dependencies for `uv`
 └── README.md               # This file
 ```
@@ -170,12 +176,19 @@ The following areas are planned for future development and are currently not int
 ## Development
 
 ### Running Tests
-To run the entire test suite and generate a report:
+This project uses `uv` with its own virtual environment (Python 3.11). Always run commands from this directory:
 ```powershell
-.
-un_tests.bat
+cd linkedin-zip-challenge
+uv sync
+uv run pytest
+```
+To run the entire test suite and save a timestamped report:
+```powershell
+.\run_tests.bat
 ```
 Test results and detailed logs will be saved in the `src/core/tests/reports/` directory.
 
-### Development Log
-For a detailed, chronological history of the project, please see the [Development Log](./dev_log.md).
+### Development Docs
+- **[Roadmap](./ai-collab/roadmap.md)** — current status, next steps, and settled decisions. Start here.
+- **[Project Guide](./ai-collab/project_guide.md)** — architecture, module responsibilities, and how to run each environment.
+- **[Development Log](./ai-collab/dev_log.md)** — detailed, chronological history of the project.

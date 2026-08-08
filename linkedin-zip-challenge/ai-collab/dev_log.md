@@ -1,7 +1,85 @@
 # Development Log
 
+> Chronological development history of `linkedin-zip-challenge`, **newest first**.
+> For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
+> Add one entry per development session, dated `## YYYY-MM-DD`.
 
-# Development Log
+## 2026-08-08
+
+### AI Collaboration Scaffold and Environment Recovery
+
+The project had been dormant since 2025-10-30 (~9 months). This session rebuilt the collaboration
+documentation so that any agent (or future self) can pick the project up without re-deriving context,
+and verified that the toolchain still works.
+
+-   **New documentation structure** (mirroring the conventions already used by `board-game-rl` and
+    `deep-learning-karpathy` in this monorepo):
+    -   `AGENTS.md` — the single source of truth for how to work on this project: startup routine,
+        document ownership, five-step task workflow, environment/verification requirements, a
+        task→file map, code conventions, and hard limits.
+    -   `CLAUDE.md` — a one-line `@AGENTS.md` import, so opening Claude Code directly in this
+        directory loads the same rules.
+    -   `ai-collab/roadmap.md` — **the new first stop**: current status, prioritised next steps with
+        explicit done-criteria, and a "settled decisions, do not reopen" table distilled from the
+        660 lines of history in this file.
+    -   `ai-collab/project_guide.md` — architecture (the three-layer Core/App/UI split), module
+        responsibilities, the nine solvers, the API contract, and all three ways to run the app.
+    -   `ai-collab/commands.txt` — reusable prompts and a command cheatsheet.
+    -   `ai-collab/reports/` — directory for future task reports.
+
+-   **File moves and link updates**:
+    -   `dev_log.md` moved from the project root into `ai-collab/` via `git mv`, matching the other
+        two sub-projects. Links in `README.md`, `README_zh-TW.md` and `gemini_readme_raw.md` updated.
+    -   The duplicated `# Development Log` heading at the top of this file was removed.
+    -   `gemini_readme_raw.md` marked as a superseded historical artefact, pointing to `AGENTS.md`.
+
+-   **Environment determinism**:
+    -   Added `.python-version` pinning **3.11**, so `uv sync` no longer has to guess a version that
+        satisfies `requires-python = ">=3.11,<3.12"`.
+    -   Documented explicitly (here and in the repo-level `AGENTS.md`) that this project is
+        **deliberately kept out of the root `uv` workspace** — it pins `torch==2.4.1` with a cu121
+        index against Python 3.11, which conflicts with the repo-root 3.9 devtools environment.
+
+-   **Recovery verification** (the point of the exercise — the baseline is good):
+    -   `uv sync` → resolved 190 packages, audited 172, no changes required.
+    -   `uv run python -c "import sys; print(sys.version)"` → `3.11.13`.
+    -   `uv run pytest` → **46 passed in 8.10s**.
+    -   `uv run pre-commit run --all-files` → `ruff-format` and `ruff` both passed.
+
+-   **End-to-end verification against a live server** (started with the documented
+    `uv run python -m src.app.main`, not `TestClient`):
+    -   `GET /` → 200; `GET /api/echo/health` → `{"status": "ok"}`; `POST /api/echo/` → `Echo: zip`; `GET /docs` → 200.
+    -   `POST /api/solver/solve` for **DFS**, **A\* (heapq)** and **CP-SAT** against `puzzle_01`: all three
+        returned a 36-step path **identical cell-by-cell to `solution_01` in `conftest.py`**, plus a
+        ~74 KB animated GIF and a ~7.6 KB final PNG each (byte-identical across solvers, i.e. they
+        converge on the same solution). The rendered PNG was inspected: waypoints, walls and the green
+        step-order overlay all match the returned path (start `(1,1)` = step 1, `(0,0)` = step 5).
+    -   Error paths: malformed layout → 400; unknown solver → 404.
+    -   Chrome headless (`--dump-dom` + `--screenshot`) on `/ui`, `/svelte-ui` and `/docs`: the Gradio
+        console renders all four tabs, the Svelte editor hydrates and draws its 320×320 canvas grid,
+        and Swagger lists every endpoint.
+
+### Small Defects Found During Verification (recorded, not fixed)
+
+-   **Swagger shows the Echo endpoints twice.** `src/app/main.py` includes the router with
+    `tags=["Echo"]` while `src/app/routers/echo.py` already declares `tags=["echo"]`; FastAPI merges
+    both, producing two identical groups in `/docs`.
+-   **The Svelte "Instructions" panel prints raw Markdown** — `**middle**` and `**border**` render as
+    literal asterisks because that text is not passed through a Markdown renderer.
+-   **The 3-of-9 solver gap is confirmed on both front-ends**, not just the API: the compiled Svelte
+    bundle only contains the strings `DFS`, `A* (heapq)` and `CP-SAT`.
+
+-   **Documentation fix**: the "Running Tests" snippet in `README.md` rendered as a broken two-line
+    command (`.` followed by `un_tests.bat`) because the backslash-r was consumed; corrected to
+    `.\run_tests.bat` and preceded by the `uv sync` / `uv run pytest` workflow.
+
+### Known Gaps Recorded (not fixed in this session)
+
+-   `src/app/routers/solver.py` only exposes **3 of the 9 implemented solvers** (`DFS`, `A* (heapq)`,
+    `CP-SAT`). The six metaheuristic solvers are implemented and tested but unreachable from the API,
+    the Gradio dropdown, or the Svelte dropdown. This is now the top item in `roadmap.md`.
+-   `src/custom_components/puzzle_editor/frontend/Dockerfile` still exists, although the 2025-10-28
+    entry below records it as removed during the Docker overhaul.
 
 ## 2025-10-30
 

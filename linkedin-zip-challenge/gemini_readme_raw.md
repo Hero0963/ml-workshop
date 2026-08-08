@@ -1,3 +1,7 @@
+> ⚠ **歷史檔案（2025）**：這是本專案最早的 AI 協作提示語原稿，**已被 `AGENTS.md` 取代**。
+> 現行規範看 [`AGENTS.md`](./AGENTS.md)，現況看 [`ai-collab/roadmap.md`](./ai-collab/roadmap.md)。
+> 保留本檔只為考古（看規範是怎麼演進的），**不要照本檔的內容做事**。
+
 我現在是機器學習 + 後端 + 演算法工程師
 正在開發 linkedin 上的 zip 遊戲相關專案
 本專案使用 python 3.11, 用 uv 管理套件
@@ -29,7 +33,7 @@
 
 ----
 
-1. 請先閱讀本專案內的 dev_log.md file
+1. 請先閱讀本專案內的 ai-collab/dev_log.md file
 2. 請了解本專案用途 各 module 功能，並在必要時閱讀程式碼了解實作細節
 
 ----
