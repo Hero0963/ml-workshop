@@ -17,7 +17,7 @@ dependencies = [
     "pandas>=2.3.2",
     "pillow>=11.3.0",
     "pydantic>=2.11.10",
-    "pydantic-ai>=1.2.1",
+    "pydantic-ai-slim[openai]==1.107.5",
     "pydantic-settings>=2.11.0",
     "pytest>=8.4.2",
     "pytest-html>=4.1.1",
@@ -32,7 +32,7 @@ dependencies = [
     "torchaudio==2.4.1",
     "torchvision==0.19.1",
     "tqdm>=4.67.1",
-    "transformers>=4.57.1",
+    "transformers>=4.57.1,<5",
     "uvicorn[standard]>=0.37.0",
 ]
 
@@ -44,8 +44,27 @@ profile = "black"
 extra-index-url = ["https://download.pytorch.org/whl/cu121"]
 index-strategy = "unsafe-best-match"
 
+# The cu121 index is `explicit`: uv consults it only for the packages routed to it
+# below. Without that, every dependency is resolved against this index first (it is
+# declared before PyPI), and `uv add` / `uv lock` fail on anything the PyTorch index
+# happens to carry an old copy of -- `requests` pinned at 2.28.1 was the one that bit.
+# Note the `[tool.uv.pip]` block above does NOT help: it applies to `uv pip` only,
+# never to the project interface (`uv add`, `uv lock`, `uv sync`).
 [[tool.uv.index]]
+name = "pytorch-cu121"
 url = "https://download.pytorch.org/whl/cu121"
+explicit = true
 
 [[tool.uv.index]]
+name = "pypi"
 url = "https://pypi.org/simple"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+torchaudio = { index = "pytorch-cu121" }
+
+[dependency-groups]
+dev = [
+    "ruff==0.14.1",
+]
