@@ -205,7 +205,7 @@ uv run python -m src.core.vl_models.benchmark --model gemma4:e4b
 | `src/core/vl_models/prompt_variants.py` | **新增**。prompt 變體（`sized`），baseline 不動 |
 | `ai-collab/reports/2026-08-15_vl-p0-p1-baseline.html` | **新增**。完整報告 |
 | `ai-collab/reports/artifacts/` | **新增**。所有原始量測資料 |
-| `ai-collab/handover.md` | **新增**。本檔 |
+| `ai-collab/handover-vlm-parser.md` | **新增**。本檔（2026-08-15 由 `handover.md` 改名，因為 RL track 也有自己的交接文件） |
 | `ai-collab/roadmap.md`／`dev_log.md` | 更新 |
 | `pyproject.toml`／`uv.lock` | 相依修正，理由見 `build(zip)` commit |
 

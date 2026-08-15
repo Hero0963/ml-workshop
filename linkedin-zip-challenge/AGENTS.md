@@ -18,12 +18,14 @@
 ## 1. 每次上線的標準動作
 
 1. 看 SessionStart 簡報（分支／最近 commit／工作區狀態／下一步）。
-2. **接手進行中的 track（目前是 VLM）→ 先讀 [`ai-collab/handover.md`](ai-collab/handover.md)**，
-   那一份是自足的：環境建置、已驗證事實、下一步、陷阱清單、該讀哪些延伸文件都在裡面。
+2. **接手進行中的 track → 先讀該 track 的交接文件**，那一份是自足的：環境建置、已驗證事實、下一步、
+   陷阱清單、該讀哪些延伸文件都在裡面。目前有兩條並行的 track：
+   - VLM 圖片解析（roadmap 第 2 項）→ [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)
+   - RL solver（roadmap 第 3 項）→ [`ai-collab/handover-rl-solver.md`](ai-collab/handover-rl-solver.md)
 3. 讀 [`ai-collab/roadmap.md`](ai-collab/roadmap.md)——**現況、下一步、已定案不要再重開的決策**。
-3. 要動程式再讀 [`ai-collab/project_guide.md`](ai-collab/project_guide.md)（架構、模組職責、關鍵函式）。
-4. 需要歷史脈絡（某個設計為什麼長這樣）才翻 [`ai-collab/dev_log.md`](ai-collab/dev_log.md)——它是 600+ 行的完整檔案，不要整份讀，用關鍵字搜。
-5. 開工前給計畫（見 §3），確認後才動手。
+4. 要動程式再讀 [`ai-collab/project_guide.md`](ai-collab/project_guide.md)（架構、模組職責、關鍵函式）。
+5. 需要歷史脈絡（某個設計為什麼長這樣）才翻 [`ai-collab/dev_log.md`](ai-collab/dev_log.md)——它是 600+ 行的完整檔案，不要整份讀，用關鍵字搜。
+6. 開工前給計畫（見 §3），確認後才動手。
 
 > ⚠ **本專案自 2025-10-30 起休眠約 9 個月**。任何開發前**先跑 `uv sync` ＋ `uv run pytest` 建立基線**，
 > 不要假設環境還是好的，也不要把「環境漂移造成的失敗」誤判成程式壞掉。
@@ -34,6 +36,7 @@
 |------|------|
 | `AGENTS.md`（本檔） | 操作規範正本：流程、環境、驗證、任務地圖、紅線 |
 | `CLAUDE.md` | 只有一行 `@AGENTS.md` |
+| `ai-collab/handover-<track>.md` | **各 track 的交接文件**：接手該 track 的第一站，自足到讀完就能動手（現有 `handover-vlm-parser.md`、`handover-rl-solver.md`）。track 告一段落就更新 |
 | `ai-collab/roadmap.md` | **現況與下一步**。新 session 第一站；每次做完事要更新 |
 | `ai-collab/project_guide.md` | 架構、模組職責、資料流、啟動方式 |
 | `ai-collab/dev_log.md` | 開發日誌（逆時序，最新在上）。做完一段就加一則 |

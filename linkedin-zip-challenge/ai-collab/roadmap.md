@@ -80,8 +80,10 @@
      ＋ Gradio 上傳分頁；實驗腳本標明為 scratchpad。
 
 3. **RL 重啟前置研究** ← **★ VLM 之後接這個（可與 VLM 交錯進行：VLM 等 Colab 時本機推 RL）**
-   - 📋 **接手請直接讀計畫書：[plans/2026-08-15_track-rl-solver.md](plans/2026-08-15_track-rl-solver.md)**
-     （worktree 環境建置、A0–A5 分階段 done 條件、**A2 前要拍板的 torch 相依決策**）
+   - 🤝 **接手第一站：[handover-rl-solver.md](handover-rl-solver.md)**——自足的交接文件（環境建置、已驗證事實、
+     已定案決策、程式地圖、下一步 A2 的具體做法、陷阱清單）。讀完那一份就能動手。
+   - 📋 作戰計畫在 [plans/2026-08-15_track-rl-solver.md](plans/2026-08-15_track-rl-solver.md)
+     （分階段 done 條件、協作約定；**§4 有 2026-08-15 的 curriculum 修訂說明**）
    - **✅ Done 條件已達成（2026-08-15）**：[reports/2026-08-15_rl-restart-plan.html](reports/2026-08-15_rl-restart-plan.html)
      ——含路線 A（action masking ＋ MaskablePPO ＋ curriculum）與路線 B（GRPO/GSPO，用既有 solver 當 verifier）。
    - **✅ A0 環境健全性已完成（2026-08-15，分支 `feat/rl-masked-ppo`）**：
