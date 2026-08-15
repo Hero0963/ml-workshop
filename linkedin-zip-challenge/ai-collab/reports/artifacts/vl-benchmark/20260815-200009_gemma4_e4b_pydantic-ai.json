@@ -1,0 +1,89 @@
+{
+  "run": {
+    "model": "gemma4:e4b",
+    "seed": 20260815,
+    "temperature": 0.0,
+    "num_ctx": 8192,
+    "base_url": "http://127.0.0.1:11435",
+    "started_at": "2026-08-15T19:59:45+0800",
+    "prompt_characters": 2124,
+    "client": "pydantic-ai",
+    "think": null,
+    "images": [
+      {
+        "puzzle_id": "puzzle_01",
+        "path": "puzzle_01.png",
+        "size": [
+          998,
+          1062
+        ]
+      }
+    ],
+    "results": [
+      {
+        "puzzle_id": "puzzle_01",
+        "call": {
+          "model": "gemma4:e4b",
+          "image": "puzzle_01.png",
+          "wall_seconds": 24.07614169997396,
+          "client": "pydantic-ai",
+          "raw_output": "```json\n{\n  \"layout\": [\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"1\", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"  \", \"3\", \"  \", \"5\", \"2\"],\n    [\"  \", \"  \", \"  \", \"4\", \"  \", \"  \"],\n    [\"  \", \"  \", \"8\", \"6\", \"  \", \"7\"]\n  ],\n  \"walls\": [\n    {\"cell1\": [1, 1], \"cell2\": [2, 1]},\n    {\"cell1\": [2, 5], \"cell2\": [3, 5]},\n    {\"cell1\": [3, 5], \"cell2\": [4, 5]},\n    {\"cell1\": [2, 2], \"cell2\": [3, 2]},\n    {\"cell1\": [3, 2], \"cell2\": [4, 2]},\n    {\"cell1\": [3, 3], \"cell2\": [4, 3]},\n    {\"cell1\": [2, 4], \"cell2\": [3, 4]},\n    {\"cell1\": [3, 4], \"cell2\": [4, 4]},\n    {\"cell1\": [4, 5], \"cell2\": [5, 5]},\n    {\"cell1\": [5, 4], \"cell2\": [5, 5]}\n  ]\n}\n```",
+          "error": null,
+          "load_seconds": null,
+          "prompt_eval_count": 1223,
+          "eval_count": 2713,
+          "eval_seconds": null,
+          "gpu_baseline_mib": 7393,
+          "gpu_peak_mib": 7393,
+          "gpu_delta_mib": 0,
+          "thinking_characters": 0,
+          "ollama_ps": "NAME          ID              SIZE      PROCESSOR    CONTEXT    UNTIL              \ngemma4:e4b    c6eb396dbd59    3.4 GB    100% GPU     8192       4 minutes from now"
+        },
+        "json_parsed": true,
+        "layout": {
+          "shape_match": true,
+          "predicted_shape": [
+            6,
+            6
+          ],
+          "truth_shape": [
+            6,
+            6
+          ],
+          "cell_accuracy": 0.6388888888888888,
+          "waypoint_recall": 0.125,
+          "waypoint_total": 8
+        },
+        "walls": {
+          "predicted_count": 10,
+          "truth_count": 10,
+          "true_positives": 1,
+          "precision": 0.1,
+          "recall": 0.1,
+          "f1": 0.10000000000000002,
+          "non_adjacent_dropped": 0
+        },
+        "end_to_end": {
+          "attempted": true,
+          "solved": false,
+          "path_matches_truth": false,
+          "solve_seconds": 0.006569899967871606
+        }
+      }
+    ]
+  },
+  "summary": {
+    "model": "gemma4:e4b",
+    "client": "pydantic-ai",
+    "images": 1,
+    "json_parse_rate": 1.0,
+    "mean_latency_seconds": 24.07614169997396,
+    "max_latency_seconds": 24.07614169997396,
+    "peak_gpu_mib": 7393,
+    "mean_cell_accuracy": 0.6388888888888888,
+    "mean_waypoint_recall": 0.125,
+    "mean_wall_f1": 0.10000000000000002,
+    "end_to_end_solved": 0,
+    "end_to_end_matches_truth": 0
+  }
+}

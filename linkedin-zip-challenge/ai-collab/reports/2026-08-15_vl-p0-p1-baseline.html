@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VL 部署煙霧測試與 baseline 實測 — linkedin-zip-challenge</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1c1a; --muted:#5f5f58; --line:#e2e0d9;
+    --card:#ffffff; --accent:#8a5a00; --accent-soft:#fff6e3;
+    --good:#1f6b3a; --good-soft:#eaf6ee; --bad:#9b2c2c; --bad-soft:#fdeeee;
+    --code-bg:#f2f1ec; --mono:ui-monospace,"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#17171a; --fg:#e8e6e1; --muted:#a4a19a; --line:#33333a;
+      --card:#1f1f23; --accent:#e8b45c; --accent-soft:#2b2418;
+      --good:#7fd39b; --good-soft:#17281d; --bad:#f0908d; --bad-soft:#2b1a1a;
+      --code-bg:#26262b;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 1.2rem 5rem; background:var(--bg); color:var(--fg);
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px; line-height:1.85; letter-spacing:.01em;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  header{padding:3rem 0 1.5rem;border-bottom:2px solid var(--line);margin-bottom:2rem}
+  h1{font-size:1.9rem;line-height:1.35;margin:0 0 .6rem}
+  .sub{color:var(--muted);font-size:.95rem;margin:0}
+  h2{font-size:1.35rem;margin:3rem 0 .9rem;padding-top:.6rem;border-top:1px solid var(--line)}
+  h3{font-size:1.08rem;margin:2rem 0 .6rem}
+  p,li{font-size:1rem}
+  ul,ol{padding-left:1.4rem}
+  li{margin:.35rem 0}
+  code{font-family:var(--mono);background:var(--code-bg);padding:.12em .38em;border-radius:4px;font-size:.88em}
+  pre{background:var(--code-bg);padding:1rem 1.1rem;border-radius:8px;overflow-x:auto;font-size:.86rem;line-height:1.6}
+  pre code{background:none;padding:0}
+  table{border-collapse:collapse;width:100%;margin:1.2rem 0;font-size:.92rem}
+  .scroll{overflow-x:auto;margin:1.2rem 0}
+  .scroll table{margin:0;min-width:660px}
+  th,td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left;vertical-align:top}
+  th{background:var(--code-bg);font-weight:600}
+  .box{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--card);
+       padding:1rem 1.2rem;border-radius:6px;margin:1.4rem 0}
+  .box.rec{border-left-color:var(--good);background:var(--good-soft)}
+  .box.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+  .box.plain{border-left-color:var(--muted)}
+  .box p:first-child{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tag{display:inline-block;font-size:.75rem;padding:.1rem .5rem;border-radius:99px;
+       border:1px solid var(--line);background:var(--code-bg);color:var(--muted);margin-right:.35rem}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem 1.4rem}
+  .toc ol{margin:.4rem 0;padding-left:1.3rem}
+  .toc li{margin:.15rem 0;font-size:.94rem}
+  a{color:var(--accent);text-underline-offset:3px}
+  .src{font-size:.85rem;color:var(--muted)}
+  footer{margin-top:4rem;padding-top:1.2rem;border-top:1px solid var(--line);color:var(--muted);font-size:.86rem}
+  .pill-good{color:var(--good);font-weight:600}
+  .pill-bad{color:var(--bad);font-weight:600}
+  @media print{ body{font-size:11pt} .box{break-inside:avoid} h2{break-after:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>VL 部署煙霧測試與 baseline 實測<br><span style="font-size:1.1rem;color:var(--muted)">linkedin-zip-challenge · 計畫書 P0 ＋ P1</span></h1>
+  <p class="sub">
+    2026-08-15（Asia/Taipei）｜分支 <code>feat/vlm-parser</code>｜worktree <code>zip-vlm</code><br>
+    本機：<strong>RTX 4070 Ti SUPER 16376 MiB ＋ Windows 11</strong>｜Ollama 容器 <code>zip_ollama_server</code> <strong>0.32.13</strong>（本次由 0.16.1 更新）<br>
+    對應計畫書：<a href="../plans/2026-08-15_track-vlm-parser.md">plans/2026-08-15_track-vlm-parser.md</a>　選型理由：<a href="2026-08-15_vlm-model-survey.html">vlm-model-survey.html</a>
+  </p>
+</header>
+
+<div class="toc">
+  <strong>本報告回答什麼</strong>
+  <ol>
+    <li>P0：官方未微調模型在本機跑得起來嗎？VRAM／延遲／Q4 vs Q8 各是多少</li>
+    <li>P1：用現有 few-shot prompt，六張真實截圖的四層指標 baseline</li>
+    <li>失敗模式：為什麼失敗、哪些不用微調就能修</li>
+    <li>指標設計的兩個坑（我自己踩到的）</li>
+    <li>對後續 P2–P5 的影響與建議</li>
+    <li><strong>§9 模型世代全表與適配評估</strong>——Qwen3.5/3.6/3.7/3.8、Gemma 4、DiffusionGemma 的發布日、尺寸、能否本機跑、能否免費微調，附重驗方法</li>
+  </ol>
+</div>
+
+<h2 id="tldr">0. 結論先講</h2>
+
+<div class="box rec">
+  <p><strong>整條「拿官方模型 → 本機 GPU 推論 → 解析成 <code>Puzzle</code> → 餵 CP-SAT」的路是通的。</strong>
+  四種模型／量化組合全部 <strong>100% 載入 GPU、無 CPU offload</strong>，16GB 顯卡對 4B 級 Q8 綽綽有餘。</p>
+  <p><strong>但未微調的端到端正確率極低：六張圖只有 1 張完全正確</strong>（<code>qwen3.5:4b-q8_0</code> 對 <code>puzzle_03</code>），
+  <code>gemma4:e4b</code> 是 <strong>0/6</strong>。P2–P4 的合成資料與微調有明確必要性。</p>
+</div>
+
+<div class="box warn">
+  <p><strong>唯一的共同瓶頸是「牆」，不是「認字」。</strong>
+  最佳設定（<code>qwen3.5:4b-q8_0</code> ＋ 關閉思考，見 §3.3）在六張圖上
+  <strong>JSON 6/6、格盤尺寸 6/6 全對、逐格 0.924、號碼 0.910</strong>——格盤與數字幾乎讀滿分，
+  <strong>牆 F1 卻只有 0.410</strong>（<code>puzzle_01</code> 10 道中 2 道、<code>puzzle_04</code> 14 道中 1 道）。
+  計畫書把「牆召回率低」列為風險第 2 名，實測直接坐實，而且它<strong>幾乎是唯一</strong>擋住端到端的東西。</p>
+</div>
+
+<div class="box rec">
+  <p><strong>兩個零訓練成本的介入就把成績推上去了</strong>——關閉思考（§3.3）與加入格盤尺寸指示＋7×7 範例（§3.4）。
+  <code>qwen3.5:4b-q8_0</code> 的 JSON 解析率 3/6 → <strong>6/6</strong>、逐格 → <strong>0.961</strong>、
+  端到端相符 → <strong>2/6</strong>、延遲 44.5s → <strong>5.4s</strong>。</p>
+  <p><strong>但同樣這兩個介入都讓 <code>gemma4:e4b</code> 變差。</strong>
+  在投入任何訓練成本前，這類設定必須<strong>逐模型實測，不可跨模型沿用</strong>；
+  而「對介入的穩定度」本身就是選型訊號（見 §9.2）。</p>
+  <p><strong>目前最佳未微調設定 ＝ <code>qwen3.5:4b-q8_0</code> ＋ 關閉思考 ＋ <code>--prompt sized</code>。</strong>
+  這就是微調必須超越的門檻。</p>
+</div>
+
+<h2 id="method">1. 方法與可複現性</h2>
+
+<p>新增量測工具 <code>src/core/vl_models/benchmark.py</code>。few-shot prompt <strong>直接 import 既有的</strong>
+<code>final_puzzle_parser.build_puzzle_prompt()</code>，不另抄一份——baseline 必須量到現存的那個 prompt，不能量一個會漂移的複本。</p>
+
+<table>
+<tr><th>設定</th><th>值</th></tr>
+<tr><td>ground truth</td><td><code>src/core/tests/conftest.py</code> 的 <code>puzzles_to_test</code>（6 題，含人工驗證過的解答）</td></tr>
+<tr><td>輸入影像</td><td><code>illustrations/puzzle_01..06.png</code>（793×803 – 998×1062）</td></tr>
+<tr><td>seed / temperature / num_ctx</td><td><code>20260815</code> / <code>0.0</code> / <code>8192</code></td></tr>
+<tr><td>傳輸層</td><td><code>--client native</code>（Ollama <code>/api/chat</code>）與 <code>--client pydantic-ai</code>（OpenAI 相容端點）兩種</td></tr>
+<tr><td>GPU 量測</td><td>請求期間以 0.25s 間隔輪詢 <code>nvidia-smi</code> 取峰值，並記錄請求前的 idle 基準</td></tr>
+<tr><td>落盤</td><td><code>ai-collab/reports/artifacts/</code>（每次呼叫一筆 JSON，含原始輸出、seed、token 數、GPU 取樣）</td></tr>
+</table>
+
+<h3>四層指標</h3>
+<ol>
+  <li><strong>JSON 可解析率</strong>——能否抽出並通過 <code>SimplePuzzleOutput</code> 驗證</li>
+  <li><strong>結構準確度</strong>——逐格準確率、<strong>號碼格召回率</strong>（單獨列，因為號碼是少數，全空盤也能拿高逐格分）、牆 precision／recall／F1</li>
+  <li><strong>端到端</strong>——預測結果餵 CP-SAT，記錄「解得出來」與「路徑與 ground truth 逐格相符」兩個不同的欄位</li>
+  <li><strong>成本</strong>——牆鐘延遲、Ollama 自報的 load／eval 拆分、token 數、GPU 峰值</li>
+</ol>
+
+<div class="box plain">
+  <p><strong>評分邏輯自檢過才用</strong>：把六題的 ground truth 當成「完美預測」餵回評分函式，確認逐格 1.000／牆 F1 1.000／端到端路徑逐格相符；
+  另加形狀不符、全漏牆、無牆題、部分命中、儲存格拼寫變體（<code>"1"</code>／<code>" 7 "</code>／<code>"XX"</code>）、不可解預測、超大盤拒絕共 8 組邊界案例，全數通過。
+  <strong>沒有這一步，下面的表格都不可信。</strong></p>
+</div>
+
+<h2 id="p0">2. P0 — 部署煙霧測試</h2>
+
+<p>四種組合各跑 <code>puzzle_01</code> 兩次（冷啟動／暖機），每次前先 <code>ollama stop</code> 全部模型以取得乾淨的 VRAM 基準。</p>
+
+<div class="scroll">
+<table>
+<tr><th>模型</th><th>量化</th><th>冷啟動</th><th>暖機</th><th>GPU 峰值</th><th>相對 idle 增量</th><th><code>ollama ps</code></th><th>JSON</th><th>逐格</th><th>號碼</th><th>牆 F1</th></tr>
+<tr>
+  <td><code>gemma4:e4b</code></td><td>Q4_K_M</td><td>31.8s</td><td><strong>19.9s</strong></td><td>7402 MiB</td><td>4707 MiB</td><td>3.4 GB · 100% GPU</td>
+  <td class="pill-good">✅</td><td>0.639 / 0.667</td><td>1/8</td><td>0.273 / 0.105</td>
+</tr>
+<tr>
+  <td><code>gemma4:e4b-it-q8_0</code></td><td>Q8_0</td><td>39.9s</td><td>43.5s</td><td>9582 MiB</td><td>6601 MiB</td><td>5.3 GB · 100% GPU</td>
+  <td class="pill-good">✅</td><td class="pill-bad">0.000</td><td>0/8</td><td>0.118 / 0.240</td>
+</tr>
+<tr>
+  <td><code>qwen3.5:4b</code></td><td>Q4_K_M</td><td>52.6s</td><td>47.8s</td><td>7029 MiB</td><td>4566 MiB</td><td>3.3 GB · 100% GPU</td>
+  <td class="pill-bad">✗ 完全失敗</td><td>—</td><td>—</td><td>—</td>
+</tr>
+<tr>
+  <td><code>qwen3.5:4b-q8_0</code></td><td>Q8_0</td><td>11.2s</td><td class="pill-good"><strong>6.2s</strong></td><td>8489 MiB</td><td>5995 MiB</td><td>5.2 GB · 100% GPU</td>
+  <td class="pill-good">✅</td><td class="pill-good">1.000</td><td class="pill-good">8/8</td><td>0.111</td>
+</tr>
+</table>
+</div>
+
+<p class="src">逐格／牆 F1 給兩個值者代表冷、暖兩次結果不同（見 §5.2 決定性）。首次真正冷載（磁碟未快取）<code>gemma4:e4b</code> 的 <code>load_duration</code> 為 <strong>36.1s</strong>，其後（頁快取命中）降到 12.9s。</p>
+
+<h3>2.1 Q4 vs Q8：差異是災難級的，而且兩個家族方向相反</h3>
+
+<div class="box warn">
+  <p><strong><code>qwen3.5:4b</code> 的 Q4 完全不可用。</strong>它思考了 16,505 字元、燒掉 6,215 個 output token 直到預算用盡，
+  <strong>從頭到尾沒有吐出任何 JSON</strong>，冷暖兩次皆然。換成 Q8 之後只用 530 token、6.2 秒，版面逐格全對、8 個號碼全對。
+  <strong>同一個模型、同一張圖、只差量化，結果是「完全失敗」與「版面滿分」。</strong></p>
+  <p><strong><code>gemma4:e4b</code> 反而是 Q8 更差。</strong>Q4 讀對了 6×6，Q8 讀成 <strong>7×6</strong>（多一列），冷暖兩次一致，不是抖動。</p>
+</div>
+
+<p>實務結論：<strong>不能假設「量化越高越好」，也不能跨家族沿用同一個量化選擇</strong>。這個對照本身就值回 P0 的成本。</p>
+
+<h3>2.2 已排除的風險</h3>
+<ul>
+  <li><strong>16GB 顯卡跑 4B 級 Q8 不是瓶頸</strong>：最吃的 <code>gemma4:e4b-it-q8_0</code> 峰值 9582 MiB，四組全部 <code>100% GPU</code>，無 CPU offload。</li>
+  <li><strong>容器內 Ollama 版本</strong>：0.16.1 確實跑不動 2026 年的模型，<code>docker compose pull ollama</code> 後為 <strong>0.32.13</strong>，
+      15GB 舊模型（<code>openbmb/minicpm-o2.6</code> 等）因 volume 已 pin 而完整存活。</li>
+  <li><strong><code>ollama ps</code> 與 <code>nvidia-smi</code> 對不上</strong>：<code>gemma4:e4b</code> 磁碟 9.6GB、<code>ps</code> 報 3.4GB、實際增量 4707 MiB。
+      這與 Gemma 4 E4B 的 nested／effective-params 設計方向一致，但<strong>機制未經一手來源確認，僅列為觀察值</strong>。容量規劃請用 <code>nvidia-smi</code> 增量，不要用 <code>ps</code> 的 SIZE。</li>
+</ul>
+
+<h2 id="p1">3. P1 — 六張圖的 baseline</h2>
+
+<h3>3.1 <code>gemma4:e4b</code>（Q4_K_M，預設開啟思考）</h3>
+
+<div class="scroll">
+<table>
+<tr><th>題目</th><th>JSON</th><th>預測尺寸 vs 實際</th><th>逐格</th><th>號碼</th><th>牆 F1（命中/實際）</th><th>解得出</th><th>路徑相符</th><th>延遲</th></tr>
+<tr><td>puzzle_01</td><td>✅</td><td>6×6 = 6×6</td><td>0.639</td><td>1/8</td><td>0.273（3/10）</td><td>✗</td><td>✗</td><td>33.1s</td></tr>
+<tr><td>puzzle_02</td><td>✅</td><td>6×6 = 6×6</td><td>0.583</td><td>0/12</td><td>—（無牆題）</td><td>✅</td><td>✗</td><td>31.5s</td></tr>
+<tr><td>puzzle_03</td><td>✅</td><td>6×6 = 6×6</td><td class="pill-good">1.000</td><td class="pill-good">12/12</td><td>0.800（4/4）</td><td class="pill-bad">✗</td><td>✗</td><td>13.7s</td></tr>
+<tr><td>puzzle_04</td><td>✅</td><td class="pill-bad">6×6 ≠ 7×7</td><td>0.000</td><td>0/12</td><td>0.000（0/14）</td><td>✗</td><td>✗</td><td>34.4s</td></tr>
+<tr><td>puzzle_05</td><td>✅</td><td>6×6 = 6×6</td><td>0.444</td><td>1/12</td><td>0.000（0/4）</td><td>✅</td><td>✗</td><td>18.9s</td></tr>
+<tr><td>puzzle_06</td><td>✅</td><td class="pill-bad">6×6 ≠ 7×7</td><td>0.000</td><td>0/21</td><td>—（無牆題）</td><td>✗</td><td>✗</td><td>17.4s</td></tr>
+<tr><th>合計</th><th>6/6</th><th>形狀對 4/6</th><th>平均 0.444</th><th>平均 0.201</th><th>有牆題平均 <strong>0.268</strong></th><th>2/6</th><th class="pill-bad">0/6</th><th>平均 24.8s</th></tr>
+</table>
+</div>
+
+<p><strong>兩個具體且可修的失敗模式：</strong></p>
+<ul>
+  <li><strong>格盤尺寸偏誤</strong>：<code>puzzle_04</code> 與 <code>puzzle_06</code> 實際是 7×7，模型硬讀成 6×6。不是讀錯個別格子，是整個尺寸判斷失準——
+      而 few-shot prompt 裡三個範例<strong>全部是 6×6</strong>，模型很可能是被範例帶偏的。這正是 P2 增強（5×5–8×8）要打的東西。</li>
+  <li><strong>牆的偽陽性和偽陰性一樣致命</strong>：<code>puzzle_03</code> 版面滿分、4 道真牆全中，<strong>卻仍解不出來</strong>——因為它多幻覺了 2 道不存在的牆（precision 0.667）。
+      評估牆時<strong>不能只看 recall</strong>。</li>
+</ul>
+
+<h3>3.2 <code>qwen3.5:4b-q8_0</code>（Q8_0，預設開啟思考）</h3>
+
+<div class="scroll">
+<table>
+<tr><th>題目</th><th>JSON</th><th>逐格</th><th>號碼</th><th>牆 F1（命中/實際）</th><th>解得出</th><th>路徑相符</th><th>延遲</th><th>output token</th><th>思考字元</th></tr>
+<tr><td>puzzle_01</td><td>✅</td><td class="pill-good">1.000</td><td class="pill-good">8/8</td><td>0.111（1/10）</td><td>✅</td><td>✗</td><td>10.8s</td><td>530</td><td>886</td></tr>
+<tr><td>puzzle_02</td><td class="pill-bad">✗</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>68.3s</td><td class="pill-bad">6248</td><td class="pill-bad">25814</td></tr>
+<tr><td>puzzle_03</td><td>✅</td><td class="pill-good">1.000</td><td class="pill-good">12/12</td><td class="pill-good">1.000（4/4）</td><td>✅</td><td class="pill-good">✅</td><td>6.0s</td><td>479</td><td>1018</td></tr>
+<tr><td>puzzle_04</td><td class="pill-bad">✗</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>69.4s</td><td class="pill-bad">6310</td><td class="pill-bad">20290</td></tr>
+<tr><td>puzzle_05</td><td>✅</td><td class="pill-good">1.000</td><td class="pill-good">12/12</td><td>0.000（0/4）</td><td>✅</td><td>✗</td><td>40.6s</td><td>3691</td><td>9409</td></tr>
+<tr><td>puzzle_06</td><td class="pill-bad">✗</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>72.2s</td><td class="pill-bad">6613</td><td class="pill-bad">24609</td></tr>
+<tr><th>合計</th><th class="pill-bad">3/6</th><th>解析成功者 <strong>1.000</strong></th><th>解析成功者 <strong>100%</strong></th><th>平均 0.370</th><th>3/6</th><th><strong>1/6</strong></th><th>平均 44.5s</th><th></th><th></th></tr>
+</table>
+</div>
+
+<div class="box">
+  <p><strong>它的失敗不是「看不懂」，是「話太多講不完」。</strong>三次失敗的 thinking 都在 20,000–26,000 字元、output token 撞到 6,200–6,600 的天花板，
+  根本沒輪到吐 JSON。而成功的三次思考只有 886–9,409 字元。</p>
+  <p>更值得注意：失敗的 <code>puzzle_04</code>／<code>puzzle_06</code> 正是兩張 7×7 大盤，<code>puzzle_02</code> 則是 12 個號碼的密集盤——<strong>盤面越複雜、思考越長、越容易撞頂</strong>。
+  這是<strong>推論設定問題，不是模型能力問題</strong>，理論上不必微調就能修（見 §4）。</p>
+</div>
+
+<h3 id="nothink">3.3 消融：關閉思考（<code>think: false</code>）</h3>
+
+<p>§3.2 顯示 qwen 的失敗是思考撞頂，於是把兩個模型都用 <code>--no-think</code> 重跑六張圖。<strong>這是零訓練成本的推論設定改動。</strong></p>
+
+<div class="scroll">
+<table>
+<tr><th>設定</th><th>JSON</th><th>尺寸對</th><th>逐格</th><th>號碼</th><th>牆 F1（有牆題）</th><th>解得出</th><th>路徑相符</th><th>平均延遲</th></tr>
+<tr><td><code>qwen3.5:4b-q8_0</code> 預設思考</td><td>3/6</td><td>3/3 <span class="src">（僅解析成功者）</span></td><td>1.000 <span class="src">（僅解析成功者）</span></td><td>1.000 <span class="src">（同上）</span></td><td>0.370</td><td>3/6</td><td>1/6</td><td>44.5s</td></tr>
+<tr style="background:var(--good-soft)">
+  <td><strong><code>qwen3.5:4b-q8_0</code> 關閉思考</strong></td>
+  <td class="pill-good"><strong>6/6</strong></td><td class="pill-good"><strong>6/6</strong></td><td class="pill-good"><strong>0.924</strong></td><td class="pill-good"><strong>0.910</strong></td>
+  <td><strong>0.410</strong></td><td>3/6</td><td>1/6</td><td class="pill-good"><strong>7.7s</strong></td>
+</tr>
+<tr><td><code>gemma4:e4b</code> 預設思考</td><td>6/6</td><td>4/6</td><td>0.444</td><td>0.201</td><td>0.268</td><td>2/6</td><td>0/6</td><td>24.8s</td></tr>
+<tr><td><code>gemma4:e4b</code> 關閉思考</td><td>6/6</td><td class="pill-bad">3/6</td><td class="pill-bad">0.389</td><td>0.222</td><td class="pill-bad">0.127</td><td>1/6</td><td>0/6</td><td>5.0s</td></tr>
+</table>
+</div>
+
+<div class="box rec">
+  <p><strong>關閉思考讓 <code>qwen3.5:4b-q8_0</code> 全面翻盤</strong>：JSON 解析率 3/6 → <strong>6/6</strong>、
+  格盤尺寸 <strong>6/6 全對（含兩張先前完全答不出來的 7×7）</strong>、延遲快 <strong>5.8 倍</strong>、
+  output token 由約 6,000 降到 236–562。<strong>先前讀不出 7×7 不是看不懂，是思考爆掉沒機會作答。</strong></p>
+  <p><strong>而 <code>gemma4:e4b</code> 方向相反——關掉思考全面變差</strong>（尺寸 4/6 → 3/6、逐格 0.444 → 0.389、牆 F1 0.268 → 0.127）。
+  <strong>思考對 gemma4 是有用的，對 qwen 是有害的</strong>；這個開關必須逐模型實測，不能沿用。</p>
+</div>
+
+<p><strong>但端到端仍卡在 1/6。</strong>最佳設定（<code>qwen3.5:4b-q8_0</code> ＋ 關閉思考）的版面已接近可用
+（逐格 0.924、號碼 0.910、尺寸全對），<strong>牆 F1 卻只有 0.410</strong>——
+<code>puzzle_01</code> 10 道中 2 道、<code>puzzle_04</code> 14 道中 1 道。
+這把本報告的主結論收得更緊：<strong>剩下的問題幾乎純粹是牆</strong>。</p>
+
+<h3 id="sized-prompt">3.4 消融：加入格盤尺寸指示與 7×7 範例（<code>--prompt sized</code>）</h3>
+
+<p>§3.1 顯示兩個模型都把 7×7 讀成 6×6，而 baseline prompt 的三個範例<strong>全部是 6×6</strong>。
+於是做第二個零訓練成本的介入：加一句「先數列數與行數，格盤常見 5×5／7×7／8×8」，並補一個 <strong>7×7 範例</strong>。
+該範例是<strong>合成的</strong>（出題器 <code>seed=20260815</code>，CP-SAT 驗過可解），
+<strong>刻意不用 <code>puzzle_04</code>／<code>puzzle_06</code>——它們是評估集，放進 prompt 就是洩題</strong>。</p>
+
+<div class="scroll">
+<table>
+<tr><th>模型／設定</th><th>prompt</th><th>JSON</th><th>尺寸對</th><th>逐格</th><th>號碼</th><th>牆 F1（有牆題）</th><th>端到端相符</th><th>平均延遲</th></tr>
+<tr><td rowspan="2"><code>qwen3.5:4b-q8_0</code><br>（關閉思考）</td><td>baseline</td><td>6/6</td><td>6/6</td><td>0.924</td><td>0.910</td><td>0.410</td><td>1/6</td><td>7.7s</td></tr>
+<tr style="background:var(--good-soft)"><td><strong>sized</strong></td><td>6/6</td><td>6/6</td><td class="pill-good"><strong>0.961</strong></td><td>0.917</td><td class="pill-good"><strong>0.438</strong></td><td class="pill-good"><strong>2/6</strong></td><td class="pill-good"><strong>5.4s</strong></td></tr>
+<tr><td rowspan="2"><code>gemma4:e4b</code><br>（預設思考）</td><td>baseline</td><td>6/6</td><td>4/6</td><td>0.444</td><td>0.201</td><td>0.268</td><td>0/6</td><td>24.8s</td></tr>
+<tr><td><strong>sized</strong></td><td>6/6</td><td class="pill-bad">3/6</td><td class="pill-bad">0.315</td><td>0.194</td><td class="pill-bad">0.023</td><td>0/6</td><td>18.8s</td></tr>
+</table>
+</div>
+
+<div class="box rec">
+  <p><strong>對 <code>qwen3.5:4b-q8_0</code> 是全面改善</strong>：逐格 0.924 → <strong>0.961</strong>、牆 F1 0.410 → <strong>0.438</strong>、
+  端到端相符 1/6 → <strong>2/6</strong>，而且還<strong>更快</strong>（7.7s → 5.4s）。零訓練成本。</p>
+  <p><strong>但要看是哪一題變對的。</strong><code>puzzle_01</code>–<code>03</code> 的答案本來就寫在 few-shot prompt 裡（洩題）。
+  原本唯一答對的 <code>puzzle_03</code> 屬於洩題；新增答對的是 <strong><code>puzzle_05</code>，它不在 prompt 裡</strong>。
+  所以<strong>真正具泛化意義的答對數是 0 → 1</strong>，這比表面的 1 → 2 更值得記。</p>
+</div>
+
+<div class="box warn">
+  <p><strong>同一個 prompt 讓 <code>gemma4:e4b</code> 全面變差</strong>：尺寸 4/6 → 3/6、逐格 0.444 → 0.315、牆 F1 0.268 → <strong>0.023</strong>。
+  失敗方式很有說明力——被告知「格盤常常不是 6×6」之後，它把真正是 6×6 的 <code>puzzle_01</code> <strong>過度矯正讀成 7×7</strong>。</p>
+  <p><strong>合起來看，這已經是第二次同方向的證據</strong>：關閉思考（§3.3）與加入尺寸指示（本節）
+  <strong>兩次介入都是幫 qwen、害 gemma</strong>。<code>gemma4:e4b</code> 對 prompt 擾動不穩定，
+  <code>qwen3.5:4b-q8_0</code> 則能正確吸收指令。這一點直接影響 §9.2 的微調順序建議。</p>
+</div>
+
+<h2 id="pitfalls">4. 兩個指標設計的坑（我自己踩到的）</h2>
+
+<h3>4.1 無牆題會把牆 F1 灌水</h3>
+<p><code>puzzle_02</code> 與 <code>puzzle_06</code> 本來就沒有牆，模型預測 0 道就自動拿到 F1 = 1.0。
+這讓 <code>gemma4:e4b</code> 的牆 F1 平均從真實的 <strong>0.268</strong> 被抬到 <strong>0.512</strong>，幾乎翻倍。
+已在工具中加入 <code>mean_wall_f1_walled_only</code> 與 <code>walled_puzzles</code> 欄位。<strong>之後比較微調成效請看有牆子集，不要看總平均。</strong></p>
+
+<h3>4.2 <code>seed</code> ＋ <code>temperature=0</code> 不保證決定性</h3>
+<p>我一度根據兩次相同結果就宣稱設定是決定性的，<strong>跑滿八次後不成立</strong>：
+<code>gemma4:e4b</code> Q4 冷、暖兩次給出不同答案（逐格 0.639 vs 0.667、牆 12 道 vs 9 道）；
+<code>qwen3.5:4b-q8_0</code> 與 <code>gemma4</code> Q8 則完全穩定。
+<strong>決定性是模型相依的，不是設定保證的</strong>——後續所有對照都要多次重複取平均，不能用單次結果下結論。</p>
+
+<h2 id="transport">5. 傳輸層對照：native vs pydantic-ai</h2>
+
+<p>同一模型、同一張圖、同一 seed，兩條傳輸路徑：</p>
+
+<table>
+<tr><th>傳輸層</th><th>逐格</th><th>號碼</th><th>牆 F1</th><th>thinking 欄位</th><th>可取得的計量</th></tr>
+<tr><td>Ollama 原生 <code>/api/chat</code></td><td>0.639</td><td>1/8</td><td>0.273</td><td>4523 字元（獨立欄位）</td><td>load／eval 拆分、token 數、<code>think</code> 開關、<code>num_ctx</code></td></tr>
+<tr><td><code>pydantic-ai</code> <code>OllamaModel</code></td><td>0.639</td><td>1/8</td><td>0.100</td><td>0</td><td>僅 input／output token</td></tr>
+</table>
+
+<p><strong>版面預測完全一致、牆不一致</strong>——結合 §4.2，這是模型對牆本身不穩定，而非傳輸層差異。
+量測用 native（計量完整），P5 出貨走 <code>pydantic-ai</code>（既有決策的路線），兩者結論一致。</p>
+
+<h2 id="impact">6. 對計畫的影響</h2>
+
+<table>
+<tr><th>計畫書原本的假設</th><th>實測後</th></tr>
+<tr><td>P0 要確認「模型看得懂圖」</td><td class="pill-good">✅ 達成，且超出預期——<code>qwen3.5:4b-q8_0</code> 的版面辨識已達 100%</td></tr>
+<tr><td>風險 #2「牆的召回率低」</td><td class="pill-bad">✅ 坐實，而且是<strong>唯一</strong>擋住端到端的因素；還要再加一條「牆的偽陽性同樣致命」</td></tr>
+<tr><td>風險 #5「本機 16GB 偏緊」</td><td class="pill-good">推論端已排除（4B 級 Q8 峰值 9.6GB）。訓練端未驗</td></tr>
+<tr><td>出題器牆數分布 2–5 與真實不符</td><td>✅ ground truth 實際為 0／0／4／4／10／14，確認要改成 0–16</td></tr>
+<tr><td>合成資料尺寸 5×5–8×8</td><td>✅ 更必要了——few-shot 三個範例全是 6×6，模型對 7×7 直接讀錯尺寸</td></tr>
+</table>
+
+<h2 id="next">7. 建議的下一步</h2>
+
+<ol>
+  <li class="pill-good"><strong>已完成：關閉思考的消融</strong>（§3.3）。<code>qwen3.5:4b-q8_0</code> JSON 3/6 → 6/6、尺寸 6/6、延遲快 5.8 倍；
+      <code>gemma4:e4b</code> 反而變差。<strong>此開關要逐模型設定，不可共用。</strong></li>
+  <li><strong>P2 的重心要從「全面模仿」收斂到「把牆畫對」</strong>。這是本報告最重要的方向修正：
+      版面與數字辨識在未微調狀態下已接近可用（逐格 0.924、號碼 0.910），
+      合成資料與微調的投資報酬幾乎<strong>全部集中在牆</strong>——牆的粗細、位置（壓在格線上）、與格線的對比、
+      以及 0–16 的數量分布，都要比其他增強優先。</li>
+  <li><strong>評估牆要同時盯 precision 與 recall</strong>。<code>gemma4</code> 在 <code>puzzle_03</code> 真牆 4/4 全中卻仍解不出來，
+      就是多幻覺了 2 道。只看 recall 會誤判成「快好了」。</li>
+  <li class="pill-good"><strong>已完成：加入格盤尺寸指示與 7×7 範例</strong>（§3.4）。
+      <code>qwen3.5:4b-q8_0</code> 逐格 0.924 → 0.961、牆 F1 0.410 → 0.438、端到端相符 1/6 → 2/6、延遲 7.7s → 5.4s；
+      <code>gemma4:e4b</code> 再次變差（過度矯正，把 6×6 讀成 7×7）。
+      <strong>目前最佳未微調設定 ＝ <code>qwen3.5:4b-q8_0</code> ＋ 關閉思考 ＋ sized prompt</strong>，這就是微調要超越的門檻。</li>
+  <li><strong>微調首選仍是 Gemma 4 E4B</strong>（免費 T4 唯一走得通的 QLoRA 路徑，官方 <code>Gemma4_(E4B)-Vision.ipynb</code>），
+      但請把<strong>未微調的「<code>qwen3.5:4b-q8_0</code> ＋ 關閉思考」留在評估表當門檻</strong>：
+      微調後若贏不過它，代表該換家族，而不是加訓練量。
+      <span class="src">注意這個門檻比原本想的高得多——它已經拿下尺寸 6/6、逐格 0.924。</span></li>
+</ol>
+
+<h2 id="limits">8. 未驗證與限制</h2>
+
+<ul>
+  <li><strong>每個設定只跑 1–2 次</strong>。已知 <code>gemma4:e4b</code> 不決定性，因此其單題數字有抖動，不應被當成精確值。</li>
+  <li><strong>P1 的 GPU 峰值不可用</strong>：P1 連續跑兩個模型時前一個仍常駐，峰值被污染（13,483 MiB）。VRAM 請只採用 §2 的 P0 數字。</li>
+  <li><strong>只有 6 張真實截圖</strong>，且它們同時是 few-shot 範例的來源（<code>puzzle_01</code>–<code>03</code> 的答案就寫在 prompt 裡）。
+      <strong><code>puzzle_01</code> 與 <code>puzzle_03</code> 的成績有洩題成分，不能當泛化證據。</strong>這使 P3 的真實驗證集更重要。</li>
+  <li><code>ollama ps</code> 的 SIZE 與實際 VRAM 增量不符的機制未經一手來源確認。</li>
+  <li>llama.cpp 對 DiffusionGemma 的支援狀態僅有二手來源，未驗。</li>
+</ul>
+
+<h2 id="freshness">9. 模型世代全表與適配評估 <span class="src">（一手查證日：2026-08-15）</span></h2>
+
+<div class="box warn">
+  <p><strong>給接手的 agent／developer：這一節是本報告最快過期的部分。</strong>
+  <code>AGENTS.md</code> 的 survey 保鮮紀律講得很直白——版本號是知識庫裡最先過期的資訊。
+  本節每一格都標了來源與查證日；<strong>超過本查證日一個月就請照 §9.3 的方法重跑一次，不要沿用</strong>。
+  實例：前一份 survey 寫「Qwen3.8 權重尚未上架」，該權重在它寫完後的<strong>一天內</strong>就上架了。</p>
+</div>
+
+<h3>9.1 全表</h3>
+
+<div class="scroll">
+<table>
+<tr>
+  <th>家族／世代</th><th>發布日</th><th>開放權重</th><th>尺寸</th>
+  <th>影像輸入</th><th>Ollama library</th><th>本機 16GB 推論</th><th>免費 T4 微調</th><th>適合我們？</th>
+</tr>
+<tr style="background:var(--good-soft)">
+  <td><strong>Gemma 4</strong></td>
+  <td><strong>2026-03-31</strong><br><span class="src">MTP 04-16；12B 06-03</span></td>
+  <td>✅ Apache-2.0</td>
+  <td><strong>E2B / E4B</strong> / 12B / 26B-A4B / 31B</td>
+  <td class="pill-good">✅ 全系列</td>
+  <td class="pill-good">✅</td>
+  <td class="pill-good">✅ E4B Q4 <strong>3.4GB</strong>／Q8 <strong>5.3GB</strong>（實測）</td>
+  <td class="pill-good">✅ <strong>E4B QLoRA 10GB</strong></td>
+  <td class="pill-good"><strong>★ 微調主力</strong></td>
+</tr>
+<tr style="background:var(--accent-soft)">
+  <td><strong>Qwen3.5</strong></td>
+  <td>2026-02 <span class="src">（僅到月）</span></td>
+  <td>✅ Apache-2.0</td>
+  <td><strong>0.8B / 2B / 4B / 9B</strong> / 27B / 35B-A3B / 122B-A10B / 397B-A17B</td>
+  <td class="pill-good">✅</td>
+  <td class="pill-good">✅ 全系列</td>
+  <td class="pill-good">✅ 4B Q8 <strong>5.2GB</strong>（實測）</td>
+  <td class="pill-bad">✗ T4 無 bf16，Unsloth 不建議其 QLoRA → 需 L4／A100</td>
+  <td><strong>對照組／未微調門檻</strong></td>
+</tr>
+<tr>
+  <td>Qwen3.6</td>
+  <td>2026-04 <span class="src">（HF repo 更新 Apr 24；未見官方公告日）</span> <span class="tag">部分未驗</span></td>
+  <td>✅</td>
+  <td class="pill-bad">27B / 35B-A3B（<strong>最小 27B</strong>）</td>
+  <td>✅</td><td>✅</td>
+  <td class="pill-bad">✗ 27B Q4 約 17GB &gt; 16GB</td>
+  <td class="pill-bad">✗</td>
+  <td class="pill-bad">✗ 沒有跑得動的尺寸</td>
+</tr>
+<tr>
+  <td>Qwen3.7</td>
+  <td>— </td>
+  <td class="pill-bad">✗ 找不到開放權重</td>
+  <td>—</td><td>—</td>
+  <td class="pill-bad">✗ 404</td>
+  <td>—</td><td>—</td>
+  <td class="pill-bad">✗ 拿不到權重</td>
+</tr>
+<tr>
+  <td>Qwen3.8</td>
+  <td>權重 <strong>2026-08 中旬</strong> 上架 <span class="src">（HF repo 更新時間；未見官方公告日）</span> <span class="tag">部分未驗</span></td>
+  <td>✅</td>
+  <td class="pill-bad">27B / <strong>2.4T-A95B</strong>（最小 27B）</td>
+  <td>✅</td><td>✅（僅 27B）</td>
+  <td class="pill-bad">✗</td>
+  <td class="pill-bad">✗</td>
+  <td class="pill-bad">✗ 沒有跑得動的尺寸</td>
+</tr>
+<tr>
+  <td>DiffusionGemma</td>
+  <td><strong>2026-06-10</strong></td>
+  <td>✅ Apache-2.0</td>
+  <td class="pill-bad">單一尺寸：26B-A4B<br><span class="src">25.2B 總參數／3.8B active</span></td>
+  <td>⚠ 見 §9.2</td>
+  <td class="pill-bad">✗ 404</td>
+  <td class="pill-bad">✗ Q4 需 <strong>18GB</strong>（Google 自己寫「fits comfortably within 18GB」）</td>
+  <td class="pill-bad">✗ 官方示範 Colab <strong>A100</strong></td>
+  <td class="pill-bad">✗ 三重不符</td>
+</tr>
+<tr>
+  <td>Qwen3.9／Qwen4／Gemma 5</td>
+  <td colspan="8">反向探測：Ollama registry 皆 <strong>404</strong>；Google releases 頁確認 Gemma 4 為最新代。<strong>目前沒有更新的世代</strong></td>
+</tr>
+</table>
+</div>
+
+<div class="box rec">
+  <p><strong>核心結論：世代選擇是被「尺寸」決定的，不是被「效能」決定的。</strong></p>
+  <p>Qwen 的新世代（3.6／3.8）確實比 3.5 強，但<strong>最小只出到 27B</strong>；27B 在 Q4 約 17GB，
+  超過本機 16GB，免費 Colab 微調更不可能。<strong>Qwen3.5 是唯一有 ≤10B 尺寸的 Qwen 世代</strong>，所以它才會在場上。
+  Gemma 4 是對稱的情況——官方 vision 微調只支援 E2B／E4B，剛好就是跑得動的那兩個。</p>
+  <p><strong>因此推薦不變</strong>：微調主力 <strong>Gemma 4 E4B</strong>（免費 T4 唯一走得通的 QLoRA 路徑），
+  <strong>Qwen3.5-4B-Q8 ＋ 關閉思考</strong>留作未微調門檻（見 §3.3 的實測成績與 §7 的停損規則）。</p>
+</div>
+
+<h3 id="which-first">9.2 先微調哪一個？<span class="src">（判準：有無 Unsloth notebook ＋ 成功機會）</span></h3>
+
+<table>
+<tr><th>判準</th><th>Qwen3.5-4B</th><th>Gemma 4 E4B</th><th>勝負</th></tr>
+<tr>
+  <td>官方 Unsloth vision notebook</td>
+  <td><code>Qwen3_5_(4B)_Vision.ipynb</code></td>
+  <td><code>Gemma4_(E4B)-Vision.ipynb</code></td>
+  <td><strong>平手</strong>（兩邊都有，且都在我們要的尺寸）</td>
+</tr>
+<tr style="background:var(--good-soft)">
+  <td><strong>未微調起點（本報告 §3 實測）</strong></td>
+  <td>尺寸 <strong>6/6</strong>、逐格 <strong>0.924</strong>、號碼 <strong>0.910</strong>、牆 F1 0.410</td>
+  <td>尺寸 3–4/6、逐格 0.389–0.444、號碼 0.20–0.22、牆 F1 0.127–0.268</td>
+  <td class="pill-good"><strong>Qwen 大勝</strong></td>
+</tr>
+<tr>
+  <td><strong>微調要學的東西</strong></td>
+  <td class="pill-good"><strong>只剩「牆」一件事</strong></td>
+  <td class="pill-bad">格盤尺寸 ＋ 數字 ＋ 牆，三件事</td>
+  <td class="pill-good"><strong>Qwen</strong></td>
+</tr>
+<tr>
+  <td><strong>訓練硬體</strong></td>
+  <td class="pill-bad">QLoRA 被官方勸退 → 只剩 bf16 LoRA 10GB；<strong>免費 T4 無 bf16</strong> → 需 L4／A100（付費 CU）</td>
+  <td class="pill-good">QLoRA <strong>10GB</strong>，免費 T4 可</td>
+  <td class="pill-good"><strong>Gemma</strong></td>
+</tr>
+</table>
+
+<div class="box rec">
+  <p><strong>推薦：先訓 Qwen3.5-4B（若成本不是硬限制）。</strong>
+  兩者的 notebook 條件相同，差別全在起點——Qwen 只需要學會讀牆，Gemma 得同時學會格盤尺寸、數字與牆。
+  <strong>單一目標的訓練，收斂與除錯都遠比三個目標一起打好處理</strong>，而合成資料 pipeline 正好最擅長教牆。</p>
+  <p><strong>第三個理由（§3.3 ＋ §3.4 的共同觀察）：<code>gemma4:e4b</code> 對介入不穩定。</strong>
+  兩次零成本介入——關閉思考、加入格盤尺寸指示——<strong>都是幫 qwen、害 gemma</strong>；
+  後者甚至被「格盤常常不是 6×6」帶到把真正的 6×6 過度矯正成 7×7。
+  一個連 prompt 指令都吸收不穩的模型，微調的除錯成本會高得多。</p>
+  <p><strong>唯一的翻轉條件：若「只用免費 Colab 層」是硬限制，改選 Gemma 4 E4B</strong>——
+  它的 QLoRA 10GB 是免費 T4 上唯一走得通的路徑。</p>
+</div>
+
+<div class="box warn">
+  <p><strong>與 Unsloth 官方建議相反的一項操作提醒：</strong>
+  官方建議先設 <code>finetune_vision_layers = False</code>（省記憶體）。
+  但本報告顯示<strong>本任務的失敗模式是純視覺的</strong>——數字與版面模型早已讀對，錯的是壓在格線上的細黑牆棒。
+  <strong>凍住視覺層很可能什麼都學不到</strong>，因此這個消融要<strong>優先</strong>做，而不是當作有空再補。</p>
+  <p>另一個實用細節：Unsloth 文件註明 Gemma 4 E2B／E4B 這類多模態模型訓練時
+  <strong>loss 落在 13–15 是正常的</strong>（純文字版才 1–3）。不知道會誤判成訓練發散。</p>
+</div>
+
+<p class="src">出處（一手，查證日 2026-08-15）：
+<a href="https://unsloth.ai/docs/models/qwen3.5/fine-tune">Unsloth · Qwen3.5 Fine-tuning</a>
+（原文：“It is not recommended to do QLoRA (4-bit) training on the Qwen3.5 models, no matter MoE or dense, due to higher than normal quantization differences.”；bf16 LoRA 0.8B 3GB／2B 5GB／4B 10GB／9B 22GB／27B 56GB）、
+<a href="https://unsloth.ai/docs/models/gemma-4/train">Unsloth · Gemma 4 Fine-tuning</a>
+（E2B LoRA 8–10GB／QLoRA 8GB；E4B LoRA 17GB／QLoRA 10GB）、
+<a href="https://github.com/unslothai/notebooks">Unsloth notebook 索引</a>。</p>
+
+<h3>9.3 DiffusionGemma 為什麼不採用（曾被特別問到）</h3>
+
+<p>它是<strong>離散擴散</strong>語言模型：不是逐 token 生成，而是從噪聲畫布平行去噪 256-token 區塊，
+Google 宣稱單張 H100 超過 1000 tokens/s、RTX 5090 超過 700 tokens/s。對「一次吐一大包 JSON」這種任務，
+理論上很有吸引力。<strong>但三個硬限制同時成立：</strong></p>
+
+<ol>
+  <li><strong>放不進 16GB</strong>——Google 官方 blog 自己寫「量化後 fits comfortably within 18GB VRAM」，Unsloth 文件列 Q4_K_M 需 18GB。
+      對比我們實測 <code>gemma4:e4b</code> Q4 的 GPU 增量只有 4.7GB。</li>
+  <li><strong>不在 Ollama library</strong>（registry 探測 404）——本專案的部署鏈是 Docker ＋ Ollama，整條要換掉。llama.cpp 支援據二手來源仍在未合併 PR。<span class="tag">未驗</span></li>
+  <li><strong>微調要 A100</strong>——與「免費 Colab T4」的前提直接衝突。</li>
+</ol>
+
+<p>另外<strong>影像能力的來源互相矛盾，需注意</strong>：<a href="https://ai.google.dev/gemma/docs/diffusiongemma/model_card">官方模型卡</a>寫
+「Processes interleaved text, image (with variable aspect ratio and resolution support), and video inputs」，
+但<a href="https://blog.google/innovation-and-ai/technology/developers-tools/diffusion-gemma-faster-text-generation/">官方 blog</a>
+通篇只談文字生成、未提影像輸入。<strong>兩者都是一手來源卻不一致</strong>——真要用必須先自己實測，不能照抄任一邊。</p>
+
+<p><strong>唯一值得持續追蹤之處在姊妹 RL track</strong>：Unsloth 的 notebook 索引裡 DiffusionGemma 只有一本，
+就是 <strong>26B-A4B Sudoku GRPO</strong>，而 Sudoku 與 Zip 同屬「網格＋硬約束＋可程式驗證」。同樣卡 A100。</p>
+
+<h3>9.4 怎麼重驗這一節（給未來的接手者）</h3>
+
+<p>不要只讀排行榜或列表型文章——它們可以告訴你「有哪些家族」，<strong>不能決定「該家族最新第幾版」</strong>。照以下順序做：</p>
+
+<ol>
+  <li><strong>反向探測有沒有更新世代</strong>（最便宜、最有效）：
+    <pre><code>for m in qwen3.9 qwen4 gemma5; do curl -s -o /dev/null -w "$m %{http_code}\n" \
+  "https://registry.ollama.ai/v2/library/$m/manifests/latest"; done</code></pre>
+    <code>200</code> 代表存在、<code>404</code> 代表沒有。這是本節每一列「有／沒有」欄位的產生方式。</li>
+  <li><strong>用工具鏈索引決定「現在真的能跑什麼」</strong>：<code>ollama.com/library/&lt;name&gt;/tags</code> 給尺寸與量化，
+      <a href="https://github.com/unslothai/notebooks">Unsloth notebook 索引</a>給「能不能訓」。二手名單與工具鏈打架時<strong>以工具鏈為準</strong>。</li>
+  <li><strong>發布日回一手</strong>：Gemma 用 <a href="https://ai.google.dev/gemma/docs/releases">官方 releases 時間軸</a>（有精確到日）；
+      Qwen 官方沒有等價頁面，只能用 <a href="https://huggingface.co/Qwen/models?sort=created">HF org 依建立時間排序</a>
+      ——<strong>注意那顯示的是「最後更新」不是「發布日」，只能當下界，要標未驗</strong>。</li>
+  <li><strong>驗證要對稱</strong>：不可以 A 家族查一手、B 家族抄部落格。本節六個世代都跑了同一套流程。</li>
+</ol>
+
+<h2 id="deps">10. 附錄：相依變動</h2>
+
+<p><code>pydantic-ai</code> 由 <code>&gt;=1.2.1</code> 釘為 <code>==1.107.5</code>（v1 維護線最新，2026-08-14；避開一天一版的 2.x）。
+理由是 1.2.1 缺三個已 backport 的資安修補（<code>GHSA-q2xc-rrxj-58x9</code>／<code>GHSA-h4xc-3qfq-jf93</code>／<code>GHSA-3gh4-cghq-f8v4</code>，
+均限 <code>Agent.to_web()</code>／<code>clai web</code>，本專案未使用，實際曝險低），且 1.107.5 才有官方文件現行示範的 <code>OllamaModel</code>。</p>
+
+<div class="box warn">
+  <p><strong>兩個必須知道的副作用：</strong></p>
+  <ol>
+    <li><strong><code>uv add</code> 在本專案會解析失敗</strong>，錯誤訊息指向 <code>requests</code>。原因是 <code>pyproject.toml</code> 把 PyTorch cu121 index 排在 PyPI 之前，
+        而 <code>index-strategy = "unsafe-best-match"</code> 寫在 <code>[tool.uv.pip]</code> 底下——<strong>那段只對 <code>uv pip</code> 生效，對 <code>uv add</code>／<code>uv lock</code> 無效</strong>。
+        平常沒事是因為 <code>uv sync</code> 照既有 lock 安裝、不重新解析。本次以 <code>uv add --index-strategy unsafe-best-match</code> 繞過。
+        <strong>RL track 要動 torch 相依時會踩到同一顆雷，建議由本人統一修 <code>pyproject.toml</code> 的 index 設定。</strong></li>
+    <li><strong>連帶升級範圍很大</strong>：<code>transformers</code> 4.57.1 → <strong>5.15.0</strong>、<code>gradio</code> 5.49.1 → <strong>6.15.1</strong>（皆跨大版本）、
+        <code>openai</code> 2.6.0 → 2.54.0、<code>pydantic</code> 2.11.10 → 2.13.4。<code>torch</code> 守住在 <code>2.4.1+cu121</code>。
+        <code>uv run pytest</code> 仍為 <strong>46 passed</strong>；Gradio 因測試使用 mock，另以 Chrome headless 實際渲染 <code>/ui</code> 比對 5.49.1 與 6.15.1，
+        四個分頁與元件均正常，<strong>無回歸</strong>。</li>
+  </ol>
+</div>
+
+<footer>
+  產出於 2026-08-15（Asia/Taipei）｜原始資料：<code>ai-collab/reports/artifacts/</code>
+  （<code>vl-benchmark</code> = P0 矩陣、<code>vl-baseline-p1</code> = P1、<code>vl-baseline-p1-nothink</code> = 關思考消融、<code>vl-client-crosscheck</code> = 傳輸層對照）<br>
+  複現：<code>cd linkedin-zip-challenge &amp;&amp; uv run python -m src.core.vl_models.benchmark --model &lt;tag&gt;</code>
+</footer>
+
+</div>
+</body>
+</html>

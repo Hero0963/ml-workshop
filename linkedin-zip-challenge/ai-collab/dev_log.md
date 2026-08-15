@@ -6,6 +6,84 @@
 
 ## 2026-08-15
 
+### VLM Track P0 + P1: Deployment Smoke Test and Untuned Baseline (branch `feat/vlm-parser`, worktree `zip-vlm`)
+
+Executed stages P0 and P1 of [`plans/2026-08-15_track-vlm-parser.md`](plans/2026-08-15_track-vlm-parser.md).
+Full numbers, method and caveats: **[`reports/2026-08-15_vl-p0-p1-baseline.html`](reports/2026-08-15_vl-p0-p1-baseline.html)**.
+
+-   **New: `src/core/vl_models/benchmark.py`** — the measurement harness. Imports the *existing*
+    `final_puzzle_parser.build_puzzle_prompt()` rather than copying it, so the baseline cannot drift
+    from the prompt it claims to measure. Scores four layers (JSON parse rate; per-cell accuracy,
+    waypoint recall and wall P/R/F1 against `src/core/tests/conftest.py`; end-to-end via CP-SAT;
+    latency plus `nvidia-smi` peak). Two transports behind `--client`: Ollama's native `/api/chat`
+    (full timing counters) and `pydantic-ai` (the path the shipped parser will use). Every call is
+    persisted to `ai-collab/reports/artifacts/` with its seed and raw output.
+-   **Environment**: `docker compose pull ollama` took the container from **0.16.1 → 0.32.13**; the
+    pinned volume kept the 15GB of 2025-10 models. Pulled `gemma4:e4b`, `gemma4:e4b-it-q8_0`,
+    `qwen3.5:4b`, `qwen3.5:4b-q8_0` from the official library. All four load **100% on GPU** — a 16GB
+    card is not the bottleneck for 4B-class Q8 (worst case 9582 MiB peak).
+-   **Quantisation matters far more than expected, and in opposite directions per family.**
+    `qwen3.5:4b` at Q4 never emits JSON at all — it thinks for 16,505 characters and burns 6,215
+    output tokens hitting the ceiling. The same model at Q8 reads the grid perfectly in 6.2s.
+    `gemma4:e4b` is the reverse: Q8 misreads a 6×6 grid as 7×6 while Q4 gets it right.
+-   **Disabling thinking is a free, large win — for one family only.** With `think: false`,
+    `qwen3.5:4b-q8_0` goes from 3/6 to **6/6** parseable, gets **6/6 grid sizes right** (including the
+    two 7×7 puzzles it previously could not answer at all), and runs **5.8× faster** (44.5s → 7.7s).
+    The same switch makes `gemma4:e4b` *worse* on every structural metric. Measure it per model;
+    never carry the setting over.
+-   **The remaining problem is almost purely walls.** Best untuned configuration
+    (`qwen3.5:4b-q8_0` + no thinking) scores cell accuracy 0.924 and waypoint recall 0.910 across the
+    six screenshots, but wall F1 only 0.410 — and end-to-end is **1/6**. `gemma4:e4b` is 0/6.
+    Wall *false positives* are as fatal as misses: on `puzzle_03` gemma4 found all 4 real walls yet
+    the puzzle was unsolvable because it hallucinated 2 more.
+-   **Two metric traps found and fixed.** Wall-free puzzles score a free F1 of 1.0, which inflated
+    gemma4's wall mean from 0.268 to 0.512 — added `mean_wall_f1_walled_only`. And `seed` plus
+    `temperature=0` does **not** guarantee determinism: `gemma4:e4b` Q4 produced different answers on
+    cold vs warm runs, while the Q8 models were stable. Comparisons need repeats.
+-   **Two zero-training interventions, both measured.** Beyond disabling thinking, a `sized` prompt
+    variant adds an explicit grid-counting step and a synthetic 7×7 example (generator seed 20260815,
+    CP-SAT verified; deliberately *not* puzzle_04/06, which are evaluation data). For
+    `qwen3.5:4b-q8_0` this lifts cell accuracy 0.924 → **0.961**, wall F1 0.410 → 0.438, end-to-end
+    matches 1/6 → **2/6**, and latency 7.7s → **5.4s**. Read that 2/6 carefully: puzzle_01–03 have
+    their answers inside the few-shot prompt, so the previously-correct puzzle_03 was leaked — the
+    newly correct one is **puzzle_05, which is not in the prompt**, so the genuinely generalising
+    count went 0 → 1.
+-   **`gemma4:e4b` got worse under both interventions.** The sized prompt drops it 4/6 → 3/6 on grid
+    size, 0.444 → 0.315 on cells and 0.268 → 0.023 on wall F1; told that grids are often not 6×6, it
+    over-corrects and reads the genuinely-6×6 puzzle_01 as 7×7. Two independent interventions now
+    point the same way: **Qwen absorbs instructions, Gemma is unstable under prompt perturbation.**
+    Best untuned configuration is `qwen3.5:4b-q8_0` + no thinking + `--prompt sized`, and that is the
+    bar fine-tuning has to clear.
+-   **Fine-tuning order revised.** Both families ship an official Unsloth vision notebook at the size
+    we need, so that criterion ties. Recommendation is now **Qwen3.5-4B first if paid Colab is
+    acceptable** — it only has to learn walls, whereas Gemma must learn size, digits and walls — and
+    **Gemma 4 E4B if the free tier is a hard constraint**, since Unsloth explicitly advises against
+    QLoRA for Qwen3.5 ("no matter MoE or dense, due to higher than normal quantization differences")
+    and a free T4 has no bf16. Also verified first-hand: Qwen3.6 is 27B minimum, Qwen3.7 has no open
+    weights, Qwen3.8 is 27B/2.4T — **Qwen3.5 is the only generation with sizes that fit a 16GB card**,
+    and Gemma 4 is symmetric (official vision fine-tuning covers E2B/E4B only). Full generation table,
+    release dates and a re-verification recipe are in §9 of the report.
+-   **Dependencies took three rounds to settle**; see the `build(zip)` commit for the full reasoning.
+    `pydantic-ai` was pinned to `==1.107.5`, but the meta-package forces `huggingface-hub>=1.3.4`,
+    which is incompatible with `transformers<5`, and `transformers` 5.x silently disables its PyTorch
+    backend against the pinned `torch 2.4.1` — that would have left the planned transformers VL
+    backend unable to load a model. Settled on **`pydantic-ai-slim[openai]==1.107.5`** (what the
+    official Ollama docs recommend, and all this project uses), which dropped **104 packages** —
+    anthropic, boto3, cohere, groq, mistralai, google-genai, xai-sdk, temporalio, logfire, mcp and
+    the whole opentelemetry stack — and freed `transformers` to stay at 4.57.6.
+    ⚠ Separately, **`uv add` could not resolve at all** in this project: the cu121 index is declared
+    before PyPI and `index-strategy` lives under `[tool.uv.pip]`, which does not apply to
+    `uv add`/`uv lock`/`uv sync`. Fixed structurally by marking that index `explicit` and routing the
+    torch trio through `[tool.uv.sources]`; as a bonus the lock now pins them solely to the cu121
+    build. **The RL track would have hit the same wall when changing torch.** Two casualties of the
+    re-resolution were repaired: `ruff` (only present transitively, so it was pruned and broke the
+    documented `uv run ruff check .` — now an explicit dev dependency) and `griffe` (pydantic-ai now
+    depends on the renamed `griffelib`, and uninstalling old `griffe` took the shared module files
+    with it). Verified after all of it: `pytest` 46 passed, `ruff check` clean,
+    `transformers.utils.is_torch_available()` True, torch still `2.4.1+cu121`, and the Gradio UI
+    rendered in Chrome — also compared against the main worktree's 5.49.1 to confirm the
+    `gradio` 5 → 6 jump caused no regression.
+
 ### Planning Reports for the VLM and RL Tracks (research only, no code changed)
 
 Two design reports were written to unblock roadmap items #2 (VL integration) and #3 (RL restart).

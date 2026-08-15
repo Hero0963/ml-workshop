@@ -1,0 +1,61 @@
+{
+  "run": {
+    "model": "qwen3.5:4b",
+    "seed": 20260815,
+    "temperature": 0.0,
+    "num_ctx": 8192,
+    "base_url": "http://127.0.0.1:11435",
+    "started_at": "2026-08-15T20:04:56+0800",
+    "prompt_characters": 2124,
+    "client": "native",
+    "think": null,
+    "images": [
+      {
+        "puzzle_id": "puzzle_01",
+        "path": "puzzle_01.png",
+        "size": [
+          998,
+          1062
+        ]
+      }
+    ],
+    "results": [
+      {
+        "puzzle_id": "puzzle_01",
+        "call": {
+          "model": "qwen3.5:4b",
+          "image": "puzzle_01.png",
+          "wall_seconds": 47.76988199999323,
+          "client": "native",
+          "raw_output": "",
+          "error": null,
+          "load_seconds": 0.236525143,
+          "prompt_eval_count": 1977,
+          "eval_count": 6215,
+          "eval_seconds": 51.679702,
+          "gpu_baseline_mib": 6766,
+          "gpu_peak_mib": 6831,
+          "gpu_delta_mib": 65,
+          "thinking_characters": 16505,
+          "ollama_ps": "NAME          ID              SIZE      PROCESSOR    CONTEXT    UNTIL              \nqwen3.5:4b    2a654d98e6fb    3.3 GB    100% GPU     8192       4 minutes from now"
+        },
+        "json_parsed": false,
+        "parse_error": "no JSON block in response"
+      }
+    ]
+  },
+  "summary": {
+    "model": "qwen3.5:4b",
+    "client": "native",
+    "images": 1,
+    "json_parse_rate": 0.0,
+    "mean_latency_seconds": 47.76988199999323,
+    "max_latency_seconds": 47.76988199999323,
+    "peak_gpu_mib": 6831,
+    "mean_cell_accuracy": 0.0,
+    "mean_waypoint_recall": 0.0,
+    "mean_wall_f1": 0.0,
+    "end_to_end_solved": 0,
+    "end_to_end_matches_truth": 0
+  }
+}

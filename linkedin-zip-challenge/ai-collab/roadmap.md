@@ -46,9 +46,24 @@
      改完 Svelte 的下拉要重新 `npm run build` 才會反映。
    - Done 條件：`SOLVERS` 含全部 9 種、schema 支援 `attempts`、Gradio 與 Svelte 兩邊下拉都可選、新增對應 API 測試且全綠。
 
-2. **VL 圖片解析整合進主流程** ← **★ 現在做這個**
+2. **VL 圖片解析整合進主流程** ← **★ 現在做這個（P0／P1 已完成，下一步 P2）**
    - 📋 **接手請直接讀計畫書：[plans/2026-08-15_track-vlm-parser.md](plans/2026-08-15_track-vlm-parser.md)**
      （worktree 環境建置、P0–P6 分階段 done 條件、與 RL track 的協作約定）
+   - ✅ **P0＋P1 已完成（2026-08-15，分支 `feat/vlm-parser`，worktree `zip-vlm`）**：
+     實測報告 [reports/2026-08-15_vl-p0-p1-baseline.html](reports/2026-08-15_vl-p0-p1-baseline.html)；
+     量測工具 `src/core/vl_models/benchmark.py`；原始資料 `reports/artifacts/`。
+     - 部署路徑打通：容器 Ollama 0.16.1 → **0.32.13**，四種模型／量化組合**全部 100% 上 GPU**（峰值最高 9582 MiB）
+       → **16GB 顯卡對 4B 級 Q8 不是瓶頸**，原風險 #5 的推論端解除。
+     - **未微調 baseline：端到端最好只有 1/6**（`qwen3.5:4b-q8_0` ＋關閉思考），`gemma4:e4b` 為 **0/6**。P2–P4 有明確必要性。
+     - ★ **方向修正：剩下的問題幾乎純粹是「牆」。** 最佳設定的逐格 0.924、號碼召回 0.910、格盤尺寸 6/6 全對，
+       **但牆 F1 只有 0.410**。**P2 合成資料的重心要從「全面模仿」收斂到「把牆畫對」**（粗細、壓在格線上的位置、對比、0–16 數量分布）。
+       且**牆的偽陽性與漏檢一樣致命**——`puzzle_03` 真牆 4/4 全中，卻因多幻覺 2 道而無解。
+     - ★ **兩個零訓練成本的介入已完成並生效**：①關閉思考 ②加入格盤尺寸指示＋合成 7×7 範例（`--prompt sized`）。
+       `qwen3.5:4b-q8_0` 由 JSON 3/6、逐格 —、延遲 44.5s 推進到 **JSON 6/6、尺寸 6/6、逐格 0.961、端到端相符 2/6、5.4s**。
+       **但同樣兩個介入都讓 `gemma4:e4b` 變差**（後者甚至把真 6×6 過度矯正成 7×7）→ **設定要逐模型實測，不可共用**。
+     - ⚠ **`seed` ＋ `temperature=0` 不保證決定性**（`gemma4:e4b` Q4 冷、暖兩次結果不同）→ 對照實驗要多次重複取平均。
+     - ⚠ **`uv add` 在本專案會解析失敗**（cu121 index 排在 PyPI 之前，而 `index-strategy` 寫在只對 `uv pip` 生效的
+       `[tool.uv.pip]`）。暫以 `uv add --index-strategy unsafe-best-match` 繞過；**RL track 動 torch 時會踩到同一顆雷**。
    - **方案已定案（2026-08-15，報告 v2）**：見 [reports/2026-08-15_vlm-model-survey.html](reports/2026-08-15_vlm-model-survey.html)
      ——選型分流（**免費 Colab T4 → Gemma 4 E4B QLoRA；付費 L4／A100 → Qwen3.5-4B bf16 LoRA**，
      兩者同資料各訓一輪做對照）、合成資料 pipeline、Unsloth 生態（250+ notebook）、OCR 專用模型評估、
@@ -88,6 +103,13 @@
 | 決策 | 理由 |
 |------|------|
 | **RL 暫停，不是放棄** | 2025-10-15。根因是 **deterministic policy loop**：距離型 reward shaping 造成「獎勵陷阱」，即使把權重從 0.1 降到 0.01 仍會讓策略卡在小迴圈。訓練期看起來好只是 ε-greedy 的隨機性意外把 agent 撞出迴圈。**不要再靠調 reward 權重硬解**，要先補理論 |
+| **模型世代選擇由「尺寸」決定，不是由「效能」決定** | 2026-08-15 一手查證（Ollama registry 探測＋library 頁）：**Qwen3.6 最小 27B、Qwen3.7 無開放權重、Qwen3.8 只有 27B**，27B 在 Q4 約 17GB **超過本機 16GB**；**Qwen3.5 是唯一有 0.8B／2B／4B／9B 小尺寸的世代**。Gemma 4 同理——vision 微調官方只支援 E2B／E4B。**所以不是「3.5 比較好」，是新世代沒出跑得動的尺寸。** ⚠ 前一份 survey 報告寫「Qwen3.8 權重尚未上架」，該權重已於 2026-08-14/15 上架（僅 27B），結論不變但該句已過期 |
+| **微調順序：成本非硬限制 → 先訓 Qwen3.5-4B；只能用免費層 → 訓 Gemma 4 E4B** | 2026-08-15 實測後修訂（原本一律推 Gemma 4）。兩者都有官方 Unsloth vision notebook（`Qwen3_5_(4B)_Vision.ipynb`／`Gemma4_(E4B)-Vision.ipynb`），差別全在**起點與穩定度**：Qwen 未微調就已尺寸 6/6、逐格 0.961，**只剩「牆」要學**；Gemma 得同時學會尺寸、數字、牆。且**兩次零成本介入（關思考、加尺寸指示）都是幫 Qwen、害 Gemma**——Gemma 甚至把真 6×6 過度矯正成 7×7，對 prompt 擾動不穩定。**唯一翻轉條件**：Qwen3.5 的 QLoRA 被 Unsloth 官方勸退、只剩 bf16 LoRA，而免費 T4 無 bf16 → 想免費就只能選 Gemma 4 E4B（QLoRA 10GB） |
+| **未微調門檻 ＝ `qwen3.5:4b-q8_0` ＋ 關思考 ＋ `--prompt sized`** | 2026-08-15。該設定六張圖達 JSON 6/6、尺寸 6/6、逐格 0.961、號碼 0.917、牆 F1(有牆) 0.438、端到端相符 2/6、平均 5.4s。**停損規則：微調後若端到端贏不過它，代表該換家族或換方法，而不是加訓練量。** ⚠ 相符的 2 題中 `puzzle_03` 屬洩題（答案在 few-shot 裡），**真正具泛化意義的只有 `puzzle_05` 1 題** |
+| **視覺層消融要優先做，不照 Unsloth 預設** | 2026-08-15。Unsloth 建議先 `finetune_vision_layers = False` 省記憶體，但本任務的失敗模式是**純視覺的**（數字與版面早已讀對，錯的是壓在格線上的細黑牆棒）→ 凍住視覺層很可能什麼都學不到。另：官方註明 Gemma 4 E2B/E4B 多模態訓練 **loss 13–15 是正常的**（純文字版才 1–3），不知道會誤判成發散 |
+| **`think` 開關逐模型實測，不可跨模型沿用** | 2026-08-15 實測：關閉思考讓 `qwen3.5:4b-q8_0` JSON 解析率 3/6→6/6、快 5.8 倍；同一開關讓 `gemma4:e4b` 全面變差。量化選擇亦然（qwen 需 Q8，gemma4 的 Q8 反而比 Q4 差） |
+| **`pydantic-ai` 釘 `==1.107.5`** | 2026-08-15。v1 維護線最新（2026-08-14）；1.2.1 缺三個已 backport 的資安修補，且只有 1.107+ 才有官方文件現行示範的 `OllamaModel`。**不上 2.x**——它 10 天內連發 8 個 minor，不是穩定目標 |
+| **DiffusionGemma 只觀察，不進 VLM track** | 2026-08-15 查證：雖然真的吃圖（Google 模型卡：text/image/video 輸入），但 Q4 推論最低 **18GB > 本機 16GB**、**不在 Ollama library**（registry 404）、微調官方示範要 **A100** → 與「本機推論＋免費 T4 微調」的前提全數衝突。唯一值得追蹤處是 Unsloth 那本 **26B-A4B Sudoku GRPO** notebook，與 RL 路線 B 同構（同樣卡 A100） |
 | **VL 採「混合策略」，不用 tool-calling** | 2025-10-24 實測：`bsahane/Qwen2.5-VL-7B-Instruct` 支援 tool-calling 但**視覺模組壞掉**（回傳結構正確但空的物件）；`openbmb/minicpm-o2.6` 視覺正常但**不支援 tools**（400 Bad Request）。結論：用 `pydantic-ai` 但把 `output_type` 設成 `str`，靠 prompt engineering 要模型吐 JSON 字串再自己 parse——已驗證完全成功 |
 | **Docker 雙環境（dev／prod 分開）** | 2025-10-28。`docker-compose.dev.yml` 兩容器＋volume mount 換 hot-reload；`docker-compose.yml` 單一 multi-stage 映像檔換 production 乾淨。不要合併成一個 |
 | **牆一律叫 `walls`** | 曾與 `blocked_cells` 混用造成前後端資料格式不符。`walls` ＝牆，`blocked_cells`／障礙是另一回事，不可互換 |

@@ -1,0 +1,89 @@
+{
+  "run": {
+    "model": "gemma4:e4b-it-q8_0",
+    "seed": 20260815,
+    "temperature": 0.0,
+    "num_ctx": 8192,
+    "base_url": "http://127.0.0.1:11435",
+    "started_at": "2026-08-15T20:03:12+0800",
+    "prompt_characters": 2124,
+    "client": "native",
+    "think": null,
+    "images": [
+      {
+        "puzzle_id": "puzzle_01",
+        "path": "puzzle_01.png",
+        "size": [
+          998,
+          1062
+        ]
+      }
+    ],
+    "results": [
+      {
+        "puzzle_id": "puzzle_01",
+        "call": {
+          "model": "gemma4:e4b-it-q8_0",
+          "image": "puzzle_01.png",
+          "wall_seconds": 43.543783199973404,
+          "client": "native",
+          "raw_output": "```json\n{\n  \"layout\": [\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"1\", \"  \", \"  \", \"  \", \"2\"],\n    [\"  \", \"  \", \"3\", \"  \", \"  \", \"  \"],\n    [\"  \", \"  \", \"  \", \"4\", \"  \", \"  \"],\n    [\"  \", \"6\", \"  \", \"5\", \"  \", \"  \"],\n    [\"  \", \"8\", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"  \", \"  \", \"  \", \"7\", \"  \"]\n  ],\n  \"walls\": [\n    {\n      \"cell1\": [\n        1,\n        1\n      ],\n      \"cell2\": [\n        1,\n        2\n      ]\n    },\n    {\n      \"cell1\": [\n        1,\n        4\n      ],\n      \"cell2\": [\n        1,\n        5\n      ]\n    },\n    {\n      \"cell1\": [\n        2,\n        2\n      ],\n      \"cell2\": [\n        2,\n        3\n      ]\n    },\n    {\n      \"cell1\": [\n        3,\n        3\n      ],\n      \"cell2\": [\n        3,\n        4\n      ]\n    },\n    {\n      \"cell1\": [\n        4,\n        2\n      ],\n      \"cell2\": [\n        4,\n        3\n      ]\n    },\n    {\n      \"cell1\": [\n        4,\n        3\n      ],\n      \"cell2\": [\n        4,\n        4\n      ]\n    },\n    {\n      \"cell1\": [\n        6,\n        4\n      ],\n      \"cell2\": [\n        6,\n        5\n      ]\n    },\n    {\n      \"cell1\": [\n        1,\n        1\n      ],\n      \"cell2\": [\n        2,\n        1\n      ]\n    },\n    {\n      \"cell1\": [\n        3,\n        1\n      ],\n      \"cell2\": [\n        4,\n        1\n      ]\n    },\n    {\n      \"cell1\": [\n        4,\n        1\n      ],\n      \"cell2\": [\n        5,\n        1\n      ]\n    },\n    {\n      \"cell1\": [\n        1,\n        2\n      ],\n      \"cell2\": [\n        2,\n        2\n      ]\n    },\n    {\n      \"cell1\": [\n        2,\n        3\n      ],\n      \"cell2\": [\n        3,\n        3\n      ]\n    },\n    {\n      \"cell1\": [\n        3,\n        3\n      ],\n      \"cell2\": [\n        4,\n        3\n      ]\n    },\n    {\n      \"cell1\": [\n        4,\n        4\n      ],\n      \"cell2\": [\n        5,\n        4\n      ]\n    },\n    {\n      \"cell1\": [\n        5,\n        4\n      ],\n      \"cell2\": [\n        6,\n        4\n      ]\n    }\n  ]\n}\n```",
+          "error": null,
+          "load_seconds": 0.329718377,
+          "prompt_eval_count": 1218,
+          "eval_count": 3761,
+          "eval_seconds": 47.142309,
+          "gpu_baseline_mib": 9197,
+          "gpu_peak_mib": 9582,
+          "gpu_delta_mib": 385,
+          "thinking_characters": 5611,
+          "ollama_ps": "NAME                  ID              SIZE      PROCESSOR    CONTEXT    UNTIL              \ngemma4:e4b-it-q8_0    9dcc35808b42    5.3 GB    100% GPU     8192       4 minutes from now"
+        },
+        "json_parsed": true,
+        "layout": {
+          "shape_match": false,
+          "predicted_shape": [
+            7,
+            6
+          ],
+          "truth_shape": [
+            6,
+            6
+          ],
+          "cell_accuracy": 0.0,
+          "waypoint_recall": 0.0,
+          "waypoint_total": 8
+        },
+        "walls": {
+          "predicted_count": 15,
+          "truth_count": 10,
+          "true_positives": 3,
+          "precision": 0.2,
+          "recall": 0.3,
+          "f1": 0.24,
+          "non_adjacent_dropped": 0
+        },
+        "end_to_end": {
+          "attempted": true,
+          "solved": false,
+          "path_matches_truth": false,
+          "solve_seconds": 0.00820209999801591
+        }
+      }
+    ]
+  },
+  "summary": {
+    "model": "gemma4:e4b-it-q8_0",
+    "client": "native",
+    "images": 1,
+    "json_parse_rate": 1.0,
+    "mean_latency_seconds": 43.543783199973404,
+    "max_latency_seconds": 43.543783199973404,
+    "peak_gpu_mib": 9582,
+    "mean_cell_accuracy": 0.0,
+    "mean_waypoint_recall": 0.0,
+    "mean_wall_f1": 0.24,
+    "end_to_end_solved": 0,
+    "end_to_end_matches_truth": 0
+  }
+}

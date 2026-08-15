@@ -1,0 +1,89 @@
+{
+  "run": {
+    "model": "qwen3.5:4b-q8_0",
+    "seed": 20260815,
+    "temperature": 0.0,
+    "num_ctx": 8192,
+    "base_url": "http://127.0.0.1:11435",
+    "started_at": "2026-08-15T20:05:49+0800",
+    "prompt_characters": 2124,
+    "client": "native",
+    "think": null,
+    "images": [
+      {
+        "puzzle_id": "puzzle_01",
+        "path": "puzzle_01.png",
+        "size": [
+          998,
+          1062
+        ]
+      }
+    ],
+    "results": [
+      {
+        "puzzle_id": "puzzle_01",
+        "call": {
+          "model": "qwen3.5:4b-q8_0",
+          "image": "puzzle_01.png",
+          "wall_seconds": 11.185267900000326,
+          "client": "native",
+          "raw_output": "```json\n{\n  \"layout\": [\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"01\", \"  \", \"  \", \"02\", \"  \"],\n    [\"  \", \"  \", \"03\", \"04\", \"  \", \"  \"],\n    [\"  \", \"  \", \"06\", \"05\", \"  \", \"  \"],\n    [\"  \", \"08\", \"  \", \"  \", \"07\", \"  \"],\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"]\n  ],\n  \"walls\": [\n    {\"cell1\": [1, 1], \"cell2\": [1, 2]},\n    {\"cell1\": [1, 1], \"cell2\": [2, 1]},\n    {\"cell1\": [2, 2], \"cell2\": [3, 2]},\n    {\"cell1\": [2, 3], \"cell2\": [2, 4]},\n    {\"cell1\": [3, 3], \"cell2\": [4, 3]},\n    {\"cell1\": [4, 1], \"cell2\": [4, 2]},\n    {\"cell1\": [4, 1], \"cell2\": [5, 1]},\n    {\"cell1\": [4, 4], \"cell2\": [5, 4]}\n  ]\n}\n```",
+          "error": null,
+          "load_seconds": 5.527306609,
+          "prompt_eval_count": 1977,
+          "eval_count": 530,
+          "eval_seconds": 6.050157,
+          "gpu_baseline_mib": 2494,
+          "gpu_peak_mib": 8489,
+          "gpu_delta_mib": 5995,
+          "thinking_characters": 886,
+          "ollama_ps": "NAME               ID              SIZE      PROCESSOR    CONTEXT    UNTIL              \nqwen3.5:4b-q8_0    8722f47c2791    5.2 GB    100% GPU     8192       4 minutes from now"
+        },
+        "json_parsed": true,
+        "layout": {
+          "shape_match": true,
+          "predicted_shape": [
+            6,
+            6
+          ],
+          "truth_shape": [
+            6,
+            6
+          ],
+          "cell_accuracy": 1.0,
+          "waypoint_recall": 1.0,
+          "waypoint_total": 8
+        },
+        "walls": {
+          "predicted_count": 8,
+          "truth_count": 10,
+          "true_positives": 1,
+          "precision": 0.125,
+          "recall": 0.1,
+          "f1": 0.11111111111111112,
+          "non_adjacent_dropped": 0
+        },
+        "end_to_end": {
+          "attempted": true,
+          "solved": true,
+          "path_matches_truth": false,
+          "solve_seconds": 0.0595337999984622
+        }
+      }
+    ]
+  },
+  "summary": {
+    "model": "qwen3.5:4b-q8_0",
+    "client": "native",
+    "images": 1,
+    "json_parse_rate": 1.0,
+    "mean_latency_seconds": 11.185267900000326,
+    "max_latency_seconds": 11.185267900000326,
+    "peak_gpu_mib": 8489,
+    "mean_cell_accuracy": 1.0,
+    "mean_waypoint_recall": 1.0,
+    "mean_wall_f1": 0.11111111111111112,
+    "end_to_end_solved": 1,
+    "end_to_end_matches_truth": 0
+  }
+}

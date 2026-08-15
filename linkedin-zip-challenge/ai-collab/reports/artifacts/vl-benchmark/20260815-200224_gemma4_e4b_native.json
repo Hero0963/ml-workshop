@@ -1,0 +1,89 @@
+{
+  "run": {
+    "model": "gemma4:e4b",
+    "seed": 20260815,
+    "temperature": 0.0,
+    "num_ctx": 8192,
+    "base_url": "http://127.0.0.1:11435",
+    "started_at": "2026-08-15T20:02:04+0800",
+    "prompt_characters": 2124,
+    "client": "native",
+    "think": null,
+    "images": [
+      {
+        "puzzle_id": "puzzle_01",
+        "path": "puzzle_01.png",
+        "size": [
+          998,
+          1062
+        ]
+      }
+    ],
+    "results": [
+      {
+        "puzzle_id": "puzzle_01",
+        "call": {
+          "model": "gemma4:e4b",
+          "image": "puzzle_01.png",
+          "wall_seconds": 19.91860130004352,
+          "client": "native",
+          "raw_output": "```json\n{\n  \"layout\": [\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"1\", \"  \", \"  \", \"  \", \"2\"],\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"3\", \"  \", \"4\", \"  \", \"  \"],\n    [\"  \", \"6\", \"  \", \"5\", \"  \", \"  \"],\n    [\"  \", \"8\", \"  \", \"  \", \"  \", \"7\"]\n  ],\n  \"walls\": [\n    {\"cell1\": [1, 1], \"cell2\": [2, 1]},\n    {\"cell1\": [1, 5], \"cell2\": [2, 5]},\n    {\"cell1\": [3, 1], \"cell2\": [2, 1]},\n    {\"cell1\": [3, 3], \"cell2\": [3, 2]},\n    {\"cell1\": [3, 3], \"cell2\": [4, 3]},\n    {\"cell1\": [4, 1], \"cell2\": [3, 1]},\n    {\"cell1\": [4, 1], \"cell2\": [5, 1]},\n    {\"cell1\": [5, 5], \"cell2\": [5, 4]},\n    {\"cell1\": [5, 5], \"cell2\": [4, 5]}\n  ]\n}\n```",
+          "error": null,
+          "load_seconds": 0.365329236,
+          "prompt_eval_count": 1218,
+          "eval_count": 2420,
+          "eval_seconds": 21.183857,
+          "gpu_baseline_mib": 7401,
+          "gpu_peak_mib": 7415,
+          "gpu_delta_mib": 14,
+          "thinking_characters": 4251,
+          "ollama_ps": "NAME          ID              SIZE      PROCESSOR    CONTEXT    UNTIL              \ngemma4:e4b    c6eb396dbd59    3.4 GB    100% GPU     8192       4 minutes from now"
+        },
+        "json_parsed": true,
+        "layout": {
+          "shape_match": true,
+          "predicted_shape": [
+            6,
+            6
+          ],
+          "truth_shape": [
+            6,
+            6
+          ],
+          "cell_accuracy": 0.6666666666666666,
+          "waypoint_recall": 0.125,
+          "waypoint_total": 8
+        },
+        "walls": {
+          "predicted_count": 9,
+          "truth_count": 10,
+          "true_positives": 1,
+          "precision": 0.1111111111111111,
+          "recall": 0.1,
+          "f1": 0.10526315789473685,
+          "non_adjacent_dropped": 0
+        },
+        "end_to_end": {
+          "attempted": true,
+          "solved": false,
+          "path_matches_truth": false,
+          "solve_seconds": 0.007248899957630783
+        }
+      }
+    ]
+  },
+  "summary": {
+    "model": "gemma4:e4b",
+    "client": "native",
+    "images": 1,
+    "json_parse_rate": 1.0,
+    "mean_latency_seconds": 19.91860130004352,
+    "max_latency_seconds": 19.91860130004352,
+    "peak_gpu_mib": 7415,
+    "mean_cell_accuracy": 0.6666666666666666,
+    "mean_waypoint_recall": 0.125,
+    "mean_wall_f1": 0.10526315789473685,
+    "end_to_end_solved": 0,
+    "end_to_end_matches_truth": 0
+  }
+}
