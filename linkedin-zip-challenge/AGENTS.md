@@ -18,7 +18,9 @@
 ## 1. 每次上線的標準動作
 
 1. 看 SessionStart 簡報（分支／最近 commit／工作區狀態／下一步）。
-2. 讀 [`ai-collab/roadmap.md`](ai-collab/roadmap.md)——**現況、下一步、已定案不要再重開的決策**。
+2. **接手進行中的 track（目前是 VLM）→ 先讀 [`ai-collab/handover.md`](ai-collab/handover.md)**，
+   那一份是自足的：環境建置、已驗證事實、下一步、陷阱清單、該讀哪些延伸文件都在裡面。
+3. 讀 [`ai-collab/roadmap.md`](ai-collab/roadmap.md)——**現況、下一步、已定案不要再重開的決策**。
 3. 要動程式再讀 [`ai-collab/project_guide.md`](ai-collab/project_guide.md)（架構、模組職責、關鍵函式）。
 4. 需要歷史脈絡（某個設計為什麼長這樣）才翻 [`ai-collab/dev_log.md`](ai-collab/dev_log.md)——它是 600+ 行的完整檔案，不要整份讀，用關鍵字搜。
 5. 開工前給計畫（見 §3），確認後才動手。
