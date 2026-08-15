@@ -1,4 +1,5 @@
 # run_docker_dev.py
+import json
 import subprocess
 import time
 import urllib.request
@@ -8,9 +9,12 @@ import os
 APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
 APP_PORT = os.getenv("APP_PORT", "7440")
 SVELTE_PORT = os.getenv("SVELTE_PORT", "5173")  # Restored for dev environment
+OLLAMA_HOST_PORT = os.getenv("OLLAMA_HOST_PORT", "11435")
 HEALTHCHECK_URL = f"http://{APP_HOST}:{APP_PORT}/api/echo/health"
+OLLAMA_TAGS_URL = f"http://{APP_HOST}:{OLLAMA_HOST_PORT}/api/tags"
 HEALTHCHECK_TIMEOUT = 30  # seconds
 HEALTHCHECK_INTERVAL = 3  # seconds
+OLLAMA_TIMEOUT = 60  # seconds; the model runtime takes longer to come up than the app
 # ---
 
 
@@ -60,6 +64,32 @@ def check_service_health():
     exit(1)
 
 
+def check_ollama_ready() -> None:
+    """Polls the Ollama container and reports which models are available.
+
+    A missing Ollama is not fatal: the solver stack works without it, only the
+    vision-language parsing does not.
+    """
+    print(f"--- Waiting for Ollama at {OLLAMA_TAGS_URL} ---")
+    start_time = time.time()
+    while time.time() - start_time < OLLAMA_TIMEOUT:
+        try:
+            with urllib.request.urlopen(OLLAMA_TAGS_URL, timeout=2) as response:
+                payload = json.loads(response.read())
+                names = [model["name"] for model in payload.get("models", [])]
+                print(
+                    f"\nSUCCESS: Ollama is up. Models: {names or '(none pulled yet)'}\n"
+                )
+                return
+        except Exception:
+            print(".", end="", flush=True)
+        time.sleep(HEALTHCHECK_INTERVAL)
+
+    print(f"\nWARNING: Ollama did not respond within {OLLAMA_TIMEOUT} seconds.")
+    print("Vision-language features will be unavailable. Check the logs with:")
+    print("docker compose -f docker-compose.dev.yml logs -f ollama")
+
+
 def main():
     """Main function to orchestrate the deployment."""
     # Step 1: Clean up previous run
@@ -87,9 +117,13 @@ def main():
     # Step 4: Wait for the backend service to become healthy
     check_service_health()
 
+    # Step 5: Report Ollama status (non-fatal, used by the vision-language parser)
+    check_ollama_ready()
+
     print("\n🚀 Deployment script finished successfully! 🚀")
     print("The application is now running in the background.")
     print(f"- Gradio UI (main app): http://{APP_HOST}:{APP_PORT}/ui")
+    print(f"- Ollama API: http://{APP_HOST}:{OLLAMA_HOST_PORT}")
     print(f"- Svelte UI (hot-reload): http://{APP_HOST}:{SVELTE_PORT}")
     print(f"- Svelte UI (integrated): http://{APP_HOST}:{APP_PORT}/svelte-ui")
     print("\nTo monitor logs, run:")

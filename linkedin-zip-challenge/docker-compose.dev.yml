@@ -3,6 +3,33 @@
 # It uses volume mounts for hot-reloading both frontend and backend.
 
 services:
+  ollama:
+    image: ollama/ollama:latest
+    # NOTE: deliberately NOT named `ollama_server` - that name is taken by another
+    # project on this machine (freelancer-ai-translator). Same reason the host port
+    # is configurable: several local stacks each ship their own Ollama.
+    container_name: zip_ollama_server
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=8192
+    ports:
+      - "${OLLAMA_HOST_PORT:-11435}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
   zip-challenge-app:
     build:
       context: .
@@ -38,3 +65,9 @@ services:
     stdin_open: true
     tty: true
     restart: on-failure
+
+volumes:
+  ollama_data:
+    # Pinned to the pre-existing volume so the ~15GB of models pulled in 2025-10
+    # (qwen2.5vl:7b, openbmb/minicpm-o2.6, bsahane/Qwen2.5-VL-7B-Instruct) survive.
+    name: linkedin-zip-challenge_ollama_data
