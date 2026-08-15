@@ -46,7 +46,7 @@
 ```powershell
 # --- 由本人執行（建 worktree）---
 cd D:\it_project\github_sync\ml-workshop
-git worktree add ..\zip-vlm -b feat/vlm-parser chore/vlm-rl-handover
+git worktree add ..\zip-vlm -b feat/vlm-parser main
 
 # --- 複製不進版控的設定 ---
 Copy-Item .\linkedin-zip-challenge\.env ..\zip-vlm\linkedin-zip-challenge\.env

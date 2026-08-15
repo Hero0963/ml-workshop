@@ -47,7 +47,7 @@
 ```powershell
 # --- 由本人執行 ---
 cd D:\it_project\github_sync\ml-workshop
-git worktree add ..\zip-rl -b feat/rl-masked-ppo chore/vlm-rl-handover
+git worktree add ..\zip-rl -b feat/rl-masked-ppo main
 Copy-Item .\linkedin-zip-challenge\.env ..\zip-rl\linkedin-zip-challenge\.env
 
 # --- agent 從這裡開始 ---
