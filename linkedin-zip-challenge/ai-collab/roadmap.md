@@ -84,6 +84,35 @@
      （worktree 環境建置、A0–A5 分階段 done 條件、**A2 前要拍板的 torch 相依決策**）
    - **✅ Done 條件已達成（2026-08-15）**：[reports/2026-08-15_rl-restart-plan.html](reports/2026-08-15_rl-restart-plan.html)
      ——含路線 A（action masking ＋ MaskablePPO ＋ curriculum）與路線 B（GRPO/GSPO，用既有 solver 當 verifier）。
+   - **✅ A0 環境健全性已完成（2026-08-15，分支 `feat/rl-masked-ppo`）**：
+     [reports/2026-08-15_a0-env-v1-findings.md](reports/2026-08-15_a0-env-v1-findings.md)
+     ——**env v1 不是難學，是「餵標準答案也不會過關」**：合法一筆畫解重播 **0/7 終止**（`reset()` 把起點當成待收集的
+     waypoint 1，而收集判定只在移動後執行，合法解不重踩起點 ⇒ 索引永遠停在 0）；同一條解答前面插一步「踩回起點」的
+     **非法**繞路則 **6/6 終止並拿 +999.01**。**v1 的獎勵與 Zip 規則反相關，最高分策略在定義上就是作弊。**
+     這修正了 restart plan §2.4：合法正樣本的機率不是「趨近於零」，是**恰好為零**。
+     **2-cycle 假說實驗成立**（8 步只有 2 個相異觀測；2 狀態確定性策略跑 69 步到 truncated 都沒逃出）⇒ v2 設計前提不必重審。
+     附帶發現：出題器在奇數盤有 parity 失敗（5×5 起點掃描 偶數色 13/13 成功、奇數色 0/12），約 2.5% 的 seed 會回 `None`，
+     **A1 的資料生成迴圈必須換 seed 重試**。`rl_env.py` 與舊 checkpoint 未動（留作 v2 對照）。
+   - **★ 2026-08-15 本人拍板兩件事**（已同步進計畫書）：
+     ① **curriculum 改成「全程一筆畫 ＋ 反向 curriculum」**，不再走「先允許倒車、三階段收緊」。
+     理由：一筆畫在構造上必定可解（出題器先畫 Hamiltonian path 再挖題）；**禁止重踩 ⇒ 2-cycle 定義上不可能發生**，
+     `visit_count`／`visit_recency` 兩個 channel 直接砍掉；原案 Phase 1/2 的「成功」不是合法 Zip 解，
+     而反向 curriculum 本來就能解稀疏訊號問題。備案（部分覆蓋給分 → 才考慮開放倒車）由 A1 量到的死路率決定。
+     ② **相依走選項 B**：`uv add sb3-contrib==2.7.1`，**不動 `torch==2.4.1+cu121`**。
+     查證：contrib 2.7.1 只要求 SB3≥2.7.0，而 SB3 2.7.0／2.8.0 都只要求 `torch>=2.3`（SB3 2.9 才要 ≥2.8）；
+     wheel 內確認有 `ppo_mask` 與 `MaskablePPO`。**待本人執行 `uv add`；A1 不需要它。**
+   - **✅ A1 已完成（2026-08-15）**：`src/core/rl/rl_env_v2.py`（一筆畫 env ＋ action masking ＋ 反向 curriculum，21 個測試全過，
+     **合法性定義對齊 `dfs.py:96-105`**）、`generate_dataset_v2.py`（保留 solution path，舊腳本 `generate_rl_dataset.py:59` 會丟掉它）、
+     `baselines.py`。**5,100 題資料集已生成**（4/5/6 各 1700，train/val/test = 8:1:1）。
+     **生成成本修掉 18 倍**：出題器預設 `timeout_per_attempt=20s` 都花在證明「起點 parity 不對所以無解」，
+     實測成功的搜尋 ≤0.415s 就完成 → 改 0.5s 後，5,100 題從預估 23 小時降到 **45 秒**；7×7 也只要 35 秒／100 題（**已不是瓶頸**）。
+     這是呼叫端參數，沒有改共用模組。
+   - **Baseline 已落盤**（510 題 held-out × 20 局，`logs/rl_baselines/`）：
+     masked random **4×4 8.8%／5×5 0.9%／6×6 0.0%**；greedy **10.2%／3.7%／0.8%**；失敗中 90–100% 是死路。
+     **greedy 就是距離型 shaping 的天花板，6×6 就崩掉——等於用實驗證實了報告 §2.2**（原本只是靜態論證）。
+   - **相依已安裝**：`sb3-contrib==2.7.1`（需加 `--index-strategy unsafe-best-match`，因為專案的 index 策略寫在 `[tool.uv.pip]`，`uv add` 不吃）。
+     裝完確認 `torch 2.4.1+cu121` 與 SB3 2.7.0 都沒被動到、`MaskablePPO` 可 import、測試全綠。
+   - **下一步是 A2**（4×4 ＋ 反向 curriculum ＋ MaskablePPO 訓練），這是第一個真的會訓練的階段。
    - **根因已升級為機制層解釋**：`ch_path` 是二值、步數不在觀測裡 → 在兩個已訪格間震盪時觀測序列變成 `o_A, o_B, o_A…`，
      確定性策略必然卡死；非法移動則是更退化的單點迴圈。**所以不是調 reward 權重的問題**。
      另外觀測只給「下一個」waypoint，長程規劃在資訊上本來就不可能。

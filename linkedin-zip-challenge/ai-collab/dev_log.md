@@ -83,6 +83,84 @@ Full numbers, method and caveats: **[`reports/2026-08-15_vl-p0-p1-baseline.html`
     `transformers.utils.is_torch_available()` True, torch still `2.4.1+cu121`, and the Gradio UI
     rendered in Chrome — also compared against the main worktree's 5.49.1 to confirm the
     `gradio` 5 → 6 jump caused no regression.
+### RL Track A1 — one-stroke env v2, dataset, and the baselines A2 must beat
+
+Curriculum decision changed by the developer before A1 started: **one-stroke all the way,
+with reverse curriculum instead of the "allow backtracking, tighten later" phases**
+(rationale recorded in the track plan §4). Consequences: revisits are masked from step one,
+so the v1 2-cycle is impossible by construction and the `visit_count` / `visit_recency`
+channels were dropped; every training success is now a legal Zip solution.
+
+-   **`src/core/rl/rl_env_v2.py`** — `PuzzleEnvV2`: Dict observation (8 channels padded to
+    8×8 + 8 scalars), `action_masks()` covering bounds / blocked / walls / visited /
+    out-of-order numbers, dead-end termination before an all-False mask can reach the
+    sampler, sparse reward (+1 success, 0 otherwise) with optional potential-based coverage
+    shaping. Legality mirrors `dfs.py:96-105`, and reset collects number 1 exactly like
+    `dfs.py:72-77` — the detail v1 got wrong. 21 unit tests, all passing, including the
+    ground-truth replay v1 failed 0/7.
+-   **`src/core/rl/generate_dataset_v2.py`** — deterministic dataset builder that *keeps the
+    solution path* (the old `generate_rl_dataset.py:59` discards it, which reverse curriculum
+    cannot afford) and splits train/val/test per size. The old script is untouched.
+-   **Generation cost fixed, 18x**: the generator's default `timeout_per_attempt=20s` is spent
+    proving that wrong-parity start cells are impossible. Measured on 7×7: successful searches
+    finish in ≤0.415s at a 0.5s cutoff and ≤1.606s at 2s. Dropping the cutoff to 0.5s took the
+    5,100-puzzle build from a projected ~23 hours to **45 seconds**, and 100 7×7 puzzles from
+    ~14 minutes to **35 seconds**. This is a call-site parameter; the shared generator was not
+    modified.
+-   **Baselines on 510 held-out puzzles × 20 episodes** (`logs/rl_baselines/`):
+
+    | policy | 4×4 | 5×5 | 6×6 |
+    |--------|-----|-----|-----|
+    | masked random | 8.8% | 0.9% | 0.0% |
+    | greedy (distance to next number) | 10.2% | 3.7% | 0.8% |
+
+    Dead ends account for 90–100% of failures, confirming that under one-stroke rules the
+    dominant failure mode is getting trapped, not running out of budget. Greedy is the ceiling
+    of what distance-based shaping can teach, and it collapses by 6×6 despite the highest
+    coverage (0.595) — **an experimental confirmation of restart-plan §2.2**, which until now
+    was a static argument.
+-   **Dependency settled**: `uv add sb3-contrib==2.7.1 --index-strategy unsafe-best-match`
+    (the project's `index-strategy` lives under `[tool.uv.pip]`, which `uv add` ignores).
+    Verified afterwards: `torch 2.4.1+cu121` and `stable-baselines3 2.7.0` unchanged,
+    `MaskablePPO` imports, suite still green. sb3-contrib is the official SB3 contrib package
+    (Antonin Raffin / DLR, MIT); 2.7.1 was released 2025-12-05.
+
+Suite after A1: **76 passed, 8 xfailed**, `ruff check` clean. Next is A2 (Phase 1 training on
+4×4 with reverse curriculum), which is the first stage that actually trains anything.
+
+### RL Track A0 — env v1 is not merely hard to learn, it is unsolvable (branch `feat/rl-masked-ppo`)
+
+The A0 sanity stage of [plans/2026-08-15_track-rl-solver.md](plans/2026-08-15_track-rl-solver.md) ran in the
+`zip-rl` worktree. Baseline first: `uv sync`, `uv run pytest` → **46 passed**, `ruff` clean, matching the
+2026-08-08 record. Then six probes were run against **unmodified** `src/core/rl/rl_env.py`. Full write-up:
+[reports/2026-08-15_a0-env-v1-findings.md](reports/2026-08-15_a0-env-v1-findings.md).
+
+-   **Replaying a ground-truth solution never terminates — 0/7 puzzles.** `reset()` puts the agent on
+    waypoint 1 but leaves `_next_waypoint_idx` at 0, and the collection check only runs *after* a move
+    (`rl_env.py:143-146`, `:199-208`). A legal one-stroke path never re-enters the start cell, so the
+    waypoint index is pinned at 0 and `terminated` is unreachable. Every fixture path covered all cells
+    (36/36, 49/49) and still scored about −35 to −48.
+-   **The success bonus is reserved for illegal paths.** Prefixing the same solution with a single
+    step off and back onto the start cell terminates **6/6** fixtures with **+999.01** (episode totals
+    +2359 to +4946). `all_cells_visited` uses `len(set(path_taken))`, so revisits are not penalised at
+    the terminal check. env v1's reward is therefore anti-correlated with the rules of Zip: the best
+    scoring strategy it can teach is a cheat. This amends §2.4 of the restart plan — the probability of
+    a *legal* positive sample was not "close to zero", it was exactly zero.
+-   **The 2-cycle hypothesis is confirmed, so the v2 design stands.** Oscillating between two visited
+    cells yields exactly 2 distinct observation hashes over 8 steps, and a deterministic 2-state policy
+    built from them ran 69 steps to truncation without ever escaping, touching only those 2 cells.
+-   **Illegal moves do not consume the step budget**: 82 boundary bumps against a budget of 72 produced
+    1 distinct observation and never reported truncation (`:176-180` hard-codes `truncated=False`).
+-   **Side finding for A1**: `generate_puzzle` fails on odd open grids by parity — a 5×5 start-cell sweep
+    gave 13/13 success on `(r+c)` even and 0/12 on odd, so ~2.5% of seeds exhaust all retries and return
+    `None`. Dataset generation must retry with a new seed. The generator itself was left untouched
+    (shared module, read-only per the track plan).
+
+Added: `src/core/rl/diagnose_env_v1.py` (six probes, JSON evidence to the git-ignored
+`logs/rl_diagnostics/`), `src/core/tests/rl/test_rl_env_v1_diagnosis.py`, and `src/core/rl/action_space.py`
+(shared path→action encoding). The unsolvable replays are pinned with `xfail(strict=True)` so the suite
+stays green while failing loudly if v1 is ever changed. After the additions:
+**55 passed, 8 xfailed**, `ruff check` clean. `rl_env.py` and the old checkpoints were not touched.
 
 ### Planning Reports for the VLM and RL Tracks (research only, no code changed)
 
