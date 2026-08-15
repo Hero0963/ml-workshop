@@ -36,7 +36,8 @@
 | `ai-collab/project_guide.md` | 架構、模組職責、資料流、啟動方式 |
 | `ai-collab/dev_log.md` | 開發日誌（逆時序，最新在上）。做完一段就加一則 |
 | `ai-collab/commands.txt` | 常用咒語 |
-| `ai-collab/reports/` | 任務報告 `YYYY-MM-DD_<主題>.md`（較大的任務才出） |
+| `ai-collab/plans/` | **任務計畫書** `YYYY-MM-DD_track-<名稱>.md`：給接手某條 track 的 agent 用，含 worktree 環境建置、分階段 done 條件、track 間的協作約定 |
+| `ai-collab/reports/` | 任務報告 `YYYY-MM-DD_<主題>.md`（較大的任務才出；分析與推理放這裡，計畫書只放要做什麼） |
 | `README.md` / `README_zh-TW.md` | **對外門面**（英文／中文）。功能、遊戲規則、安裝與啟動 |
 | `gemini_readme_raw.md` | 歷史檔案：2025 年的原始協作提示語，**已被本檔取代**，保留當考古用 |
 | `.env.example` | 環境變數樣板（`.env` 本身**絕不進版控**） |

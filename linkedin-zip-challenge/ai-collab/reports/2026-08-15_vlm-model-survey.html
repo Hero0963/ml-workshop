@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VLM 選型與微調方案報告 — linkedin-zip-challenge</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1c1a; --muted:#5f5f58; --line:#e2e0d9;
+    --card:#ffffff; --accent:#8a5a00; --accent-soft:#fff6e3;
+    --good:#1f6b3a; --good-soft:#eaf6ee; --bad:#9b2c2c; --bad-soft:#fdeeee;
+    --code-bg:#f2f1ec; --mono:ui-monospace,"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#17171a; --fg:#e8e6e1; --muted:#a4a19a; --line:#33333a;
+      --card:#1f1f23; --accent:#e8b45c; --accent-soft:#2b2418;
+      --good:#7fd39b; --good-soft:#17281d; --bad:#f0908d; --bad-soft:#2b1a1a;
+      --code-bg:#26262b;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 1.2rem 5rem; background:var(--bg); color:var(--fg);
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px; line-height:1.85; letter-spacing:.01em;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  header{padding:3rem 0 1.5rem;border-bottom:2px solid var(--line);margin-bottom:2rem}
+  h1{font-size:1.9rem;line-height:1.35;margin:0 0 .6rem}
+  .sub{color:var(--muted);font-size:.95rem;margin:0}
+  h2{font-size:1.35rem;margin:3rem 0 .9rem;padding-top:.6rem;border-top:1px solid var(--line)}
+  h3{font-size:1.08rem;margin:2rem 0 .6rem}
+  h4{font-size:.98rem;margin:1.4rem 0 .4rem;color:var(--muted)}
+  p,li{font-size:1rem}
+  ul,ol{padding-left:1.4rem}
+  li{margin:.35rem 0}
+  code{font-family:var(--mono);background:var(--code-bg);padding:.12em .38em;border-radius:4px;font-size:.88em}
+  pre{background:var(--code-bg);padding:1rem 1.1rem;border-radius:8px;overflow-x:auto;font-size:.86rem;line-height:1.6}
+  pre code{background:none;padding:0}
+  table{border-collapse:collapse;width:100%;margin:1.2rem 0;font-size:.92rem}
+  .scroll{overflow-x:auto;margin:1.2rem 0}
+  .scroll table{margin:0;min-width:660px}
+  th,td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left;vertical-align:top}
+  th{background:var(--code-bg);font-weight:600}
+  .box{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--card);
+       padding:1rem 1.2rem;border-radius:6px;margin:1.4rem 0}
+  .box.rec{border-left-color:var(--good);background:var(--good-soft)}
+  .box.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+  .box.plain{border-left-color:var(--muted)}
+  .box p:first-child{margin-top:0}.box p:last-child{margin-bottom:0}
+  .qa{border-left:4px solid var(--accent);background:var(--accent-soft);padding:.9rem 1.2rem;border-radius:6px;margin:1.4rem 0}
+  .qa .q{font-weight:700;margin:0 0 .4rem}
+  .tag{display:inline-block;font-size:.75rem;padding:.1rem .5rem;border-radius:99px;
+       border:1px solid var(--line);background:var(--code-bg);color:var(--muted);margin-right:.35rem}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem 1.4rem}
+  .toc ol{margin:.4rem 0;padding-left:1.3rem}
+  .toc li{margin:.15rem 0;font-size:.94rem}
+  a{color:var(--accent);text-underline-offset:3px}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src code{font-size:.85em}
+  footer{margin-top:4rem;padding-top:1.2rem;border-top:1px solid var(--line);color:var(--muted);font-size:.86rem}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.94rem;margin:1rem 0}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0}
+  .pill-good{color:var(--good);font-weight:600}
+  .pill-bad{color:var(--bad);font-weight:600}
+  .changelog{background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:.9rem 1.2rem;font-size:.92rem;margin:1.5rem 0}
+  @media print{ body{font-size:11pt} .box{break-inside:avoid} h2{break-after:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>VLM 選型與微調方案報告<br><span style="font-size:1.1rem;color:var(--muted)">linkedin-zip-challenge · 圖片 → puzzle JSON</span></h1>
+  <p class="sub">
+    初版 2026-08-15｜<strong>v2 修訂 2026-08-15</strong>（Asia/Taipei）｜對象：本專案 roadmap 第 2 項「VL 圖片解析整合進主流程」<br>
+    本機：<strong>RTX 4070 Ti SUPER 16GB VRAM ＋ 64GB RAM</strong>（實測 <code>nvidia-smi</code>）｜訓練：<strong>以 Google Colab 為主</strong>
+  </p>
+</header>
+
+<div class="changelog">
+  <strong>v2 修訂了什麼</strong>（依你的五點回饋）
+  <ol>
+    <li><strong>新增第 2 節「本機能跑多大」</strong>：推論／訓練分開估算，直接回答 7／8／9B 會不會吃力。</li>
+    <li><strong>第 5 節重寫選型結論</strong>：既然訓練放 Colab，尺寸不再被本機訓練綁死，推薦改成決策樹而非單一答案。</li>
+    <li><strong>第 4 節 survey 全面更新</strong>：v1 用了過期資訊（寫成 Gemma 3、把 Qwen3-VL 當主流）。實際上 <strong>Gemma 4 已於 2026-03/04 釋出且首度採 Apache-2.0</strong>，而 <strong>Qwen 3.7／3.8 走閉源 API</strong>，開源線停在 3.5／3.6。</li>
+    <li><strong>新增第 6 節</strong>：OCR 專用模型能不能微調成功。</li>
+    <li><strong>新增第 7 節</strong>：Unsloth notebook 生態調查（250+ 本）。</li>
+  </ol>
+</div>
+
+<div class="toc">
+  <strong>目錄</strong>
+  <ol>
+    <li><a href="#tldr">結論先講</a></li>
+    <li><a href="#hw">本機能跑多大？7／8／9B 會吃力嗎</a></li>
+    <li><a href="#why">為什麼這個任務值得 fine-tune</a></li>
+    <li><a href="#survey">開源 VLM 現況調查（2026-08 更新版）</a></li>
+    <li><a href="#pick">選型推薦：不是「4B 就好」，是分流</a></li>
+    <li><a href="#ocr">OCR 專用模型有機會微調成功嗎</a></li>
+    <li><a href="#unsloth">Unsloth 生態調查</a></li>
+    <li><a href="#data">訓練資料：本專案最大的不公平優勢</a></li>
+    <li><a href="#train">微調設定</a></li>
+    <li><a href="#colab">Colab 用法（含 Windows 與 T4 的坑）</a></li>
+    <li><a href="#deploy">本機部署路徑與已知地雷</a></li>
+    <li><a href="#eval">評估指標</a></li>
+    <li><a href="#onestep">一步到位（agent 看圖直接給答案）</a></li>
+    <li><a href="#plan">分階段執行計畫與 done 條件</a></li>
+    <li><a href="#risk">風險清單</a></li>
+    <li><a href="#unverified">本報告未驗證的部分</a></li>
+    <li><a href="#ref">參考資料</a></li>
+  </ol>
+</div>
+
+<h2 id="tldr">1. 結論先講</h2>
+
+<div class="box rec">
+  <p><strong>兩個主力候選，看你要不要付 Colab 的錢：</strong></p>
+  <ul>
+    <li><strong>只想用免費 T4 → <code>Gemma 4 E4B</code></strong>（Apache-2.0、Unsloth 官方 QLoRA 只要 10GB、支援 vision 微調）。關鍵理由：<strong>免費 T4 是 Turing 架構、不支援 bf16</strong>，而 Unsloth 明說 Qwen3.5 不建議走 4-bit QLoRA → Qwen3.5 在免費 T4 上其實很尷尬。</li>
+    <li><strong>願意付 CU 用 L4／A100 → <code>Qwen3.5-4B</code>（主力）＋ <code>Qwen3.5-9B</code>（上限對照）</strong>。Qwen3-VL-8B 在 DocVQA 拿 96.1、4B 拿 95.3，同代 Qwen 在「讀圖中文字」這條線上是最強的一族，而我們的任務正是讀圖中的數字與線條。</li>
+  </ul>
+  <p><strong>本機部署完全不是瓶頸</strong>：9B 的 Q4 量化推論只吃約 6GB，你的 16GB 綽綽有餘（詳見第 2 節）。</p>
+  <p><strong>再加一組低成本對照：<code>DeepSeek-OCR 2</code>（Unsloth 有官方微調 notebook）。</strong>不是因為它一定贏，而是它便宜到值得平行試一輪（詳見第 6 節）。</p>
+</div>
+
+<h2 id="hw">2. 本機能跑多大？7／8／9B 會吃力嗎</h2>
+
+<p>先把兩件常被混在一起的事分開：<strong>訓練</strong>吃的 VRAM 是<strong>推論</strong>的好幾倍。</p>
+
+<h3>2.1 推論（部署）：9B 一點都不吃力</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>尺寸</th><th>bf16／fp16</th><th>Q8</th><th>Q4_K_M</th><th>16GB 本機結論</th></tr></thead>
+<tbody>
+<tr><td>2B</td><td>~5 GB</td><td>~3 GB</td><td>~2 GB</td><td class="pill-good">✅ 輕鬆</td></tr>
+<tr><td>4B</td><td>~9–10 GB</td><td>~5.5 GB</td><td>~3.5 GB</td><td class="pill-good">✅ 輕鬆（bf16 也放得下）</td></tr>
+<tr><td><strong>8–9B</strong></td><td>~19–21 GB ❌</td><td>~10–11 GB</td><td><strong>~6 GB</strong></td><td class="pill-good">✅ <strong>不吃力</strong>（走 Q4／Q8）</td></tr>
+<tr><td>12B</td><td>~26 GB ❌</td><td>~14 GB</td><td>~8.5 GB</td><td>✅ 可行（Q4）</td></tr>
+<tr><td>27–31B</td><td>❌</td><td>❌</td><td>~18–20 GB ❌</td><td class="pill-bad">✗ 超出 16GB</td></tr>
+</tbody>
+</table>
+</div>
+<p class="src"><strong>這張表是估算</strong>（bf16 ≈ 2GB／1B、Q8 ≈ 1.1GB／1B、Q4_K_M ≈ 0.6GB／1B，再加視覺編碼器與 KV cache 約 1–2GB），不是實測。實際值必須在 P0 階段量。影像 token 多時 KV cache 會再吃一點。</p>
+
+<div class="box rec">
+<p><strong>直接回答你的問題：7／8／9B 在你的機器上「推論」完全不吃力</strong>，Q4 量化後大約 6GB，甚至還能同時開別的東西。真正的天花板在<strong>訓練</strong>。</p>
+</div>
+
+<h3>2.2 訓練：這才是 16GB 的天花板</h3>
+<p>以下是<strong>官方文件數字</strong>（非估算）：</p>
+<div class="scroll">
+<table>
+<thead><tr><th>模型</th><th>方式</th><th>官方 VRAM</th><th>你的 16GB</th><th>Colab</th></tr></thead>
+<tbody>
+<tr><td>Qwen3.5-0.8B</td><td>bf16 LoRA</td><td>3 GB</td><td class="pill-good">✅</td><td>—</td></tr>
+<tr><td>Qwen3.5-2B</td><td>bf16 LoRA</td><td>5 GB</td><td class="pill-good">✅</td><td>—</td></tr>
+<tr><td><strong>Qwen3.5-4B</strong></td><td>bf16 LoRA</td><td><strong>10 GB</strong></td><td class="pill-good">✅（加影像後偏緊，需實測）</td><td>L4 更舒服</td></tr>
+<tr><td><strong>Qwen3.5-9B</strong></td><td>bf16 LoRA</td><td><strong>22 GB</strong></td><td class="pill-bad">✗ 放不下</td><td>L4 24GB／A100</td></tr>
+<tr><td>Gemma 4 E2B</td><td>LoRA（含 vision）</td><td>8–10 GB</td><td class="pill-good">✅</td><td>免費 T4 可</td></tr>
+<tr><td><strong>Gemma 4 E4B</strong></td><td><strong>QLoRA 10 GB</strong>／LoRA 17 GB</td><td>QLoRA ✅／LoRA ✗</td><td class="pill-good">免費 T4 可</td><td>—</td></tr>
+<tr><td>Gemma 4 31B</td><td>QLoRA</td><td>22 GB</td><td class="pill-bad">✗</td><td>A100</td></tr>
+<tr><td>Gemma 4 26B-A4B</td><td>LoRA</td><td>&gt;40 GB</td><td class="pill-bad">✗</td><td>A100 80G</td></tr>
+</tbody>
+</table>
+</div>
+<p class="src">出處：<a href="https://unsloth.ai/docs/models/qwen3.5/fine-tune">Unsloth · Qwen3.5 Fine-tuning Guide</a>（0.8B 3GB／2B 5GB／4B 10GB／9B 22GB，bf16 LoRA，<strong>文字基準</strong>）、<a href="https://unsloth.ai/docs/models/gemma-4/train">Unsloth · Gemma 4 Fine-tuning Guide</a>（E2B 8GB、E4B QLoRA 10GB／LoRA 17GB、31B QLoRA 22GB、26B-A4B &gt;40GB；<strong>vision 微調僅 E2B／E4B 支援</strong>）。</p>
+
+<div class="box warn">
+<p><strong>免費 T4 的隱藏陷阱（這條會決定你的選型）：T4 是 Turing 架構，硬體不支援 bf16。</strong>而 Unsloth 對 Qwen3.5 明寫「不建議做 QLoRA（4-bit）訓練」——兩件事湊起來，<strong>Qwen3.5 在免費 T4 上幾乎沒有舒服的路</strong>（bf16 跑不動、4-bit 不被建議）。Gemma 4 則官方支援 QLoRA，E4B QLoRA 只要 10GB，免費 T4 剛好。</p>
+<p>Unsloth 文件本身也印證了這條限制：Gemma-3-4B 做 RL 時「T4 不夠、建議用 Colab 的 L4」，理由正是 vLLM 限定 bf16。</p>
+</div>
+
+<h2 id="why">3. 為什麼這個任務值得 fine-tune</h2>
+
+<h4>白話版</h4>
+<p>現在是「寫一大段說明書＋三個範例，拜託通用模型照格式吐 JSON」。通用模型什麼都會一點，但沒有一項專精，所以時好時壞——尤其數牆壁在第幾條線、圓圈在第幾格這種對位細活。微調等於<strong>拿一萬張已知正確答案的圖去補習</strong>，讓模型只把這件事做到極熟：說明書從三頁縮成三行，速度變快，答案穩定。</p>
+
+<h4>術語版</h4>
+<p>目前是 few-shot in-context learning ＋ 手工 JSON 解析（<code>output_type=str</code> 混合策略，2025-10-24 驗證，決策見 <code>ai-collab/roadmap.md</code>）。三個結構性弱點：</p>
+<ul>
+  <li><strong>prompt 成本</strong>：<code>build_puzzle_prompt()</code> 內嵌三個完整 JSON 範例（<code>final_puzzle_parser.py:131-159</code>），每次推論重付。微調後可縮成一句話。</li>
+  <li><strong>格式不穩</strong>：需要 <code>extract_json_block()</code> 做 regex 兜底（同檔 <code>:46-58</code>）。微調把輸出分布鎖進單一格式。</li>
+  <li><strong>空間精度</strong>：牆是「兩個相鄰格子」的關係（<code>{"cell1":[r,c],"cell2":[r,c]}</code>），通用 VLM 對細粒度相對位置本來就弱，這正是資料能教會的。</li>
+</ul>
+<p>任務範圍極窄——輸出只有 <code>layout</code> 與 <code>walls</code> 兩個 key，schema 定死在 <code>SimplePuzzleOutput</code>（<code>final_puzzle_parser.py:37-43</code>）。<strong>任務越窄，小模型微調的性價比越高。</strong></p>
+
+<h2 id="survey">4. 開源 VLM 現況調查（2026-08 更新版）</h2>
+
+<div class="box warn">
+<p><strong>v1 這一節是錯的，先認帳</strong>：v1 把 Gemma 3 當現役、把 Qwen3-VL 當主流，兩者都落後至少一代。以下是重新查證後的版本。</p>
+</div>
+
+<h3>4.1 先看大局：2026 年開源前緣發生了兩件事</h3>
+<ol>
+  <li><strong>Qwen 分成兩軌，旗艦轉閉源。</strong>Qwen3.7-Max／3.7-Plus（2026-05／06）與 Qwen3.8-Max（2026-08-02）都是 <strong>API-only、不放權重</strong>；開源線維持在「落後約一代」的中階，最後一個開源通用模型是 2026-04 的 <strong>Qwen3.6-27B</strong>。官方曾預告 2026-08 第二週釋出 Qwen3.8-Max／3.8-27B 權重，<strong>截至本報告撰寫時尚未上架</strong>。<br>
+  → 對我們的意義：<strong>Qwen 最新的「小尺寸開源 VL」仍然是 2026-02 的 Qwen3.5 系列（0.8B／2B／4B／9B）</strong>，Qwen3.6 沒有 10B 以下。</li>
+  <li><strong>Gemma 4 出來了，而且首度給 Apache-2.0。</strong>2026-03-31／04-02 釋出，五個尺寸 <strong>E2B／E4B／12B／26B-A4B／31B 全部支援影像輸入</strong>（E2B／E4B／12B 另支援音訊），E2B/E4B 128K context、其餘 256K。這是 Gemma 線第一次拿掉自訂授權改用純 Apache-2.0。</li>
+</ol>
+
+<h3>4.2 通用 VLM 候選（適合 16GB 本機部署）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>模型</th><th>釋出</th><th>可用尺寸</th><th>授權</th><th>Unsloth 微調</th><th>本機部署</th><th>本專案適配度</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Gemma 4</strong></td><td>2026-03/04</td>
+  <td>E2B(2.3B eff)／E4B(4.5B eff)／12B／26B-A4B／31B</td>
+  <td class="pill-good">Apache-2.0</td>
+  <td class="pill-good">✅ 全系列（vision 限 E2B／E4B）；官方 vision＋text／audio／RL notebook</td>
+  <td>GGUF · llama.cpp · Ollama · LM Studio · MLX</td>
+  <td class="pill-good"><strong>★ 免費 T4 路線首選</strong>：QLoRA 官方支援，E4B 只要 10GB</td>
+</tr>
+<tr>
+  <td><strong>Qwen3.5</strong>（原生多模態）</td><td>2026-02</td>
+  <td>0.8B／2B／4B／9B（另 27B、35B-A3B、122B）</td>
+  <td class="pill-good">Apache-2.0</td>
+  <td class="pill-good">✅ vision notebook（0.8B／2B／4B）＋ 4B GRPO</td>
+  <td>Ollama 官方 library 全系列標 vision；llama.cpp／vLLM(≥0.170)</td>
+  <td class="pill-good"><strong>★ 付費 L4／A100 路線首選</strong>；early-fusion 原生多模態，4B 原生 262K context</td>
+</tr>
+<tr>
+  <td>Qwen3.6</td><td>2026-04</td><td>27B／35B-A3B</td><td>Apache-2.0</td><td>—</td><td>llama.cpp 文字＋視覺</td>
+  <td class="pill-bad">✗ 沒有 10B 以下，16GB 本機不適用</td>
+</tr>
+<tr>
+  <td>Qwen3-VL</td><td>2025-10</td><td>2B／4B／8B／32B／30B-A3B／235B-A22B</td><td>Apache-2.0</td>
+  <td class="pill-good">✅ 含 GRPO/GSPO</td><td>官方 GGUF；llama.cpp 自 2025-10-30 支援</td>
+  <td>上一代，但<strong>踩雷資料最齊、DocVQA 8B 96.1／4B 95.3</strong>；穩妥的備援</td>
+</tr>
+<tr>
+  <td>MiniCPM-V 4.6</td><td>2026-05-11</td><td>1.3B</td><td>需查 model license</td><td>未見官方 notebook</td><td>Ollama 有 MiniCPM 系列</td>
+  <td>手機端取向；官方稱 VL 任務達 Qwen3.5-2B 級。<strong>「最小可行」對照組</strong></td>
+</tr>
+<tr>
+  <td>MiniCPM-o 4.5</td><td>2026 上半</td><td>9B</td><td>需查</td><td>未見官方 notebook</td><td>社群 GGUF，有 mmproj 缺件回報</td>
+  <td>你現用 <code>minicpm-o2.6</code> 的後繼，OpenCompass 均分 77.6。<strong>不微調、只想換更強模型時最省事</strong></td>
+</tr>
+<tr>
+  <td>InternVL3.5</td><td>2025-08</td><td>1B～241B-A28B</td><td>開源</td><td>未見官方 notebook</td><td>transformers 為主</td>
+  <td>學術線強（Cascade RL），但已快一年，生態不如上面兩家</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>4.3 OCR／文件解析專用模型（第 6 節詳談）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>模型</th><th>尺寸</th><th>特點</th><th>Unsloth 微調</th></tr></thead>
+<tbody>
+<tr><td><strong>PaddleOCR-VL</strong></td><td><strong>0.9B</strong></td><td>OmniDocBench V1.5 拿 92.56 分、支援 109 語言；以 0.9B 之姿壓過多數大模型</td><td class="pill-good">✅ Unsloth notebook 目錄有 Paddle OCR</td></tr>
+<tr><td><strong>DeepSeek-OCR / OCR-2</strong></td><td>3B 級</td><td>輸出乾淨 markdown；MoE 版吞吐更好</td><td class="pill-good">✅ <strong>官方免費 Colab 微調 notebook</strong>；Unsloth 稱 OCR-2 訓練快 1.4×、省 40% VRAM</td></tr>
+<tr><td>dots.ocr</td><td>~1.7B</td><td>多語文件版面解析單一模型</td><td>社群回報微調有困難（見 HF 討論）</td></tr>
+<tr><td>GOT-OCR 2.0／Granite-Docling</td><td>小型</td><td>可自架的文件解析選項</td><td>未見官方 notebook</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src"><strong>出處</strong>：
+<a href="https://ai.google.dev/gemma/docs/core/model_card_4">Gemma 4 model card · Google AI for Developers</a>（五個尺寸、全部支援影像、Apache-2.0、context 長度）；
+<a href="https://unsloth.ai/docs/models/gemma-4/train">Unsloth · Gemma 4 Fine-tuning Guide</a>；
+<a href="https://arxiv.org/html/2607.02770v1">Gemma 4 Technical Report</a>；
+<a href="https://huggingface.co/Qwen/Qwen3.5-4B">Qwen3.5-4B 模型卡</a>；
+<a href="https://github.com/QwenLM/Qwen3.6">QwenLM/Qwen3.6</a>；
+<a href="https://insiderllm.com/guides/qwen-open-weights-vs-closed-frontier-2026/">Qwen 開源／閉源兩軌策略整理</a>與
+<a href="https://www.digitalapplied.com/blog/qwen-closed-flagship-pivot-open-weight-retreat-2026">Qwen 閉源轉向報導</a>（<span class="pill-bad">二手</span>，但兩篇獨立來源一致，且與官方 repo「Qwen3.6 最小 27B」的事實吻合）；
+<a href="https://github.com/qwenlm/qwen3-vl">QwenLM/Qwen3-VL</a>；
+<a href="https://www.spheron.network/blog/best-open-source-ocr-vlm-self-host-gpu-cloud-2026/">開源 OCR VLM 自架比較（PaddleOCR-VL／DeepSeek-OCR／dots.ocr／GOT-OCR）</a>；
+<a href="https://unsloth.ai/docs/models/tutorials/deepseek-ocr-2">Unsloth · DeepSeek-OCR 2 微調指南</a>。
+搜尋關鍵字（去識別化）：<code>newest open source vision language model August 2026</code>、<code>Gemma 4 release 2026 multimodal sizes</code>、<code>Qwen3.7 open weights or API only 2026</code>、<code>OCR specialist vision model 2026 fine-tune LoRA</code>。</p>
+
+<h2 id="pick">5. 選型推薦：不是「4B 就好」，是分流</h2>
+
+<div class="qa">
+  <p class="q">Q2：你建議 4B 就好了嗎？</p>
+  <p><strong>不是。</strong>v1 之所以停在 4B，是因為當時把「本機訓練」當硬限制——4B bf16 LoRA 10GB 剛好卡進 16GB，9B 的 22GB 放不下。<strong>但你說訓練要放 Colab，這個限制就不成立了</strong>：本機只需要跑推論，而 9B 的 Q4 推論只要 6GB。</p>
+  <p>所以修正後的建議是：<strong>用尺寸做對照實驗，而不是先賭一個尺寸。</strong>先用 2B／4B 把整條 pipeline 打通（資料、訓練腳本、評估、部署），再用<strong>同一份資料</strong>訓 9B，看指標差多少——差得少就留 4B（推論快、迭代快），差得多就上 9B（反正本機跑得動）。Unsloth 換尺寸只要改 model name。</p>
+</div>
+
+<h3>5.1 決策樹</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>你的情境</th><th>主力</th><th>對照</th><th>為什麼</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>只用免費 Colab T4</strong></td>
+  <td class="pill-good">Gemma 4 E4B（QLoRA）</td>
+  <td>Gemma 4 E2B</td>
+  <td>T4 無 bf16；Gemma 4 官方支援 QLoRA 且 vision 微調限 E2B／E4B——剛好就是免費層跑得動的兩個</td>
+</tr>
+<tr>
+  <td><strong>願意付 CU 用 L4／A100</strong></td>
+  <td class="pill-good">Qwen3.5-4B（bf16 LoRA）</td>
+  <td>Qwen3.5-9B、Qwen3-VL-4B</td>
+  <td>Qwen 在讀圖文字（DocVQA 等）這條線最強，且 4B 原生多模態、Ollama 官方支援</td>
+</tr>
+<tr>
+  <td><strong>想全程本機、不碰雲</strong></td>
+  <td>Qwen3.5-2B 或 Gemma 4 E2B</td>
+  <td>Qwen3.5-4B（偏緊）</td>
+  <td>任務窄，2B 微調後很可能就夠；本機迭代最快</td>
+</tr>
+<tr>
+  <td><strong>低成本奇兵</strong></td>
+  <td>DeepSeek-OCR 2 / PaddleOCR-VL</td>
+  <td>—</td>
+  <td>見第 6 節</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="box rec">
+<p><strong>我的實際建議（如果只能挑一條）</strong>：主力 <strong>Qwen3.5-4B</strong>、對照 <strong>Gemma 4 E4B</strong>，兩者用同一份資料各訓一輪。理由是這兩條路的成本差異主要在 Colab 額度，而你手上兩種都有；<strong>訓兩個不同家族比訓兩個不同尺寸更有資訊量</strong>——尺寸的效果可以事後補測，家族選錯要重來。</p>
+</div>
+
+<h2 id="ocr">6. OCR 專用模型有機會微調成功嗎</h2>
+
+<div class="qa">
+  <p class="q">Q4：你覺得專門做 OCR 的 VLM 有機會 fine-tune 成功嗎？</p>
+  <p><strong>有機會，而且值得平行試一輪，但我不會把它當主力。</strong>關鍵在於：<strong>我們的任務名義上像 OCR，本質上不是 OCR。</strong></p>
+</div>
+
+<h3>6.1 先分清楚我們到底要模型做什麼</h3>
+<p>把 <code>puzzle_04.png</code> 的解析工作拆開，其實是三件事：</p>
+<ol>
+  <li><strong>認字</strong>：黑圓圈裡的 <code>1…12</code>。<span class="tag">OCR 專用模型的強項</span>——但這是三件事裡<strong>最簡單</strong>的，通用 4B 模型也幾乎不會錯。</li>
+  <li><strong>網格對位</strong>：每個圓圈落在第幾列第幾行。<span class="tag">空間推理</span>——OCR 模型有版面分析（layout parsing）能力，理論上對「表格化網格」是熟的。</li>
+  <li><strong>牆的關係抽取</strong>：一條粗黑短棒壓在兩格之間，要輸出「它隔開了 (2,3) 與 (3,3)」。<span class="tag">最難</span>——<strong>這既不是文字也不是版面框，是一個「圖形元素 → 兩個座標的關係」的抽取任務</strong>，OCR 模型的預訓練目標裡幾乎沒有這種東西。</li>
+</ol>
+<p>第 3 項才是這個任務的瓶頸，而它<strong>正好落在 OCR 專用模型的訓練分布之外</strong>。所以「OCR 模型天生比較適合」這個直覺，只在前兩項成立。</p>
+
+<h3>6.2 那為什麼還值得試</h3>
+<ul>
+  <li><strong>便宜到不試可惜</strong>：PaddleOCR-VL 只有 <strong>0.9B</strong>，DeepSeek-OCR 3B 級。訓練一輪的時間與 VRAM 都遠低於 4B／9B，等於「用零頭的成本買一個可能的驚喜」。</li>
+  <li><strong>Unsloth 有官方支援</strong>：DeepSeek-OCR 有免費 Colab 微調 notebook（Unsloth 稱 OCR-2 訓練快 1.4×、省 40% VRAM、context 長 5×），Paddle OCR 也在其 notebook 目錄。等於這條路的工程成本≈零。</li>
+  <li><strong>有實證顯示 OCR 模型很吃得下領域微調</strong>：有公開回報以 20 萬筆波斯文資料微調 DeepSeek-OCR，僅 60 步就把平均 CER 從 149.07% 降到 60.81%（<span class="pill-bad">二手、且是不同任務</span>，只能當「這類模型可被馴化」的旁證，不能當成我們任務的預期值）。</li>
+</ul>
+
+<h3>6.3 但要預期到的三個坑</h3>
+<ul>
+  <li><strong>輸出格式被預訓練綁死</strong>：這些模型被大量訓練成輸出 markdown／版面 JSON。要它改吐我們的 <code>{"layout":…, "walls":…}</code> 需要足夠資料把舊習慣壓過去。可用「system prompt 指定 JSON」緩解，但微調時仍要注意格式衝突。</li>
+  <li><strong>指令跟隨能力弱</strong>：專用模型犧牲了通用對話能力，prompt 空間小、對複雜指令的服從度不如通用 VLM。我們最終要接 API 與 Gradio，若之後想加「順便判斷網格尺寸」「回報信心度」等，通用模型擴充性較好。</li>
+  <li><strong>社群微調難度回報</strong>：dots.ocr 在 HF 討論串有專門的「微調挑戰與限制」討論。專用模型的微調路徑不像 Qwen／Gemma 那樣被大量踩過。</li>
+</ul>
+
+<div class="box rec">
+<p><strong>結論：把 OCR 專用模型排成「B 組實驗」，不是主力。</strong>具體做法——資料 pipeline（第 8 節）做好之後，同一份資料多跑一輪 DeepSeek-OCR 2 的 Unsloth notebook，用同一套指標（第 12 節）比較。若它在<strong>牆的 F1</strong> 上打得贏通用模型，那就換主力；若只是數字認得準、牆一樣糟，就確認了「瓶頸在空間關係而非文字」，這個結論本身也值得寫進報告。</p>
+</div>
+
+<h2 id="unsloth">7. Unsloth 生態調查</h2>
+
+<div class="qa">
+  <p class="q">Q5：也要 survey Unsloth 的資訊，他們 release 很多 fine-tune notebook。</p>
+  <p><strong><code>unslothai/notebooks</code> 目前收錄 250+ 本 Colab／Kaggle notebook</strong>，是這個方案最重要的工程資產——你幾乎不需要從零寫訓練腳本。</p>
+</div>
+
+<h3>7.1 目錄結構</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>分類</th><th>數量／內容</th><th>與本專案的關係</th></tr></thead>
+<tbody>
+<tr><td>Main Notebooks</td><td>基礎模型與訓練法</td><td>入門</td></tr>
+<tr><td><strong>Vision / Multimodal</strong></td><td><strong>30+ 本</strong>：Qwen3-VL (8B)、Qwen3.5 Vision (0.8B/2B/4B)、Gemma 3／<strong>Gemma 4 vision</strong>、Llama3.2 (11B)、Pixtral (12B)、vision math／visual reasoning</td><td class="pill-good"><strong>★ 第 9 節的訓練腳本直接改這裡的</strong></td></tr>
+<tr><td><strong>GRPO &amp; RL</strong></td><td><strong>40+ 本</strong>，含遊戲解謎、數學推理（走 vLLM）；Gemma 4 有 <strong>E2B Sudoku 的 RL/GRPO notebook</strong></td><td class="pill-good"><strong>★ 姊妹報告（RL 路線 B）的起手範本，而且 Sudoku 與 Zip 同屬網格約束解謎</strong></td></tr>
+<tr><td><strong>OCR</strong></td><td>DeepSeek-OCR（多版本）、Paddle OCR</td><td class="pill-good">★ 第 6 節的 B 組實驗</td></tr>
+<tr><td>Embeddings / STT / TTS / BERT</td><td>EmbeddingGemma、Qwen3 Embedding、BGE M3、Spark TTS、Orpheus…</td><td>本專案用不到；但 <code>lingua-tutor</code> 的 STT 線可能用得上</td></tr>
+<tr><td>Specific Use Cases</td><td>text classification、tool calling（FunctionGemma）、KTO、synthetic data</td><td>tool calling 那本與第 13 節的「agent 一步到位」有關</td></tr>
+</tbody>
+</table>
+</div>
+<p class="src">出處：<a href="https://github.com/unslothai/notebooks">github.com/unslothai/notebooks</a>；Gemma 4 的 notebook 清單見 <a href="https://unsloth.ai/docs/models/gemma-4/train">Unsloth · Gemma 4 Fine-tuning Guide</a>（E4B Vision+Text／Audio／Text-only、E2B Vision+Text、<strong>E2B Sudoku RL/GRPO</strong>、Kaggle 31B、26B-A4B 與 31B 需 A100）。</p>
+
+<h3>7.2 這對執行計畫的影響</h3>
+<ol>
+  <li><strong>不要自己寫訓練 loop</strong>。fork 對應的 vision notebook，只換三件事：資料集載入、chat template 的樣本格式、評估區塊。</li>
+  <li><strong>一開始就挑「有 notebook 的模型」</strong>——這是我把 Gemma 4 E4B 與 Qwen3.5-4B 並列主力的實際理由之一，兩者都有官方 vision notebook。</li>
+  <li><strong>RL 路線先看 Gemma 4 E2B 的 Sudoku GRPO notebook</strong>。Sudoku 與 Zip 都是「網格＋硬約束＋可程式驗證」，reward function 的寫法可以幾乎照抄結構（見姊妹報告第 5 節）。</li>
+</ol>
+
+<h2 id="data">8. 訓練資料：本專案最大的不公平優勢</h2>
+
+<h4>白話版</h4>
+<p>一般人做 fine-tune 最痛苦的是標資料。這個專案是反過來的：<strong>出題器先產生答案，再把它畫成圖，標註是免費附贈且保證 100% 正確。</strong>資料量的唯一限制是硬碟和你想跑多久。</p>
+
+<h4>術語版：資料 pipeline</h4>
+<pre><code>generate_puzzle(m, n, has_walls=True, num_blocked_cells=k)
+      ↓  回傳 (Puzzle, solution_path)，Puzzle 內含 layout / walls / num_map
+  render_linkedin_style(Puzzle) -> PNG        ← 要新寫
+      ↓
+  augment(PNG)                                ← 要新寫
+      ↓
+  (image, json_label) 樣本 → HF datasets 格式</code></pre>
+
+<h3>8.1 必須新寫：LinkedIn 風格 renderer</h3>
+<p>現有 <code>src/core/utils.py</code> 的 <code>save_solution_as_image()</code>（<code>:556</code>）畫的是<strong>解答圖</strong>：白底、方格、純文字數字、灰色路徑，用 <code>arial.ttf</code>。而真實輸入（我實際開啟 <code>illustrations/puzzle_04.png</code> 檢視）是：圓角外框 7×7 網格、淺灰細格線、米白底、<strong>實心黑圓＋白色粗體數字</strong>、<strong>壓在格線上的粗黑短棒</strong>當牆，畫面下方還有 <code>Undo</code>／<code>Hint</code> 按鈕與滑鼠游標殘影。兩者差距太大，<strong>直接拿現成 renderer 產訓練資料會學到錯的視覺分布</strong>。需要新寫 <code>src/core/vl_models/render_puzzle.py</code>（PIL 即可，專案已依賴）。</p>
+
+<h3>8.2 增強策略（對抗 domain gap）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>維度</th><th>隨機範圍</th><th>為什麼</th></tr></thead>
+<tbody>
+<tr><td>網格尺寸</td><td>5×5 – 8×8（含非正方形）</td><td>真實題目尺寸不固定</td></tr>
+<tr><td>牆數量</td><td><strong>0 – 16</strong></td><td><span class="pill-bad">重要</span>現有 generator 只產 2–5 道牆（<code>puzzle_generator.py:10-11</code>），但 <code>puzzle_04.png</code> 實測有 14 道。分布沒對齊，模型會系統性低估牆數</td></tr>
+<tr><td>配色</td><td>亮／暗色模式、灰階微調</td><td>App 有深色主題</td></tr>
+<tr><td>幾何</td><td>±2° 旋轉、輕微透視、裁切鬆緊</td><td>手機拍照／截圖裁切不精準</td></tr>
+<tr><td>畫質</td><td>JPEG 60–95、縮放 0.5–2×、輕微模糊</td><td>轉傳過的截圖會失真</td></tr>
+<tr><td>UI chrome</td><td>有／無按鈕、有／無游標、有／無狀態列</td><td>使用者截圖範圍不一定乾淨</td></tr>
+<tr><td>字型</td><td>2–3 種無襯線字型</td><td>跨平台渲染差異</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>8.3 資料量與切分</h3>
+<div class="kv">
+  <dt>訓練集</dt><dd>8,000 – 20,000 張合成圖（先 8,000 起跑，看學習曲線再加）</dd>
+  <dt>合成驗證集</dt><dd>1,000 張，同分布不同 seed</dd>
+  <dt><strong>真實驗證集</strong></dt><dd><strong>目前只有 6 張</strong>（<code>illustrations/puzzle_01..06.png</code>）。建議自己再截 30–50 張，這是整個方案唯一需要人工的部分，但它決定了你能不能相信評估數字</dd>
+  <dt>seed 落盤</dt><dd>生成腳本固定並記錄 seed（repo 規範：測資與 seed 要可追溯）</dd>
+</div>
+<div class="box warn">
+<p><strong>真實驗證集要「乾淨」</strong>：這 30–50 張只用來評估，<strong>絕不能拿去訓練</strong>，也不要照著它們把 renderer 每個細節調到過擬合。它是你唯一的誠實鏡子。</p>
+</div>
+
+<h2 id="train">9. 微調設定</h2>
+
+<h3>9.1 起手參數</h3>
+<pre><code># Qwen3.5 路線（L4/A100）
+model = FastVisionModel.from_pretrained("unsloth/Qwen3.5-4B", load_in_4bit=False)   # bf16；官方不建議對 Qwen3.5 用 QLoRA
+# Gemma 4 路線（免費 T4）
+model = FastVisionModel.from_pretrained("unsloth/gemma-4-e4b", load_in_4bit=True)   # QLoRA 官方支援，10GB
+
+model = FastVisionModel.get_peft_model(
+    model,
+    finetune_vision_layers=True,      # 見下方取捨
+    finetune_language_layers=True,
+    r=16, lora_alpha=16, lora_dropout=0,
+)
+# 1–3 epoch、lr 1e-4~2e-4、cosine、warmup 5%
+# 圖片短邊固定（例如 640），關高解析切塊以省 VRAM
+# batch_size=1 + grad_accum 8~16 + gradient_checkpointing
+# 多模態 prompt：圖片放在文字之前（Gemma 4 官方明確建議）</code></pre>
+
+<div class="box">
+<p><strong>關於 <code>finetune_vision_layers</code> 的三層取捨</strong>（v2 補充，因為兩家官方建議不同）：</p>
+<ul>
+  <li><strong>Gemma 4 官方建議先設 <code>False</code></strong>，只訓語言／attention／MLP，需要時再開視覺層。</li>
+  <li><strong>但我們的瓶頸是空間對位</strong>（第 6.1 節的第 2、3 項），純語言層很可能學不動牆的位置。</li>
+  <li><strong>做法</strong>：第一輪照官方建議 <code>False</code> 跑（快、穩、當 baseline），第二輪開 <code>True</code>。<strong>兩者的 wall F1 差距，就直接告訴你瓶頸是不是真的在視覺端</strong>——這是一個很便宜的消融實驗。</li>
+  <li>另注意：走 vLLM 快速推論（RL 用）時視覺層 LoRA 不支援，要 <code>finetune_vision_layers=False</code>。所以視覺對位能力要在 SFT 這步練好。</li>
+</ul>
+</div>
+
+<h3>9.2 算力配置</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>工作</th><th>位置</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>資料生成（出題＋渲染＋增強）</td><td class="pill-good">本機 CPU</td><td>純 CPU 多核；上雲只是浪費額度與上傳頻寬</td></tr>
+<tr><td>2B／4B／E2B／E4B 訓練</td><td>Colab（你的偏好）／本機亦可</td><td>Colab 快；本機省額度。兩邊都行 → 用 Colab 跑主線、本機跑小規模消融</td></tr>
+<tr><td>9B 訓練</td><td class="pill-bad">必須 Colab</td><td>bf16 LoRA 22GB &gt; 16GB</td></tr>
+<tr><td>GGUF 量化與部署測試</td><td class="pill-good">本機</td><td>目標就是本機跑，要在真實環境驗</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="colab">10. Colab 用法（含 Windows 與 T4 的坑）</h2>
+<p>你提到「Colab 好像支援 VS Code CLI」——查證結果是<strong>兩件不同的東西</strong>：</p>
+<ol>
+  <li><strong>Colab CLI</strong>（2026-06-05 推出，Apache-2.0，<code>uv tool install google-colab-cli</code>）：可從終端機開 T4／L4／G4／A100／H100 與 TPU，支援 SSH／WebSocket bridge 給 IDE 遠端開發，repo 內附 <code>AGENTS.md</code> 與 Colab MCP Server 給終端 coding agent 用。<br>
+  <span class="pill-bad">⚠ 官方明寫：「the Colab CLI currently supports <strong>Linux and macOS</strong> only. Windows is not supported at this time.」</span>你是 Windows 11 → 要走 <strong>WSL2</strong>。</li>
+  <li><strong>VS Code 的 Colab kernel</strong>（官方擴充，2025-11-13 起）：開本地 <code>.ipynb</code> → 選 Colab kernel → Google 帳號授權。<strong>不需要 WSL</strong>，Windows 上最省事。</li>
+</ol>
+<div class="box rec">
+<p><strong>建議：先用 VS Code Colab kernel。</strong>只有當你要「讓 coding agent 直接驅動雲端 GPU 跑長訓練」時，才值得為 Colab CLI 架 WSL2。</p>
+<p><strong>並且記得第 2.2 節的 T4 陷阱</strong>：免費 T4 無 bf16 → 若要用 Qwen3.5，實務上得換 L4（付 CU）；用 Gemma 4 E2B／E4B 的 QLoRA 才是免費層的舒適路線。</p>
+</div>
+<p class="src">出處：<a href="https://github.com/googlecolab/google-colab-cli">github.com/googlecolab/google-colab-cli</a>（平台支援、安裝、GPU 型號，一手）、<a href="https://developers.googleblog.com/introducing-the-google-colab-cli/">Google Developers Blog</a>。免費層額度（T4 16GB、單次約 12 小時、每週約 15–30 GPU 小時、T4 約 1.76 CU/hr）為<span class="pill-bad">二手整理</span>，以你帳號實際顯示為準。</p>
+
+<h2 id="deploy">11. 本機部署路徑與已知地雷</h2>
+<p>微調成功 ≠ 跑得起來。VLM 的本機部署鏈比純文字模型脆弱，因為多模態需要額外的視覺投影權重（mmproj），各推論引擎支援進度不一。</p>
+
+<div class="box rec">
+<p><strong>本機環境實測（2026-08-15，v2 補充）——比 v1 假設的樂觀很多：</strong></p>
+<ul>
+  <li><strong>Ollama 跑在 Docker，不是原生安裝</strong>（v1 誤判為「未安裝」）。<code>docker-compose.dev.yml</code> 已加入 <code>ollama</code> 服務，實測 <code>docker compose up -d ollama</code> 可啟動。</li>
+  <li><strong>GPU 直通可用</strong>：容器內 <code>nvidia-smi</code> 看得到 <code>RTX 4070 Ti SUPER, 16376 MiB</code>；ollama 容器內版本 0.16.1。</li>
+  <li><strong>volume <code>linkedin-zip-challenge_ollama_data</code> 內的 15GB 模型還在</strong>：<code>openbmb/minicpm-o2.6</code>、<code>qwen2.5vl:7b</code>、<code>bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh</code>（2025-10 的實驗資產）。</li>
+  <li>⚠ 容器名改用 <code>zip_ollama_server</code>、host 埠改 <code>${OLLAMA_HOST_PORT:-11435}</code>——因為 <code>ollama_server</code> 與 11434 已被本機另一個專案佔用。</li>
+</ul>
+<p><strong>對計畫的影響</strong>：P0 應該<strong>先從 Ollama 官方 library 拉未微調模型</strong>（官方模型內嵌視覺張量，繞開下方地雷二），這條路成功機率其實最高、成本最低。<strong>地雷只存在於「微調後自製 GGUF」那一步</strong>，也就是 P4 之後才會遇到。<br>
+註：容器內 ollama 0.16.1 是半年前的快取映像，<strong>要跑 Qwen3.5／Gemma 4 需先 <code>docker compose -f docker-compose.dev.yml pull ollama</code></strong>。</p>
+</div>
+<div class="scroll">
+<table>
+<thead><tr><th>路徑</th><th>成功機率</th><th>優點</th><th>風險</th></tr></thead>
+<tbody>
+<tr><td><strong>A. transformers 直跑</strong>（merge LoRA → bf16）</td><td class="pill-good">最高</td><td>無格式轉換；FastAPI 可 in-process 呼叫，貼合現有架構</td><td>吃 VRAM（4B bf16 約 9GB）</td></tr>
+<tr><td><strong>B. llama.cpp GGUF ＋ <code>--mmproj</code></strong></td><td>中高</td><td>量化後 3–6GB；Windows 有原生 build</td><td>issue #3899</td></tr>
+<tr><td><strong>C. Ollama</strong>（匯入自製 GGUF）</td><td class="pill-bad">最低（但體驗最好）</td><td>與現有 <code>pydantic-ai + OllamaProvider</code> 零改動（<code>final_puzzle_parser.py:174-179</code>）</td><td>issue #14730</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box warn">
+<p><strong>地雷一</strong>：Unsloth issue #3899（2026-01-16 開、已 closed）回報 <code>Qwen3-VL-2B-Thinking</code> 微調後匯出的 GGUF 推論<strong>亂碼</strong>，官方 GGUF 正常，<strong>issue 內無載明修法</strong>。→ <strong>P0 先拿未微調模型走完 export→本機推論</strong>。</p>
+<p><strong>地雷二</strong>：Ollama issue #14730（2026-03-09 以 duplicate 關閉）：匯入 Qwen3.5 GGUF＋mmproj 報 <code>unknown model architecture: 'qwen35moe'</code>，同檔用 llama.cpp <code>--mmproj</code> 正常。官方 library 的模型內嵌視覺張量所以沒事，自製匯入的才中。註：該 issue 是 MoE 架構，你要用的 4B 是 dense，<strong>不能假設會中、也不能假設不會</strong>，要實測。</p>
+<p class="src"><a href="https://github.com/unslothai/unsloth/issues/3899">unsloth#3899</a>、<a href="https://github.com/ollama/ollama/issues/14730">ollama#14730</a></p>
+</div>
+
+<p><strong>vLLM 不建議當本機主線</strong>：官方在 Windows 上仍以 WSL2 為正規路徑（社群有 native wheel，如 2026-04-30 的 <code>SystemPanic/vllm-windows</code>）。vLLM 留給 Colab 上的 GRPO 訓練用（Unsloth <code>fast_inference=True</code>）。</p>
+
+<h3>11.1 要不要量化？（v2 補充）</h3>
+<p><strong>不一定要。</strong>本機 16GB 扣掉桌面常駐（實測 <code>nvidia-smi</code> 已用 1.9GB）約剩 14GB：</p>
+<ul>
+  <li><strong>4B → 直接 bf16，不必量化</strong>（約 9–10GB），最單純、無精度疑慮。</li>
+  <li><strong>9B → 必須量化</strong>（bf16 約 18–20GB 放不下）：Q8 約 10–11GB、Q4_K_M 約 6GB。</li>
+</ul>
+<p><strong>效果會不會掉？三個要點：</strong></p>
+<ol>
+  <li><strong>Q8 一般視為近乎無損</strong>；Q4_K_M 在一般文字生成上損失通常很小——<strong>但不能直接把這個通說套到我們的任務</strong>。我們要的是精確空間對位＋嚴格結構化輸出，端到端指標又是<strong>全有全無</strong>（錯一格 → 整題錯），對精度的敏感度高於閒聊。</li>
+  <li><strong>好消息</strong>：GGUF 的視覺投影檔（mmproj）通常維持 F16，<strong>視覺路徑受量化影響比語言路徑小</strong>。</li>
+  <li><strong>順序不能反</strong>：LoRA 要先 merge 成 bf16／fp16 再量化，不要對已量化權重套 adapter。另外 <strong>QLoRA 訓練 ≠ 量化推論</strong>，是兩件事。</li>
+</ol>
+<div class="box rec">
+<p><strong>這題不要用推論，要用量測。</strong>同一個模型跑 <code>bf16 / Q8 / Q4_K_M</code> 三檔，過第 12 節同一套四層指標，差多少直接看數字。決策規則：若 Q4 的端到端通關率比 Q8 掉超過 2–3 個百分點就用 Q8；4B 就直接 bf16。這個對比在 P0 順手做完。</p>
+</div>
+
+<h3>11.2 與現有程式的接法</h3>
+<pre><code>src/core/vl_models/
+  render_puzzle.py      # 新增：LinkedIn 風格渲染（產訓練資料）
+  dataset_builder.py    # 新增：出題 → 渲染 → 增強 → HF dataset
+  puzzle_parser.py      # 新增：正式 parser（image -> Puzzle）
+  backends/
+    transformers_backend.py   # 路徑 A
+    openai_compat_backend.py  # 路徑 B/C（llama-server 與 Ollama 都吃 OpenAI 相容 API）
+  experiment_*.py       # 既有：標為 scratchpad，不動</code></pre>
+<p>兩個 backend 實作同一介面 <code>parse(image_bytes) -> SimplePuzzleOutput</code>，用 <code>src/settings.py</code> 切換；部署路徑翻車可直接切回。單元測試 mock 掉 backend，<strong>不依賴 Ollama 或 GPU</strong>。</p>
+
+<h2 id="eval">12. 評估指標</h2>
+<ol>
+  <li><strong>格式層</strong>：JSON 可解析率、通過 <code>SimplePuzzleOutput</code> 驗證率。</li>
+  <li><strong>內容層</strong>：網格尺寸正確率；waypoint 逐格準確率與完全正確率；<strong>牆的 precision／recall／F1</strong>（牆最容易漏，必須分開看）。</li>
+  <li><strong>端到端層 ★ 最重要</strong>：解析結果丟進 CP-SAT，能否解出合法路徑且與 ground truth 一致。<strong>唯一真正代表「使用者拿到正確答案」的指標</strong>，而且本專案免費就有。</li>
+  <li><strong>成本層</strong>：本機單張延遲、VRAM 峰值、prompt token 數。</li>
+</ol>
+<div class="box rec">
+<p><strong>先量 baseline 再訓練。</strong>把「未微調模型 ＋ 現有 few-shot prompt」在真實驗證集上的四層指標先量出來。沒有這個數字，訓完無法回答「fine-tune 帶來多少」。</p>
+</div>
+
+<h2 id="onestep">13. 一步到位（agent 看圖直接給答案）</h2>
+<p>你原本的設計是兩步分開、第一步的產物給人類玩——這個定位保留為主線。但「一步到位」有<strong>兩種實作，難度差一個數量級</strong>：</p>
+<div class="scroll">
+<table>
+<thead><tr><th></th><th>B. Agent 一步到位（體感一步，內部兩步）</th><th>C. 模型端到端（模型自己看圖解題）</th></tr></thead>
+<tbody>
+<tr><td>內部流程</td><td>VLM 解析 → 既有 solver 求解 → 視覺化</td><td>VLM 一次生成完整路徑</td></tr>
+<tr><td>正確率上限</td><td class="pill-good">＝解析正確率（solver 保證最優解）</td><td class="pill-bad">遠低於前者</td></tr>
+<tr><td>工作量</td><td>1–2 天</td><td>數週起跳，不保證成功</td></tr>
+<tr><td>價值</td><td>產品價值</td><td>研究價值</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>13.1 路線 B：建議直接做</h3>
+<pre><code>POST /api/vision/solve
+  input : image (multipart)
+  flow  : parse_puzzle_image() -> Puzzle -> prepare_solver_input() -> CP-SAT -> path
+  output: {puzzle, path, image_url|gif_url, confidence, parse_warnings}</code></pre>
+<p>關鍵設計：<strong>回傳解析結果讓使用者能修</strong>。既有 Svelte WYSIWYG 編輯器正好吃這個 <code>puzzle</code>——解析錯一兩格時拖兩下就修好。<strong>「VLM ＋ 人」的組合拳，比追求 100% 解析率務實。</strong>同時保留你原本的定位：解析完的題目可直接進互動分頁讓人自己玩。</p>
+
+<h3>13.2 路線 C：三種做法</h3>
+<ol>
+  <li><strong>工具呼叫式</strong>：模型輸出「呼叫 solver 的參數」而非路徑。等於路線 B 換包裝，但可以練 tool-calling（Unsloth 有 FunctionGemma 之類的 notebook）。<span class="tag">最務實</span></li>
+  <li><strong>蒸餾式 SFT</strong>：用「圖 → CP-SAT 最優路徑」直接教走位。4×4／5×5 可期，7×7 會崩。<span class="tag">可當實驗</span></li>
+  <li><strong>RL post-training（GRPO/GSPO）</strong>：用既有 solver 當 verifier。<strong>就是姊妹報告的路線 B</strong>，也是目前對「答案可驗證」任務的主流做法；Unsloth 的 Gemma 4 E2B Sudoku GRPO notebook 是最接近的範本。<span class="tag">研究題</span></li>
+</ol>
+<p class="src">文獻上 LLM 對網格謎題系統性偏弱：<a href="https://arxiv.org/html/2407.14790v1">Step-by-Step Reasoning to Solve Grid Puzzles: Where do LLMs Falter?</a></p>
+
+<h2 id="plan">14. 分階段執行計畫與 done 條件</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>階段</th><th>內容</th><th>done 條件</th><th>估時</th></tr></thead>
+<tbody>
+<tr><td><strong>P0 部署煙霧測試</strong></td><td><code>docker compose pull ollama</code> 更新映像 → 從 <strong>Ollama 官方 library</strong> 拉未微調 <code>Qwen3.5-4B</code>（與 <code>Gemma 4 E4B</code>）；量 VRAM 與延遲；<strong>順便量 Q4／Q8 兩檔差異</strong>（見 11.1）</td><td>本機能對 <code>puzzle_01.png</code> 產生合理描述；VRAM 峰值與延遲落盤（順便驗證第 2.1 節的估算表）；量化差異成表</td><td>0.5 天</td></tr>
+<tr><td><strong>P1 Baseline</strong></td><td>未微調模型＋現有 few-shot prompt，在 6 張真實圖上量四層指標</td><td>指標落盤成一張表；沒跑的項目標明沒跑</td><td>0.5 天</td></tr>
+<tr><td><strong>P2 資料 pipeline</strong></td><td><code>render_puzzle.py</code>＋<code>dataset_builder.py</code>；牆數分布修正到 0–16；增強；seed 落盤</td><td>8,000 張圖＋標籤；抽 20 張人眼比對真實截圖；標籤能反向通過 solver 驗證</td><td>2 天</td></tr>
+<tr><td><strong>P3 真實驗證集</strong></td><td>收集 30–50 張真實截圖＋人工標註</td><td>入庫（大檔不進版控），標註經 solver 驗證可解</td><td>1 天（人工）</td></tr>
+<tr><td><strong>P4 SFT ×2 家族</strong></td><td>Unsloth LoRA：<strong>Qwen3.5-4B</strong> 與 <strong>Gemma 4 E4B</strong> 各一輪（同一份資料）</td><td>兩者四層指標均優於 P1；<strong>並排比較表</strong>；權重存 <code>models/</code>（不進版控）</td><td>1–2 天</td></tr>
+<tr><td><strong>P4b 消融（便宜）</strong></td><td>① <code>finetune_vision_layers</code> True／False ② DeepSeek-OCR 2 一輪</td><td>能回答「瓶頸是不是在視覺層」與「OCR 專用模型贏不贏」</td><td>1 天</td></tr>
+<tr><td><strong>P5 整合</strong></td><td>正式 <code>puzzle_parser.py</code>＋backend 抽象＋單元測試（mock）＋Gradio 上傳分頁</td><td>roadmap 第 2 項 done 條件全達成；<code>uv run pytest</code> 全綠；模型不在時有明確錯誤訊息</td><td>1–2 天</td></tr>
+<tr><td><strong>P6 一步到位</strong></td><td><code>POST /api/vision/solve</code>＋解析結果可在 Svelte 編輯器修正</td><td>上傳真實截圖 → 拿到正確解答圖；解析錯可修正後重解</td><td>1–2 天</td></tr>
+<tr><td><strong>P7（選）尺寸上探</strong></td><td>同一份資料訓 <code>Qwen3.5-9B</code></td><td>指標對比 4B；決定最終部署尺寸</td><td>1 天（Colab）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="risk">15. 風險清單</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>風險</th><th>機率</th><th>影響</th><th>對策</th></tr></thead>
+<tbody>
+<tr><td><strong>Domain gap</strong>：只會認自己畫的圖</td><td>高</td><td>高</td><td>參數化 renderer＋強增強；真實驗證集當唯一裁判</td></tr>
+<tr><td>微調後 GGUF 匯出異常（#3899）</td><td>中</td><td>高</td><td>P0 先驗；保留 transformers 路徑</td></tr>
+<tr><td>Ollama 匯入自製多模態模型失敗（#14730）</td><td>中</td><td>中</td><td>改用 <code>llama-server</code>（一樣 OpenAI 相容，只改 base_url）</td></tr>
+<tr><td><strong>免費 T4 跑不動所選模型</strong></td><td>中高</td><td>中</td><td>選型分流（第 5 節）：免費層走 Gemma 4 QLoRA</td></tr>
+<tr><td>牆的召回率偏低</td><td>高</td><td>中</td><td>提高牆密度；分開看 wall F1；必要時對牆的 loss 加權；開 vision 層</td></tr>
+<tr><td>Qwen3.8 開源權重若在專案期間釋出</td><td>中</td><td>低</td><td>屆時只是多一個候選；<strong>不要為了追新重做 pipeline</strong>，資料與評估都可複用</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="unverified">16. 本報告未驗證的部分</h2>
+<ul>
+  <li><strong>沒有實際下載或執行任何模型</strong>：VRAM／速度／準確率均來自官方文件或估算，非本機實測。第 2.1 節整張推論表是<strong>估算</strong>。</li>
+  <li><strong>沒有跑 <code>uv run pytest</code></strong>：本次只讀檔與查證。46 tests passed 是 2026-08-08 的紀錄。</li>
+  <li><strong>Qwen 閉源轉向、Qwen3.8 權重未上架</strong>等敘述來自二手報導（兩個獨立來源一致），非 Qwen 官方公告原文。</li>
+  <li><strong>Colab 免費層額度數字為二手</strong>；官方 CLI repo 未載明免費配額。</li>
+  <li><strong>MiniCPM／PaddleOCR-VL 的授權條款未逐條確認</strong>。</li>
+  <li><strong>DeepSeek-OCR 波斯文微調的 CER 數字為二手且任務不同</strong>，僅作旁證。</li>
+  <li><strong>Gemma 4 的釋出日期在來源間有出入</strong>（部落格記 2026-03-31／04-02，官方 model card 頁面顯示 2026-07-30，可能是最後更新日）。不影響選型結論。</li>
+</ul>
+
+<h2 id="ref">17. 參考資料</h2>
+<h4>一手（官方文件／原始碼／issue）</h4>
+<ul>
+  <li><a href="https://ai.google.dev/gemma/docs/core/model_card_4">Gemma 4 model card · Google AI for Developers</a>／<a href="https://arxiv.org/html/2607.02770v1">Gemma 4 Technical Report</a></li>
+  <li><a href="https://unsloth.ai/docs/models/gemma-4/train">Gemma 4 Fine-tuning Guide · Unsloth</a>（VRAM 表、vision 限 E2B/E4B、notebook 清單）</li>
+  <li><a href="https://huggingface.co/Qwen/Qwen3.5-4B">Qwen3.5-4B 模型卡</a>／<a href="https://unsloth.ai/docs/models/qwen3.5/fine-tune">Qwen3.5 Fine-tuning Guide · Unsloth</a></li>
+  <li><a href="https://github.com/QwenLM/Qwen3.6">QwenLM/Qwen3.6</a>／<a href="https://github.com/qwenlm/qwen3-vl">QwenLM/Qwen3-VL</a></li>
+  <li><a href="https://github.com/unslothai/notebooks">unslothai/notebooks</a>（250+ notebooks）</li>
+  <li><a href="https://unsloth.ai/docs/models/tutorials/deepseek-ocr-2">DeepSeek-OCR 2 · Unsloth</a>／<a href="https://unsloth.ai/docs/models/tutorials/deepseek-ocr-how-to-run-and-fine-tune">DeepSeek-OCR · Unsloth</a></li>
+  <li><a href="https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide/vision-reinforcement-learning-vlm-rl">Vision RL (VLM RL) · Unsloth</a></li>
+  <li><a href="https://github.com/googlecolab/google-colab-cli">googlecolab/google-colab-cli</a>／<a href="https://developers.googleblog.com/introducing-the-google-colab-cli/">Colab CLI 發表文</a></li>
+  <li><a href="https://github.com/unslothai/unsloth/issues/3899">unsloth#3899</a>／<a href="https://github.com/ollama/ollama/issues/14730">ollama#14730</a></li>
+  <li><a href="https://huggingface.co/openbmb/MiniCPM-V-4.6">MiniCPM-V 4.6</a>／<a href="https://github.com/OpenBMB/MiniCPM-o/blob/main/README.md">MiniCPM-o</a>／<a href="https://huggingface.co/OpenGVLab/InternVL3_5-8B">InternVL3.5-8B</a></li>
+  <li><a href="https://arxiv.org/html/2407.14790v1">Where do LLMs Falter? (grid puzzles)</a></li>
+</ul>
+<h4>二手（已標註，僅供佐證）</h4>
+<ul class="src">
+  <li><a href="https://insiderllm.com/guides/qwen-open-weights-vs-closed-frontier-2026/">Qwen 開源 vs 閉源策略</a>／<a href="https://www.digitalapplied.com/blog/qwen-closed-flagship-pivot-open-weight-retreat-2026">Qwen 閉源轉向</a></li>
+  <li><a href="https://www.spheron.network/blog/best-open-source-ocr-vlm-self-host-gpu-cloud-2026/">開源 OCR VLM 自架比較 2026</a>／<a href="https://medium.com/@matteo28/how-to-fine-tune-the-new-deepseek-ocr-model-with-unsloth-3964c01f39bd">DeepSeek-OCR 微調實作紀錄</a></li>
+  <li><a href="https://huggingface.co/rednote-hilab/dots.ocr/discussions/39">dots.ocr 微調挑戰討論</a></li>
+</ul>
+<h4>本機原始碼（絕對路徑）</h4>
+<ul class="src">
+  <li><code>D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge\src\core\vl_models\final_puzzle_parser.py</code>（:37 schema、:131 prompt、:165 主流程、:174 Ollama provider）</li>
+  <li><code>…\src\core\vl_models\prompts.py</code>（few-shot 範例）</li>
+  <li><code>…\src\core\utils.py</code>（<code>Puzzle</code> :15、<code>parse_puzzle_layout</code> :71、<code>save_solution_as_image</code> :556）</li>
+  <li><code>…\src\core\puzzle_generation\puzzle_generator.py</code>（<code>generate_puzzle</code> :15、牆數常數 :10-11、牆生成 :107-125）</li>
+  <li><code>…\illustrations\puzzle_01..06.png</code>（真實截圖，現有全部評估素材）</li>
+  <li><code>…\ai-collab\roadmap.md</code>（VL 混合策略決策、第 2 項 done 條件）</li>
+</ul>
+<p class="src">搜尋關鍵字（去識別化）：<code>newest open source vision language model August 2026</code>、<code>Gemma 4 release 2026 multimodal vision sizes</code>、<code>Unsloth Gemma 4 fine-tuning notebook vision</code>、<code>Qwen3.7 open weights or API only 2026</code>、<code>OCR specialist vision model 2026 PaddleOCR-VL DeepSeek-OCR dots.ocr fine-tune</code>、<code>Unsloth DeepSeek-OCR fine-tune notebook VRAM</code>、<code>InternVL latest 2026</code>。</p>
+
+<footer>
+  linkedin-zip-challenge · ai-collab/reports/2026-08-15_vlm-model-survey.html（v2）<br>
+  姊妹報告：<code>2026-08-15_rl-restart-plan.html</code>（RL 重啟方案：實驗重新設計 ＋ GRPO 路線）
+</footer>
+
+</div>
+</body>
+</html>

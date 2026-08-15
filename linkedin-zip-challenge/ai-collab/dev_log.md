@@ -4,6 +4,138 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-08-15
+
+### Planning Reports for the VLM and RL Tracks (research only, no code changed)
+
+Two design reports were written to unblock roadmap items #2 (VL integration) and #3 (RL restart).
+No source code was modified in this session; the work was code reading plus external verification.
+
+-   **`ai-collab/reports/2026-08-15_vlm-model-survey.html`** — model selection and fine-tuning plan
+    for `image -> puzzle JSON`:
+    -   Recommends **Qwen3.5-4B** (natively multimodal, Apache-2.0) with Unsloth **bf16 LoRA**
+        (Unsloth explicitly advises against QLoRA for Qwen3.5); `Qwen3-VL-4B/8B` as the fallback.
+    -   Training data comes from the existing puzzle generator: labels are free and exact, but a new
+        LinkedIn-style renderer is required — `save_solution_as_image()` draws a *solution* in a
+        different visual style than the real screenshots (black circles, thick wall bars, UI chrome).
+    -   Two deployment landmines were found and documented: unsloth#3899 (garbled GGUF after vision
+        fine-tuning) and ollama#14730 (imported GGUF + mmproj fails on some architectures). Hence the
+        plan starts with a **deployment smoke test before any training**.
+    -   Colab: the official Colab CLI (2026-06-05) is **Linux/macOS only**, so on Windows either use
+        WSL2 or the VS Code Colab kernel extension.
+    -   Also evaluates the "one-shot" variant the developer asked about, splitting it into an
+        *agent-orchestrated* one-shot (parse → existing solver, cheap and reliable) and a
+        *model end-to-end* one-shot (research-grade, hands off to the RL report).
+-   **`ai-collab/reports/2026-08-15_rl-restart-plan.html`** — the RL restart plan required by
+    roadmap item #3, covering two routes:
+    -   **Route A (recommended first)**: a dedicated agent with **action masking**. Reading
+        `rl_env.py` produced a sharper root cause for the 2025-10 failure than the original
+        diagnosis: because `ch_path` is binary and the step counter is absent from the observation,
+        an agent oscillating between two already-visited cells produces an observation sequence
+        `o_A, o_B, o_A, ...` — a genuine 2-cycle, so a deterministic policy is *provably* trapped.
+        Illegal moves are an even more degenerate single-state loop. Masking removes both by
+        construction. Other findings: the potential used for shaping (distance to the next waypoint)
+        is not isomorphic to the real objective (full coverage), and the observation exposes only the
+        *next* waypoint, making long-horizon planning impossible in principle.
+    -   **Route B**: GRPO/GSPO post-training of a language model, using the existing solver and
+        `calculate_fitness_score()` as a verifier (RLVR). Recommends text-only input and 4x4 grids
+        first, so vision and reasoning are not debugged simultaneously.
+
+### Both reports revised to v2 after review
+
+The developer reviewed both reports and pushed back on five points; both were rewritten the same day.
+
+-   **VLM report v2**:
+    -   The v1 survey was **out of date** and is now corrected: **Gemma 4** shipped 2026-03/04 with
+        five image-capable sizes (E2B/E4B/12B/26B-A4B/31B) under a plain **Apache-2.0** license, while
+        **Qwen 3.7/3.8 went closed (API-only)** — the newest *small open-weight* Qwen VL is still the
+        Qwen3.5 series, and Qwen3.6 has nothing under 10B.
+    -   New section on **what this machine can actually run**: 7–9B inference is *not* a problem
+        (~6GB at Q4), the ceiling is training — Qwen3.5-9B bf16 LoRA needs 22GB and does not fit 16GB.
+    -   Recommendation changed from a single model to a **split by Colab tier**: the free T4 is Turing
+        and has no bf16, and Unsloth advises against QLoRA for Qwen3.5, so the free path is
+        **Gemma 4 E4B QLoRA (10GB)** while the paid L4/A100 path is **Qwen3.5-4B bf16 LoRA**. Plan now
+        trains both families on the same data and compares.
+    -   New section on **OCR-specialist models** (PaddleOCR-VL 0.9B, DeepSeek-OCR 2, dots.ocr): the
+        task looks like OCR but the bottleneck — "this bar separates cell (2,3) from (3,3)" — is a
+        relation-extraction problem outside their pretraining. Verdict: cheap enough to run as a
+        parallel B-arm, not the main line.
+    -   New section on the **Unsloth notebook catalogue** (250+ notebooks; 30+ vision, 40+ GRPO/RL,
+        OCR incl. DeepSeek-OCR and Paddle OCR). Notably a **Gemma 4 E2B Sudoku GRPO notebook** exists,
+        which is the closest available template for the RL route B reward design.
+-   **RL report v2** — route A's experiment was **redesigned from scratch** at the developer's request:
+    -   Adopts the developer's two proposals: **allow backtracking** (easier to train than forcing a
+        one-stroke path from the start) and **put visit counts in the observation**. The second one
+        directly dissolves the 2-cycle diagnosed in v1; the report adds that a **strictly monotonic
+        `steps_used / budget` scalar** is also needed, because a clipped visit counter can saturate.
+    -   Observation is now 9 channels (valid mask, two wall planes, **visit count**, visit recency,
+        agent, next/future/done waypoints) plus 6 global scalars; the `wp_future` plane fixes the v1
+        finding that the agent could not see waypoints beyond the next one.
+    -   Reward is now **FrozenLake-style**: +1 on success, 0 otherwise, with "finish faster" expressed
+        by the discount factor rather than a per-step penalty (the old -1/step accumulated to -72 and
+        drowned the +1000 terminal signal). Shaping potential switched from *distance to next waypoint*
+        to **coverage ratio**, which is isomorphic to the real objective.
+    -   Three-phase curriculum on constraint strictness: free backtracking → priced backtracking →
+        hard-masked one-stroke. Explicitly notes that only the last phase produces a *legal* Zip
+        solution, so "soft success rate" and "legal one-stroke rate" must be reported separately.
+    -   **Dependency conflict found**: `MaskablePPO` lives in `sb3-contrib`, whose latest (2.9.0)
+        requires `stable-baselines3>=2.9.0`, which in turn requires `torch>=2.8` — but this project
+        pins `torch==2.4.1+cu121` (a deliberate decision recorded in `../AGENTS.md §5`). Three options
+        documented; the choice needs the developer's call since packages are installed manually.
+    -   Also adds a build-your-own assessment: ~620–860 lines using sb3-contrib, ~970–1310 lines fully
+        hand-rolled (masking itself is ~40 lines in the CleanRL style).
+
+### Ollama brought back as a Docker service (dev stack)
+
+An earlier claim in this session — "Ollama is not installed" — was **wrong**: it had only been checked
+as a native install. It runs in Docker here, and the 2025-10 assets were all still intact.
+
+-   **Found**: image `ollama/ollama` present; volume `linkedin-zip-challenge_ollama_data` still holds
+    ~15GB of blobs with three models (`openbmb/minicpm-o2.6`, `qwen2.5vl:7b`,
+    `bsahane/Qwen2.5-VL-7B-Instruct:Q4_K_M_benxh`). `docker-compose.yml.vl_version` already contained
+    a working `ollama` service definition, but it was never merged into the active dev stack.
+-   **Changed**:
+    -   `docker-compose.dev.yml` — added the `ollama` service with the NVIDIA device reservation, a
+        healthcheck, and a `volumes:` block pinning `ollama_data` to the pre-existing
+        `linkedin-zip-challenge_ollama_data` so the 15GB is reused rather than re-downloaded.
+        Container is named `zip_ollama_server` and the host port is `${OLLAMA_HOST_PORT:-11435}`:
+        the name `ollama_server` and port 11434 are already taken on this machine by an unrelated
+        project (verified via the container's compose labels).
+    -   `.env` (not versioned) — re-enabled `OLLAMA_MODEL_NAME` / `OLLAMA_PROVIDER_URL` (both had been
+        commented out). In-network URL is `http://ollama:11434/v1`; the host-side alternative is noted
+        in a comment.
+    -   `run_docker_dev.py` — added a non-fatal `check_ollama_ready()` that polls `/api/tags` and
+        prints which models are available, plus the Ollama endpoint in the final summary.
+-   **Verified** (2026-08-15): `docker compose -f docker-compose.dev.yml config` OK;
+    `docker compose up -d ollama` starts; inside the container `nvidia-smi` reports
+    `NVIDIA GeForce RTX 4070 Ti SUPER, 16376 MiB` (GPU passthrough works) and `ollama --version` is
+    0.16.1; `ollama list` shows all three old models; host `GET :11435/api/tags` returns 200;
+    `uv run ruff check run_docker_dev.py` passes.
+-   **Not verified**: the app container reaching `http://ollama:11434/v1` (would require building the
+    app image); and whether ollama 0.16.1 — a ~6-month-old cached image — can serve Qwen3.5 / Gemma 4.
+    `docker compose pull ollama` is required before P0.
+
+### Task plans written for two parallel worktree tracks
+
+The two reports explain *why*; these new plans say *what to do*, and are written for a fresh agent
+landing in an empty worktree.
+
+-   **New directory `ai-collab/plans/`** (documented in both `AGENTS.md` files):
+    -   `2026-08-15_track-vlm-parser.md` — P0 deployment smoke test → P1 baseline → P2 data pipeline
+        → P3 real eval set → P4 SFT → P5 integration → P6 one-shot endpoint.
+    -   `2026-08-15_track-rl-solver.md` — A0 env sanity → A1 env v2 (9 channels + 6 scalars, masking,
+        FrozenLake-style reward) → A2/A3/A4 three-phase curriculum → A5 ship as the 10th solver.
+-   **Worktree gotchas documented up front**, because a fresh worktree only gets version-controlled
+    files: `.env` must be copied by hand (its absence broke startup back in 2025-10), each worktree
+    needs its own `uv sync`, `datasets/rl_datasets/` is empty even in the main tree, and `models/`
+    holds only the failed 2025-10 DQN checkpoints (do not resume from them). `illustrations/
+    puzzle_01..06.png` *are* tracked, so the VLM track has its eval material from the start.
+-   **Cross-track coordination rules**: code barely overlaps (`vl_models/` vs `rl/`), but
+    `src/core/utils.py` and `src/core/puzzle_generation/` are read-only for both;
+    `pyproject.toml`/`uv.lock` changes are serialised through the developer; `roadmap.md` and
+    `dev_log.md` edits stay in each track's own section; and the Docker stack must not be started
+    from two worktrees at once (container name and host port are machine-unique).
+
 ## 2026-08-08
 
 ### AI Collaboration Scaffold and Environment Recovery

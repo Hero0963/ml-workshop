@@ -2,7 +2,7 @@
 
 > **新 session 的第一站。** 每次工作告一段落就更新這裡（現況一句話、下一步順序、進度日誌加一列）。
 > 架構與啟動方式看 [project_guide.md](project_guide.md)、完整開發歷程看 [dev_log.md](dev_log.md)、規範看 [../AGENTS.md](../AGENTS.md)。
-> 最後更新：2026-08-08
+> 最後更新：2026-08-15
 
 ## 現況（2026-08-08）
 
@@ -47,6 +47,15 @@
    - Done 條件：`SOLVERS` 含全部 9 種、schema 支援 `attempts`、Gradio 與 Svelte 兩邊下拉都可選、新增對應 API 測試且全綠。
 
 2. **VL 圖片解析整合進主流程** ← **★ 現在做這個**
+   - 📋 **接手請直接讀計畫書：[plans/2026-08-15_track-vlm-parser.md](plans/2026-08-15_track-vlm-parser.md)**
+     （worktree 環境建置、P0–P6 分階段 done 條件、與 RL track 的協作約定）
+   - **方案已定案（2026-08-15，報告 v2）**：見 [reports/2026-08-15_vlm-model-survey.html](reports/2026-08-15_vlm-model-survey.html)
+     ——選型分流（**免費 Colab T4 → Gemma 4 E4B QLoRA；付費 L4／A100 → Qwen3.5-4B bf16 LoRA**，
+     兩者同資料各訓一輪做對照）、合成資料 pipeline、Unsloth 生態（250+ notebook）、OCR 專用模型評估、
+     本機部署地雷（unsloth#3899、ollama#14730）、八階段執行計畫與 done 條件。**開工從該報告的 P0（部署煙霧測試）起手。**
+   - **關鍵限制**：免費 T4 是 Turing 架構、不支援 bf16，而 Unsloth 不建議對 Qwen3.5 用 QLoRA
+     → 想用免費層就走 Gemma 4。本機 16GB 可訓到 4B（bf16 LoRA 10GB），9B（22GB）必須上雲；
+     **但 9B 的 Q4 推論只吃約 6GB，本機部署不是瓶頸**。
    - 現況：`src/core/vl_models/` 是實驗腳本堆，技術路線已驗證（見下方決策），但沒有正式的 parser 進 API／UI。
    - 起手處：`final_puzzle_parser.py`／`parser.py`／`prompts.py` 是最接近成品的三支；
      `experiment_*.py` 是驗證用的 scratchpad，不要當生產程式碼改。
@@ -55,10 +64,21 @@
    - Done 條件：一個穩定的 `image → Puzzle dict` 函式 ＋ 單元測試（VL 呼叫要能 mock，測試不依賴 Ollama）
      ＋ Gradio 上傳分頁；實驗腳本標明為 scratchpad。
 
-3. **RL 重啟前置研究** ← **★ VLM 之後接這個**
+3. **RL 重啟前置研究** ← **★ VLM 之後接這個（可與 VLM 交錯進行：VLM 等 Colab 時本機推 RL）**
+   - 📋 **接手請直接讀計畫書：[plans/2026-08-15_track-rl-solver.md](plans/2026-08-15_track-rl-solver.md)**
+     （worktree 環境建置、A0–A5 分階段 done 條件、**A2 前要拍板的 torch 相依決策**）
+   - **✅ Done 條件已達成（2026-08-15）**：[reports/2026-08-15_rl-restart-plan.html](reports/2026-08-15_rl-restart-plan.html)
+     ——含路線 A（action masking ＋ MaskablePPO ＋ curriculum）與路線 B（GRPO/GSPO，用既有 solver 當 verifier）。
+   - **根因已升級為機制層解釋**：`ch_path` 是二值、步數不在觀測裡 → 在兩個已訪格間震盪時觀測序列變成 `o_A, o_B, o_A…`，
+     確定性策略必然卡死；非法移動則是更退化的單點迴圈。**所以不是調 reward 權重的問題**。
+     另外觀測只給「下一個」waypoint，長程規劃在資訊上本來就不可能。
+   - **實驗已重新設計（報告 v2）**：觀測改 9 channel（含 **visit 次數**）＋6 純量（含**已用步數比例**，
+     嚴格單調 → 數學上排除觀測循環）；reward 改**冰湖式**（成功 +1、其餘 0，「越快越好」由 γ=0.99 表達，
+     不用每步扣分）；位能從「距離下一個號碼」換成「**覆蓋率**」（與真目標同構）；
+     三階段 curriculum：**寬鬆允許倒車 → 倒車開始收費 → 一筆畫（mask 已訪格）**。
+   - **開工前要拍板的相依決策**：`MaskablePPO` 在 `sb3-contrib`，其最新版需 SB3≥2.9 而 SB3 2.9 需 `torch>=2.8`，
+     與本專案鎖的 `torch==2.4.1+cu121` 衝突。三個選項（升 torch／找舊版 contrib／自寫 masked PPO）見報告 §5.2。
    - 先讀 `../more_simple_reinforcement_learning/` 的 DQN 與 PPO 章節，再看 AlphaGo／AlphaZero 架構。
-   - 重啟時的簡化方向（2025-10-15 已想好）：縮小 `map_size`、放寬環境限制（允許重走，從 Hamiltonian path 降級為一般尋路）。
-   - Done 條件：寫一份「RL 重啟方案」到 `ai-collab/reports/`，說明改哪些設計、為什麼這次不會再掉進 policy loop。
 
 4. **測試報告目錄整理**（雜務）
    - `run_tests.bat` 會把報告寫進 `src/core/tests/reports/`，堆久了會亂。決定要不要納入 `.gitignore`。
@@ -101,3 +121,4 @@
 | 2025-10-28 | Production-ready 重構：設定集中化、DRY（`prepare_solver_input`）、Svelte 整合、Docker 雙環境 |
 | 2025-10-30 | 文件精修 ＋ 本機／Docker dev／Docker prod 三種環境全部實測驗證 |
 | 2026-08-08 | **建立 AI 協作骨架**：`AGENTS.md`／`CLAUDE.md`／`ai-collab/`（roadmap・project_guide・dev_log・commands），`dev_log.md` 移入 `ai-collab/`，補 `.python-version` |
+| 2026-08-15 | **兩份方案報告**（純研究，未動程式）：VLM 選型與微調計畫、RL 重啟方案（含 2025-10 policy loop 的機制層根因） |

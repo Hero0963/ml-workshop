@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RL 重啟方案報告 — linkedin-zip-challenge</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1c1a; --muted:#5f5f58; --line:#e2e0d9;
+    --card:#ffffff; --accent:#8a5a00; --accent-soft:#fff6e3;
+    --good:#1f6b3a; --good-soft:#eaf6ee; --bad:#9b2c2c; --bad-soft:#fdeeee;
+    --code-bg:#f2f1ec; --mono:ui-monospace,"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#17171a; --fg:#e8e6e1; --muted:#a4a19a; --line:#33333a;
+      --card:#1f1f23; --accent:#e8b45c; --accent-soft:#2b2418;
+      --good:#7fd39b; --good-soft:#17281d; --bad:#f0908d; --bad-soft:#2b1a1a;
+      --code-bg:#26262b;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 1.2rem 5rem; background:var(--bg); color:var(--fg);
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px; line-height:1.85; letter-spacing:.01em;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  header{padding:3rem 0 1.5rem;border-bottom:2px solid var(--line);margin-bottom:2rem}
+  h1{font-size:1.9rem;line-height:1.35;margin:0 0 .6rem}
+  .sub{color:var(--muted);font-size:.95rem;margin:0}
+  h2{font-size:1.35rem;margin:3rem 0 .9rem;padding-top:.6rem;border-top:1px solid var(--line)}
+  h3{font-size:1.08rem;margin:2rem 0 .6rem}
+  h4{font-size:.98rem;margin:1.4rem 0 .4rem;color:var(--muted)}
+  p,li{font-size:1rem}
+  ul,ol{padding-left:1.4rem}
+  li{margin:.35rem 0}
+  code{font-family:var(--mono);background:var(--code-bg);padding:.12em .38em;border-radius:4px;font-size:.88em}
+  pre{background:var(--code-bg);padding:1rem 1.1rem;border-radius:8px;overflow-x:auto;font-size:.86rem;line-height:1.6}
+  pre code{background:none;padding:0}
+  table{border-collapse:collapse;width:100%;margin:1.2rem 0;font-size:.92rem}
+  .scroll{overflow-x:auto;margin:1.2rem 0}
+  .scroll table{margin:0;min-width:660px}
+  th,td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left;vertical-align:top}
+  th{background:var(--code-bg);font-weight:600}
+  .box{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--card);
+       padding:1rem 1.2rem;border-radius:6px;margin:1.4rem 0}
+  .box.rec{border-left-color:var(--good);background:var(--good-soft)}
+  .box.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+  .box.plain{border-left-color:var(--muted)}
+  .box p:first-child{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tag{display:inline-block;font-size:.75rem;padding:.1rem .5rem;border-radius:99px;
+       border:1px solid var(--line);background:var(--code-bg);color:var(--muted);margin-right:.35rem}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem 1.4rem}
+  .toc ol{margin:.4rem 0;padding-left:1.3rem}
+  .toc li{margin:.15rem 0;font-size:.94rem}
+  a{color:var(--accent);text-underline-offset:3px}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src code{font-size:.85em}
+  footer{margin-top:4rem;padding-top:1.2rem;border-top:1px solid var(--line);color:var(--muted);font-size:.86rem}
+  .pill-good{color:var(--good);font-weight:600}
+  .pill-bad{color:var(--bad);font-weight:600}
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;margin:1.4rem 0}
+  .diagram svg{display:block;width:100%;height:auto;max-width:660px;margin:0 auto;color:var(--fg)}
+  .changelog{background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:.9rem 1.2rem;font-size:.92rem;margin:1.5rem 0}
+  @media print{ body{font-size:11pt} .box{break-inside:avoid} h2{break-after:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>RL 重啟方案報告<br><span style="font-size:1.1rem;color:var(--muted)">linkedin-zip-challenge · 讓模型自己通關</span></h1>
+  <p class="sub">
+    初版 2026-08-15｜<strong>v2 修訂 2026-08-15</strong>（Asia/Taipei）｜對象：本專案 roadmap 第 3 項「RL 重啟前置研究」<br>
+    本報告即為該項 done 條件所要求的「RL 重啟方案」文件。硬體：RTX 4070 Ti SUPER 16GB ＋ 64GB RAM
+  </p>
+</header>
+
+<div class="changelog">
+  <strong>v2 修訂了什麼</strong>（依你的回饋）
+  <ol>
+    <li><strong>路線 A 整個實驗重新設計</strong>（第 4 節全新）：observation 與 reward 全部重寫，採用你提的<strong>「允許倒車重試」＋「visit 次數進觀測」</strong>，並用<strong>冰湖式的稀疏獎勵＋折扣</strong>表達「越快越好」。</li>
+    <li><strong>新增第 5 節：框架／套件調查</strong>（含版本），並發現一個真實的相依衝突：最新 SB3／sb3-contrib 需要 <code>torch≥2.8</code>，而本專案<strong>鎖 <code>torch==2.4.1</code></strong>。</li>
+    <li><strong>新增第 6 節：自己造輪子的評估</strong>（行數、工期、可行度）。</li>
+    <li>v1 的死因分析保留（第 2 節），但補上一段：<strong>你的提案為什麼正好解掉那個機制</strong>，以及還缺哪一塊才嚴謹。</li>
+  </ol>
+</div>
+
+<div class="toc">
+  <strong>目錄</strong>
+  <ol>
+    <li><a href="#tldr">結論先講</a></li>
+    <li><a href="#rootcause">2025-10 那次失敗的機制性根因</a></li>
+    <li><a href="#nature">問題本質與 RL 的定位</a></li>
+    <li><a href="#redesign">路線 A：實驗全新設計</a></li>
+    <li><a href="#framework">框架與套件調查（含相依衝突）</a></li>
+    <li><a href="#diy">自己造輪子的可行度評估</a></li>
+    <li><a href="#routeB">路線 B：GRPO 讓語言模型通關</a></li>
+    <li><a href="#compare">兩條路線比較與順序</a></li>
+    <li><a href="#plan">執行計畫與 done 條件</a></li>
+    <li><a href="#redline">紅線與期望值管理</a></li>
+    <li><a href="#unverified">本報告未驗證的部分</a></li>
+    <li><a href="#ref">參考資料</a></li>
+  </ol>
+</div>
+
+<h2 id="tldr">1. 結論先講</h2>
+
+<div class="box rec">
+<p><strong>你的兩個直覺都對，而且它們正好互補。</strong></p>
+<p><strong>①「允許倒車重試比較好訓練」——對。</strong>強制一筆畫會讓 agent 一走進死路就結束，訓練初期幾乎每一集都是失敗，等於沒有學習訊號。允許倒車讓它有機會「走錯再回頭」，把稀疏的成功事件變得可及。</p>
+<p><strong>②「visit 次數要進 observation」——對，而且這一條直接解掉 v1 診斷的 2-cycle。</strong>舊環境的 <code>path</code> 是二值的，走過就是走過，所以來回震盪時觀測不變、確定性策略卡死。改成<strong>造訪次數</strong>之後，每回頭一次觀測就變一次，迴圈不再是不動點。<br>
+<strong>但還缺一塊才嚴謹</strong>：visit count 若做上限截斷（例如 clip 到 4），飽和後又會退化成常數。所以要<strong>再加一個嚴格單調的量——已用步數／預算</strong>，那麼觀測序列在數學上就<strong>永遠不可能循環</strong>。</p>
+<p><strong>③「越快完成越好，像冰湖」——對，但實作方式建議用折扣因子 γ，而不是每步扣分。</strong>冰湖的 reward 就是「到終點 +1、其他 0」，速度是由 γ&lt;1 自然壓出來的。舊版每步 −1 累積到 −72，把 +1000 的終局訊號稀釋掉了，這是尺度失衡。</p>
+<p><strong>整體設計＝三階段課程</strong>：Phase 1 寬鬆（隨便倒車）→ Phase 2 收緊（倒車開始要付代價）→ Phase 3 一筆畫（直接 mask 掉已走過的格）。<strong>你最理想的「一筆畫」是終點，不是起點。</strong></p>
+</div>
+
+<h2 id="rootcause">2. 2025-10 那次失敗的機制性根因</h2>
+
+<p>當時 dev_log 的結論是「dense reward trap 造成 deterministic policy loop，調權重無效」。這描述對，但停在現象層。讀完 <code>src/core/rl/rl_env.py</code> 後可以給出機制層解釋：<strong>那個迴圈不是訓練不足，是環境設計讓它成為必然</strong>。</p>
+
+<h3>2.1 死因一：觀測空間裡存在 2-cycle（決定性的）</h3>
+<h4>白話版</h4>
+<p>agent 只看得到「哪些格走過（走過就是走過，不分次數與先後）」「我在哪」「下一個目標在哪」。當它在兩個<strong>已走過</strong>的格子間來回跳，畫面其實沒變——走過的還是走過，目標還是那個。於是模型看到的世界只剩兩個畫面 A 和 B，而測試時是固定決策：「看到 A → 去 B」「看到 B → 去 A」，<strong>永遠出不來</strong>。訓練時有隨機探索才會意外跳出去，這正解釋了「訓練分數漂亮、評估必掛」。</p>
+
+<h4>術語版</h4>
+<p>觀測由 6 個 channel 組成（<code>rl_env.py:104-128</code>）：blocked、horizontal walls、vertical walls（三者靜態）、path_taken（<strong>二值集合</strong>）、agent 位置、<strong>下一個</strong> waypoint 位置。設 agent 在已訪格 <em>A</em>、<em>B</em> 間震盪：<code>ch_path</code> 不變（二值化抹掉次數與順序）、<code>ch_waypoint</code> 不變（索引沒遞增），只有 <code>ch_agent</code> 交替。因此觀測序列為 <code>o_A, o_B, o_A, o_B, …</code>，確定性策略 π 是觀測的函數，<strong>該迴圈是策略的不動點</strong>，直到 <code>truncated</code>。dev_log 記錄的 <code>(4,0) ↔ (5,0)</code> 正是這個形狀。</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 660 220" role="img" aria-label="觀測 o_A 與 o_B 之間的 2-cycle 示意圖" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="40" y="72" width="190" height="68" rx="10"/>
+    <rect x="430" y="72" width="190" height="68" rx="10"/>
+    <path d="M235,90 C300,52 370,52 425,90" marker-end="url(#ah)"/>
+    <path d="M425,122 C370,160 300,160 235,122" marker-end="url(#ah)"/>
+  </g>
+  <g fill="currentColor" font-family="ui-monospace,Consolas,monospace" font-size="15">
+    <text x="135" y="100" text-anchor="middle">觀測 o_A</text>
+    <text x="525" y="100" text-anchor="middle">觀測 o_B</text>
+  </g>
+  <g fill="currentColor" font-size="13" opacity=".85">
+    <text x="135" y="122" text-anchor="middle">agent 在 A（已訪）</text>
+    <text x="525" y="122" text-anchor="middle">agent 在 B（已訪）</text>
+    <text x="330" y="46" text-anchor="middle">π(o_A) = 往 B</text>
+    <text x="330" y="184" text-anchor="middle">π(o_B) = 往 A</text>
+    <text x="330" y="208" text-anchor="middle" opacity=".7">path channel 已飽和、waypoint 未推進 ⇒ 觀測不再變化 ⇒ 迴圈成為穩定不動點</text>
+  </g>
+</svg>
+</figure>
+
+<p>還有<strong>退化版的單點迴圈</strong>：非法移動時 agent 不動、不入 path、也不 terminate，只吃 <code>-10</code>（<code>:176-180</code>）。「一直撞同一面牆」同樣是不動點——觀測完全不變，動作完全不變。</p>
+
+<div class="box rec">
+<p><strong>你的提案為什麼正好命中</strong>：把 <code>path</code> 從<strong>二值</strong>改成<strong>造訪次數</strong>，A↔B 每來回一次計數就 +1，觀測就變了 → 上圖那個閉環被打開。<br>
+<strong>但要補一刀才嚴謹</strong>：計數若 clip（實務上一定要 clip，否則數值無界），飽和後仍可能退化。所以觀測必須再帶一個<strong>嚴格單調</strong>的量（已用步數／預算）。有了它，<strong>任兩個時刻的觀測必不相同，循環在數學上被排除</strong>，而不是靠「大概不會」。</p>
+</div>
+
+<h3>2.2 死因二：shaping 的位能與真正目標不同構</h3>
+<p>shaping 項是 <code>(dist_before - dist_after) * weight</code>（<code>:193</code>），等價於位能 Φ(s) = −曼哈頓距離(agent, 下一個 waypoint)。potential-based shaping（Ng, Harada &amp; Russell, 1999）保證最優策略集合不變，<strong>但不保證學習動態不被扭曲，更不會讓一個「錯的目標」變成對的</strong>。真正的目標是「依序經過所有 waypoint <em>且走遍每一格</em>」，位能卻只描述「靠近下一個號碼」。要填滿角落必然得暫時遠離下一個號碼，shaping 一路給負回饋 → 策略學會貼著號碼跑，而那恰恰解不了 Hamiltonian path。<strong>所以權重從 0.1 調到 0.01 沒用是必然的。</strong></p>
+
+<h3>2.3 死因三：agent 看不到未來的 waypoint</h3>
+<p><code>_get_obs()</code> 只放<strong>下一個</strong> waypoint（<code>:114-116</code>）。走 1→2 時完全不知道 3、4、5 在哪 → <strong>「規劃一條同時滿足順序與全覆蓋的路線」在資訊上不可能</strong>，只能貪心。這與 reward 無關，是資訊瓶頸。</p>
+
+<h3>2.4 死因四：稀疏終局 ＋ 天文數字的搜尋空間</h3>
+<p>7×7 要走完 49 格才拿得到 <code>+1000</code>（<code>:199-205</code>）。隨機探索撞出完整 Hamiltonian path 的機率趨近於零 → <strong>整個訓練過程幾乎沒有正樣本</strong>。這是探索問題，調權重同樣無解。</p>
+
+<p class="src"><strong>出處</strong>（本機一手）：<code>D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge\src\core\rl\rl_env.py</code> — 觀測 <code>:104-128</code>、非法移動 <code>:176-180</code>、重走懲罰 <code>:185-188</code>、shaping 與時間懲罰 <code>:193-195</code>、終局 <code>:199-209</code>、<code>max_steps</code> <code>:71</code>。歷史診斷：<code>…\ai-collab\dev_log.md</code> 2025-10-12／10-13／10-15。</p>
+
+<h2 id="nature">3. 問題本質與 RL 的定位</h2>
+<h4>白話版</h4>
+<p>Zip 不是走迷宮，是「一筆畫」：不重複踩過每一格，還要照號碼順序。這是電腦科學裡出名的難題，而<strong>你的專案已經有一個解得又快又正確的工具（CP-SAT）</strong>。所以 RL 的價值不是解得更好，而是學會方法，以及訓練一個對<strong>沒看過的新題目</strong>能一次前向就給答案的模型。</p>
+<h4>術語版</h4>
+<p>Zip ＝ 帶順序約束的 Hamiltonian path problem，NP-hard。專案現況：CP-SAT（<code>src/core/solvers/cp.py</code>）給精確最優解，DFS 給可行解，六種啟發式給近似解，全部有 ground-truth 測試。</p>
+<div class="box">
+<p><strong>RL 的定位（誠實版）</strong>：不是為了比 CP-SAT 快或準（不會贏）；是為了學 masking／PPO／curriculum／MCTS／RLVR；是為了得到<strong>攤提式（amortized）解題器</strong>——訓練一次，之後每題一次前向傳播（毫秒級）；也是為了讓 API 多一個能展示的 solver。</p>
+</div>
+
+<h2 id="redesign">4. 路線 A：實驗全新設計</h2>
+
+<h3>4.1 三條設計原則</h3>
+<ol>
+  <li><strong>觀測必須單調前進</strong>：任兩個時刻的觀測不得相同 → 迴圈在結構上不可能。用「visit 次數 ＋ 已用步數比例」達成。</li>
+  <li><strong>約束用 masking 表達，偏好用 reward 表達</strong>。物理上不可能的事（出界／穿牆／踩到順序錯的號碼）一律 mask，<strong>不用扣分教</strong>；「希望它少繞路」才用 reward。舊版把兩者混在一起（非法移動扣 −10），是 −10 這個數字在跟 +1000 搶尺度。</li>
+  <li><strong>速度用折扣因子表達，不用時間懲罰</strong>。見 4.4。</li>
+</ol>
+
+<h3>4.2 觀測空間（Observation）重新設計</h3>
+<p>全部 padding 到 <code>8×8</code>，讓同一個模型吃 5×5～8×8 的題目。</p>
+
+<h4>空間層（9 個 channel，各 8×8）</h4>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Channel</th><th>值</th><th>為什麼需要</th></tr></thead>
+<tbody>
+<tr><td>0</td><td><code>valid_mask</code></td><td>1＝可走格（非 padding、非障礙）</td><td>一併處理 padding 與 <code>blocked_cells</code>，網路才知道盤面真實邊界</td></tr>
+<tr><td>1</td><td><code>wall_right</code></td><td>1＝該格右側有牆</td><td>沿用舊設計（正確）</td></tr>
+<tr><td>2</td><td><code>wall_down</code></td><td>1＝該格下方有牆</td><td>同上</td></tr>
+<tr><td>3</td><td><strong><code>visit_count</code></strong></td><td><code>min(v, 4) / 4</code></td><td class="pill-good"><strong>★ 你的提案</strong>。打開 2-cycle；也讓網路能分辨「這格走過一次」與「這裡我已經鬼打牆四次了」</td></tr>
+<tr><td>4</td><td><code>visit_recency</code></td><td><code>(t − 最後造訪步) / budget</code>，未訪為 1</td><td>讓網路知道「剛剛從哪來」，有助於避免立刻回頭</td></tr>
+<tr><td>5</td><td><code>agent_pos</code></td><td>one-hot</td><td>當前位置</td></tr>
+<tr><td>6</td><td><code>wp_next</code></td><td>one-hot（下一個目標）</td><td>短程目標，網路最容易抓的訊號</td></tr>
+<tr><td>7</td><td><strong><code>wp_future</code></strong></td><td>尚未收集的 waypoint 標 <code>k/N</code>；其餘 0</td><td class="pill-good"><strong>修死因三</strong>：讓長程規劃在資訊上成為可能</td></tr>
+<tr><td>8</td><td><code>wp_done</code></td><td>已收集的 waypoint 標 1</td><td>讓網路知道進度，不必從 <code>wp_future</code> 反推</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>全域純量層（6 維，接在 CNN 特徵後面）</h4>
+<div class="scroll">
+<table>
+<thead><tr><th>特徵</th><th>值</th><th>為什麼需要</th></tr></thead>
+<tbody>
+<tr><td><code>coverage</code></td><td>已訪不同格數 / 可走格數</td><td>與真正目標同構的進度量；也是 4.4 shaping 的位能</td></tr>
+<tr><td><strong><code>time_used</code></strong></td><td>已用步數 / budget</td><td class="pill-good"><strong>★ 嚴格單調</strong>，數學上保證觀測不循環；同時解掉舊版的「時間盲點」</td></tr>
+<tr><td><code>wp_progress</code></td><td>已收集 waypoint 數 / N</td><td>進度</td></tr>
+<tr><td><code>revisit_ratio</code></td><td>重走步數 / 已走步數</td><td>讓網路感知自己繞路的程度（Phase 2 的成本與它相關）</td></tr>
+<tr><td><code>last_action</code></td><td>one-hot(4)（首步全 0）</td><td>方向慣性；也讓「立刻回頭」這個動作可被辨識</td></tr>
+<tr><td><code>grid_shape</code></td><td>(H/8, W/8)</td><td>padding 後仍知道真實尺寸</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box">
+<p><strong>為什麼不是把這些也畫成 channel？</strong>純量做成整張 8×8 的常數平面會浪費卷積算力，而且梯度訊號被稀釋。標準做法是 CNN 抽空間特徵後 <code>concat</code> 純量，再進 MLP。SB3 可以用自訂的 <code>BaseFeaturesExtractor</code> 搭 <code>Dict</code> 觀測空間乾淨地做到（<code>spaces.Dict({"grid": Box(0,1,(9,8,8)), "vec": Box(0,1,(6,))})</code>）。</p>
+</div>
+
+<h3>4.3 動作空間與 masking 政策</h3>
+<p>動作維持 4 個（上下左右）。<strong>每一步都提供 action mask</strong>，遮掉：</p>
+<ol>
+  <li>出界</li>
+  <li>目標格是障礙（<code>blocked_cells</code>）</li>
+  <li>兩格之間有牆</li>
+  <li><strong>目標格是「順序錯的 waypoint」</strong>——例如 3 還沒收，卻要踩 5。這是遊戲規則，屬物理非法，<span class="pill-good">舊版沒有處理這條</span></li>
+  <li><em>（僅 Phase 3）</em>目標格已被造訪 → 強制一筆畫</li>
+</ol>
+<p><strong>效果</strong>：非法移動的 <code>-10</code> 懲罰整條消失，環境不再有「撞牆不動」的退化不動點；動作空間永遠只剩合法選項，策略學習的難度大幅下降。文獻與實務都指出，masking 比懲罰法／重取樣法更穩定、收斂更快（把非法動作的 logit 設 −∞ 再 softmax，梯度為 0）。</p>
+<div class="box warn">
+<p><strong>邊界情況要處理</strong>：Phase 3 下可能出現「四個方向全被 mask」（走進死路）。SB3 的 <code>MaskablePPO</code> 遇到全 False 的 mask 會出錯，所以環境必須<strong>在該狀態直接 <code>terminated=True</code>（失敗）</strong>，不要讓它進到取樣階段。這是實作時最容易漏的一個 bug。</p>
+</div>
+
+<h3>4.4 Reward 重新設計（冰湖式）</h3>
+
+<h4>白話版：為什麼不要每走一步就扣分</h4>
+<p>每步 −1 聽起來很自然（「快點走完」），但有兩個副作用。第一，agent 沒有「認輸」按鈕，它逃不掉扣分，於是「早死早超生」不可行，反而學會擺爛。第二，尺度會打架：走 72 步就是 −72，而終局才 +1000／中繼 +200，訓練初期永遠拿不到終局獎勵，所以模型看到的世界幾乎全是負分，訊號被時間懲罰淹沒。<strong>冰湖遊戲的處理更漂亮：到終點 +1，其他一律 0，速度交給折扣因子。</strong>因為晚 10 步拿到的 +1 打了折（0.99¹⁰ ≈ 0.90），<strong>「越快越好」自動成立，一個權重都不用調。</strong></p>
+
+<h4>術語版</h4>
+<p>最大化 <code>γ^T · R_success</code> 等價於最小化 T。時間懲罰是把速度寫進即時獎勵，會與稀疏終局獎勵爭奪尺度、放大 return 變異；折扣是把速度寫進<strong>目標函數本身</strong>，無額外超參。Gymnasium 的 FrozenLake 正是這個設計（抵達目標 +1，其餘 0）。</p>
+
+<pre><code># === Reward 規格 v2 ===
+gamma = 0.99                     # 「越快越好」由這裡表達
+
+success        = +1.0            # 唯一的大獎：依序收完所有 waypoint 且走遍所有可走格
+failure        =  0.0            # 步數用盡：不額外懲罰（避免誘發自毀行為）
+dead_end       =  0.0            # 僅 Phase 3：無合法動作 -> terminated
+
+# 覆蓋型 potential shaping（Phase 1-2 開，Phase 3 關）
+Phi(s)  = 已訪不同格數 / 可走格數           # <- 與真正目標同構，不是距離
+F(s,s') = lambda * (gamma * Phi(s') - Phi(s))
+lambda  = 0.5
+
+# 重走成本（三階段 anneal，見 4.6）
+revisit_cost = c * (visit_count_before - 1)   # c: 0 -> 0.005 -> 改用 mask
+</code></pre>
+
+<div class="box rec">
+<p><strong>與舊版的關鍵差異</strong>：位能從<strong>距離</strong>換成<strong>覆蓋率</strong>。這一步是整份設計的核心——距離位能會懲罰「為了填滿角落而暫時遠離下一個號碼」，覆蓋位能則獎勵它。位能與真實目標同構，shaping 才會幫忙而不是扯後腿。</p>
+</div>
+
+<h3>4.5 終止條件與步數預算</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>事件</th><th>條件</th><th>回傳</th></tr></thead>
+<tbody>
+<tr><td>成功</td><td>所有可走格 <code>visit_count ≥ 1</code> ∧ waypoint 依序全收 ∧ 位於最後一個 waypoint</td><td><code>terminated=True</code>, +1.0</td></tr>
+<tr><td>失敗（超時）</td><td>已用步數 ≥ budget</td><td><code>truncated=True</code>, 0</td></tr>
+<tr><td>失敗（死路）</td><td>Phase 3 且無合法動作</td><td><code>terminated=True</code>, 0</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>budget（步數預算）＝ <code>k × 可走格數</code></strong>，<code>k</code> 隨階段收斂：Phase 1 <code>k=3</code>（大量倒車空間）→ Phase 2 <code>k=2</code> → Phase 3 <code>k=1</code>（一筆畫的理論步數就是「格數 − 1」，沒有餘裕）。</p>
+
+<div class="box warn">
+<p><strong>一個必須講清楚的誠實點</strong>：Phase 1／2 允許重走，所以<strong>「成功」的路徑不一定是合法的 Zip 解</strong>（真實遊戲不能重複踩格）。這兩階段的成功是<strong>訓練用的軟目標</strong>，用來製造學習訊號。<strong>只有 Phase 3（或推論時強制 mask 已訪格）產出的才是合法一筆畫解。</strong>評估時要同時報「軟成功率」與「合法一筆畫率」，不能混為一談。</p>
+</div>
+
+<h3>4.6 三階段 curriculum（尺寸 × 約束強度雙軸）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th></th><th>Phase 1「先學會走到終點」</th><th>Phase 2「學會少繞路」</th><th>Phase 3「一筆畫」</th></tr></thead>
+<tbody>
+<tr><td>盤面</td><td>4×4，無牆無障礙，3–4 個 waypoint</td><td>5×5 → 6×6，2–8 道牆</td><td>6×6 → 7×7，完整規則（牆＋障礙）</td></tr>
+<tr><td>重走</td><td class="pill-good">自由，零成本</td><td>成本 <code>c</code> 從 0 線性升到 0.005</td><td class="pill-bad">直接 mask，不可能</td></tr>
+<tr><td>budget</td><td>3× 格數</td><td>2× 格數</td><td>格數 − 1</td></tr>
+<tr><td>shaping λ</td><td>0.5</td><td>0.5 → 0.2</td><td>0（只剩 +1 與 γ）</td></tr>
+<tr><td>升級條件</td><td>軟成功率 ≥ 90%</td><td>軟成功率 ≥ 85% 且 revisit_ratio &lt; 0.2</td><td>—</td></tr>
+<tr><td>權重</td><td colspan="3" style="text-align:center">三階段<strong>接續訓練</strong>，不重新初始化（等於逐步收緊的 fine-tune）</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>額外的加速器：反向 curriculum。</strong>出題器 <code>generate_puzzle()</code> 回傳的是 <code>(Puzzle, solution_path)</code>——<strong>答案本來就在手上</strong>。Phase 1 可以讓 agent 從「解答路徑的倒數第 3 格」開始（幾乎必成功），成功率達標後再往前推到倒數第 6、第 10 格……逐步逼近真正起點。<strong>這直接解決死因四「從來沒有正樣本」，成本近乎為零。</strong></p>
+
+<h3>4.7 題目供給與網路架構</h3>
+<ul>
+  <li><strong>每個 episode 隨機抽一題</strong>（不要再 overfit 單一地圖）。用 <code>generate_rl_dataset.py</code> 離線預生成 50k 題並固定 seed 切 train／val／test，<strong>避免生成器的內部逾時拖慢訓練迴圈</strong>（出題器有 <code>timeout_per_attempt=20s</code>，放在 rollout 迴圈裡會是災難）。</li>
+  <li><strong>網路</strong>：3 層 CNN（64 channel、3×3、padding=1，無 pooling——盤面只有 8×8，池化會丟掉位置資訊）→ flatten → concat 6 維純量 → MLP 256 → policy head(4) ＋ value head(1)。參數量約 10⁵–10⁶，本機訓練分鐘～小時級。</li>
+</ul>
+
+<h3>4.8 PPO 超參（起手值）</h3>
+<pre><code>n_envs        = 16 (SubprocVecEnv)
+n_steps       = 512          # 每環境；一次更新 8192 transitions
+batch_size    = 512
+n_epochs      = 10
+learning_rate = 3e-4 (linear decay)
+gamma         = 0.99
+gae_lambda    = 0.95
+clip_range    = 0.2
+ent_coef      = 0.01         # 稀疏獎勵下維持探索；Phase 3 可降到 0.003
+vf_coef       = 0.5
+max_grad_norm = 0.5</code></pre>
+
+<h3>4.9 評估協定（含必備對照組）</h3>
+<div class="box rec">
+<p><strong>先量兩個 baseline，否則無法證明模型學到東西：</strong></p>
+<ol>
+  <li><strong>masked random</strong>：在合法動作裡均勻亂選。有了 masking 之後，這在 4×4 上的成功率可能意外地高——這正是必須先量的理由。</li>
+  <li><strong>greedy</strong>：永遠往下一個 waypoint 靠近（等於舊版 shaping 想教出來的東西）。它的成功率就是「距離型 shaping 的天花板」。</li>
+</ol>
+</div>
+<ul>
+  <li><strong>主指標</strong>：1,000 題 held-out 的 <strong>deterministic 通關率</strong>，依尺寸分列，並<strong>同時報兩種推論模式</strong>——(a) 允許重走 (b) 推論時強制 mask 已訪格（＝直接要求一筆畫）。(b) 才是產品可用的數字。</li>
+  <li><strong>效率指標</strong>：平均步數 / 理論最少步數；<code>revisit_ratio</code>；合法一筆畫率。</li>
+  <li><strong>成本指標</strong>：單題決策延遲 vs DFS／CP-SAT 求解時間（RL 唯一可能贏的維度）。</li>
+  <li><strong>健全性測試（pytest）</strong>：把 ground-truth 解答路徑逐步餵進 env，斷言最後 <code>terminated=True</code> 且拿到 +1。<strong>這個測試若當年存在，第一天就能排除「環境本身不可解」。</strong></li>
+</ul>
+
+<h2 id="framework">5. 框架與套件調查（含相依衝突）</h2>
+
+<h3>5.1 2026 年的選項</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>套件</th><th>最新版</th><th>定位</th><th>對本專案</th></tr></thead>
+<tbody>
+<tr><td><strong>Gymnasium</strong></td><td>1.3.0（2026-04-22）</td><td>環境介面標準</td><td class="pill-good">必用。專案已鎖 1.2.1，API 相同（5-tuple step）</td></tr>
+<tr><td><strong>Stable-Baselines3</strong></td><td>2.9.0</td><td>「把演算法藏起來讓你直接用」</td><td class="pill-good">專案已鎖 2.7.0</td></tr>
+<tr><td><strong>sb3-contrib</strong></td><td>2.9.0（2026-06-15）</td><td><strong>MaskablePPO 在這裡</strong></td><td class="pill-bad">⚠ 見 5.2 的衝突</td></tr>
+<tr><td>CleanRL</td><td>持續維護</td><td>「把演算法攤開讓你改每一行」單檔實作</td><td>造輪子時的最佳參考（見第 6 節）</td></tr>
+<tr><td>TorchRL / RLlib</td><td>—</td><td>規模化、分散式</td><td>對 8×8 網格是殺雞用牛刀</td></tr>
+<tr><td>PufferLib</td><td>2.x</td><td>不是學習庫，是讓環境與 SB3／CleanRL「相處愉快」的高吞吐層（第一方環境可達 1M steps/s）</td><td>本專案 env 很輕，瓶頸不在吞吐，先不用</td></tr>
+<tr><td>JAX 系（Brax／PureJaxRL）</td><td>—</td><td>極致吞吐</td><td>要重寫 env 為 JAX，成本不划算</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>5.2 ⚠ 真實的相依衝突（開工前必須拍板）</h3>
+<p>本專案 <code>pyproject.toml</code> 鎖的是：</p>
+<pre><code>requires-python = "&gt;=3.11,&lt;3.12"
+torch==2.4.1        (+cu121 自訂 index)
+gymnasium&gt;=1.2.1    (uv.lock: 1.2.1)
+stable-baselines3&gt;=2.7.0  (uv.lock: 2.7.0)
+# 沒有 sb3-contrib</code></pre>
+<p>而 PyPI 上 <code>sb3-contrib</code> 最新版 2.9.0 的 <code>requires_dist</code> 是 <code>stable_baselines3&gt;=2.9.0,&lt;3.0</code>，且 SB3 2.9.0 要求 <strong>PyTorch ≥ 2.8</strong>。</p>
+<div class="scroll">
+<table>
+<thead><tr><th>選項</th><th>做法</th><th>代價</th><th>評價</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>A. 升級 torch</strong></td>
+  <td><code>torch 2.4.1+cu121 → ≥2.8</code>（換 cu124/cu126 index），SB3 與 sb3-contrib 一起上 2.9</td>
+  <td>動到專案刻意的 pin（<code>AGENTS.md §5</code> 記載此 pin 與 cu121 index 是決策），要重跑 46 個測試回歸</td>
+  <td class="pill-good"><strong>推薦</strong>：torch 2.4.1／cu121 是 2024 年的組合，你的卡是 Ada，cu124+ 更合適；VLM 那邊跑 Unsloth／transformers 也會想要新 torch。<strong>但這是你的決定，需要你 <code>uv add</code> 拍板</strong></td>
+</tr>
+<tr>
+  <td>B. 找相容舊版 contrib</td>
+  <td>裝與 SB3 2.7.0 相容的 sb3-contrib</td>
+  <td>我在 PyPI 的版本列表<strong>沒有確認到 2.7.0</strong>（需你實際 <code>uv add sb3-contrib==2.7.0</code> 驗證是否存在）</td>
+  <td>可行則最省事，但不確定</td>
+</tr>
+<tr>
+  <td><strong>C. 自己實作 masking</strong></td>
+  <td>不裝 contrib，自寫 masked PPO</td>
+  <td>多寫 350–450 行</td>
+  <td class="pill-good"><strong>備案且有教育價值</strong>：零相依衝突，且 masking 本身只要約 40 行（CleanRL 的做法）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="src">出處：<a href="https://pypi.org/pypi/sb3-contrib/json">PyPI · sb3-contrib JSON metadata</a>（最新 2.9.0、<code>stable_baselines3&gt;=2.9.0,&lt;3.0</code>、<code>requires_python&gt;=3.10</code>）、<a href="https://github.com/DLR-RM/stable-baselines3/releases">SB3 Releases</a>（PyTorch 最低版本升到 2.8、gymnasium <code>&gt;=0.29.1,&lt;2.0</code>、v2.8.0 起不支援 Python 3.9）、<a href="https://pypi.org/project/gymnasium/">PyPI · Gymnasium</a>（1.3.0，2026-04-22）、<a href="https://sb3-contrib.readthedocs.io/en/master/modules/ppo_mask.html">MaskablePPO 官方文件</a>。本機一手：<code>…\linkedin-zip-challenge\pyproject.toml</code> 與 <code>uv.lock</code>。<br>
+註：SB3 releases 頁面的日期我讀到的是 2024，但 sb3-contrib 在 PyPI 上 2.9.0 標的是 <strong>2026-06-15</strong>，兩者版本號同步發布，<strong>我判斷 2024 那個日期是解析錯誤</strong>，未進一步查證。</p>
+
+<h2 id="diy">6. 自己造輪子的可行度評估</h2>
+
+<div class="box">
+<p><strong>結論：可行，規模約 900–1,200 行、2–3 週業餘時間；但建議「環境自己寫、演算法先用現成的」。</strong></p>
+</div>
+
+<h3>6.1 工作量拆解</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>元件</th><th>行數估計</th><th>難度</th><th>用現成的？</th></tr></thead>
+<tbody>
+<tr><td><code>rl_env_v2.py</code>（觀測、masking、reward、curriculum 參數）</td><td>250–320</td><td>中</td><td class="pill-bad">必須自己寫（本專案特有）</td></tr>
+<tr><td><code>features.py</code>（CNN＋純量的 features extractor）</td><td>50–80</td><td>低</td><td>自己寫（SB3 提供基底類別）</td></tr>
+<tr><td><strong>masked PPO 本體</strong></td><td><strong>350–450</strong></td><td>中高</td><td class="pill-good"><strong>建議用 sb3-contrib</strong>；自寫的話 CleanRL 單檔 PPO 約 350 行＋masking 約 40 行</td></tr>
+<tr><td><code>train_curriculum.py</code>（三階段、升級判斷、checkpoint）</td><td>120–180</td><td>中</td><td>自己寫</td></tr>
+<tr><td><code>evaluate.py</code>（兩個 baseline＋四類指標＋兩種推論模式）</td><td>120–160</td><td>低</td><td>自己寫</td></tr>
+<tr><td><code>test_rl_env_v2.py</code>（ground-truth 路徑健全性、mask 正確性、全 mask 邊界）</td><td>80–120</td><td>低</td><td>自己寫</td></tr>
+<tr><td colspan="4"><strong>合計：用 sb3-contrib ≈ 620–860 行；全自寫 ≈ 970–1,310 行</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>6.2 造輪子的取捨</h3>
+<ul>
+  <li><span class="pill-good">好處</span>：零相依衝突（不用碰 torch pin）；<strong>學習價值最高</strong>——PPO 的 clip、GAE、mask 的梯度處理都會親手寫過一遍；而且你已經有 <code>../more_simple_reinforcement_learning/chap_05_ppo</code> 可以對照。</li>
+  <li><span class="pill-bad">壞處</span>：debug 成本高。<strong>RL 的 bug 不會報錯，只會「學不起來」</strong>，你會分不清是演算法寫錯、環境寫錯、還是超參不好。這正是舊實驗吃過的苦。</li>
+</ul>
+<div class="box rec">
+<p><strong>建議的折衷</strong>：先用 <code>sb3-contrib</code> 的 <code>MaskablePPO</code> 把整條路跑通、拿到成功率數字（<strong>此時你有了「已知能成功」的參考點</strong>），再選擇性地自寫一版 PPO 對拍——兩邊在同一環境同一 seed 下的學習曲線應該相近。<strong>有參考點的造輪子才學得到東西；沒有參考點的造輪子只會卡在「到底哪裡錯」。</strong></p>
+</div>
+
+<h2 id="routeB">7. 路線 B：GRPO 讓語言模型通關</h2>
+<h4>白話版</h4>
+<p>另一種「讓模型通關」是：不另外訓小 agent，而是<strong>教語言模型自己寫出答案</strong>。讓它一次生成好幾個答案，用你寫好的解題程式當裁判打分，分高的做法被強化。因為你手上有<strong>能自動判對錯的裁判</strong>，這件事才做得起來。</p>
+<h4>術語版</h4>
+<p>GRPO／GSPO 屬於 RLVR（RL with Verifiable Rewards）：同題取樣一組回答，用可驗證 reward 算組內相對優勢，不需要 value network 或人工偏好標註。本專案的 verifier 現成：<code>prepare_solver_input()</code>、<code>calculate_fitness_score()</code> 與各 solver 的合法性檢查，全部有 46 個測試背書。</p>
+
+<div class="box rec">
+<p><strong>兩個關鍵決定</strong>：<br>
+① <strong>先做純文字輸入</strong>（把題目用 layout 陣列＋walls 清單餵進去），不要一開始就吃圖片——否則答錯時分不清是「看錯圖」還是「不會解題」。<br>
+② <strong>從 4×4 起步</strong>（16 步），7×7（49 步）一開始必然全 0 reward。</p>
+</div>
+
+<pre><code># Reward 階梯（大量部分分數，避免訓練初期全 0）
+format_ok          +0.1   # 能解析出座標序列
+all_in_bounds      +0.1
+adjacency_ok       +0.2 x (合法相鄰步數 / 總步數)
+no_wall_crossing   +0.2 x (未穿牆步數 / 總步數)
+no_revisit         +0.1 x (不重複比例)
+waypoint_order_ok  +0.2 x (依序命中比例)
+full_coverage      +1.0
+solved             +2.0   # 等價於既有 solver 驗證通過</code></pre>
+
+<p><strong>基礎建設（與 VLM 報告共用）</strong>：Unsloth 支援 Qwen3-VL／Gemma 3／Gemma 4／Qwen2.5-VL 的 GRPO/GSPO；<strong>Qwen3-VL-8B 可在免費 Colab T4 跑 GSPO</strong>；Qwen3.5-4B 有官方 GRPO notebook；<strong>Gemma 4 有 E2B 的 Sudoku RL/GRPO notebook——Sudoku 與 Zip 同屬「網格＋硬約束＋可程式驗證」，reward function 的結構幾乎可以照抄</strong>。GSPO 只要設 <code>importance_sampling_level="sequence"</code>，對長輸出（我們的路徑就是長輸出）較穩定。<span class="pill-bad">限制</span>：走 vLLM 快速推論時視覺層 LoRA 不支援（<code>finetune_vision_layers=False</code>），所以視覺能力要在 VLM 報告的 SFT 階段先練好。</p>
+
+<div class="box warn">
+<p><strong>誠實的期望值</strong>：路線 B 成功機率明顯低於 A，成本高一個數量級。文獻顯示 LLM 在網格謎題上系統性偏弱；Sudoku 的 GRPO 有成功案例，但都伴隨精心設計的 reward 與大量取樣。<strong>done 條件建議訂成「4×4 上把通關率從 baseline 顯著拉高」，不是「解出 7×7」。</strong></p>
+</div>
+
+<h2 id="compare">8. 兩條路線比較與順序</h2>
+<div class="scroll">
+<table>
+<thead><tr><th></th><th>路線 A：獨立 RL agent</th><th>路線 B：GRPO 微調語言模型</th></tr></thead>
+<tbody>
+<tr><td>模型</td><td>小型 CNN 策略網路（10⁵–10⁶ 參數）</td><td>4B–8B 語言／多模態模型 ＋ LoRA</td></tr>
+<tr><td>通關率預期</td><td class="pill-good">小網格接近 100%，7×7 可觀</td><td>4×4 有機會，7×7 悲觀</td></tr>
+<tr><td>算力</td><td class="pill-good">本機，分鐘～小時</td><td>Colab T4/L4，小時～天，燒 CU</td></tr>
+<tr><td>失敗風險</td><td class="pill-good">低（根因已定位、對策明確）</td><td>中高</td></tr>
+<tr><td>學到的東西</td><td>masking、PPO、curriculum、potential shaping、MCTS/AlphaZero</td><td>RLVR、GRPO/GSPO、reward engineering、LLM 微調棧</td></tr>
+<tr><td>綜效</td><td><code>board-game-rl</code> 的 MCTS/AlphaZero 下一步</td><td>VLM 報告的 Unsloth/Colab 基礎建設</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>建議順序：A → B。</strong>A 直接把 2025 年那個未結的案子翻頁、全程本機、一兩週有結果；B 依賴 VLM 報告的環境先就位。<strong>A 的 Phase 3 成品可以掛成 API 的第 10 種 solver。</strong></p>
+
+<h2 id="plan">9. 執行計畫與 done 條件</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>階段</th><th>內容</th><th>done 條件</th><th>估時</th></tr></thead>
+<tbody>
+<tr><td><strong>A0 決策＋健全性</strong></td><td>拍板第 5.2 節的相依方案（A／B／C）；寫 ground-truth 路徑的 pytest</td><td>套件裝好、既有 46 測試仍全綠；新測試通過（餵解答路徑 → <code>terminated=True</code> 且 +1）</td><td>0.5–1 天</td></tr>
+<tr><td><strong>A1 env v2</strong></td><td>9 channel ＋ 6 純量觀測、四類 mask、reward v2、budget、三階段參數化</td><td>單元測試涵蓋 mask 正確性與「全 mask → terminated」邊界；<strong>masked random 與 greedy 兩個 baseline 的成功率量測落盤</strong></td><td>2–3 天</td></tr>
+<tr><td><strong>A2 Phase 1</strong></td><td>4×4 無牆＋反向 curriculum＋MaskablePPO</td><td>軟成功率 ≥ 90% 且<strong>顯著高於 masked random</strong>；學習曲線與 seed 落盤</td><td>1–2 天</td></tr>
+<tr><td><strong>A3 Phase 2</strong></td><td>5×5→6×6 加牆，revisit 成本 anneal</td><td>軟成功率 ≥ 85% 且 <code>revisit_ratio &lt; 0.2</code></td><td>2–3 天</td></tr>
+<tr><td><strong>A4 Phase 3</strong></td><td>6×6→7×7 一筆畫（mask 已訪格）</td><td><strong>合法一筆畫通關率</strong>在 1,000 題 held-out 上明確優於兩個 baseline（deterministic 評估）</td><td>2–4 天</td></tr>
+<tr><td><strong>A5 落地</strong></td><td>掛成 API 第 10 種 solver；更新 roadmap／dev_log</td><td><code>uv run pytest</code> 全綠；API 可選 RL solver；報告進 <code>ai-collab/reports/</code></td><td>1 天</td></tr>
+<tr><td>A6（選）</td><td>自寫 PPO 對拍 / AlphaZero-lite（MCTS＋雙頭網路）</td><td>與 A4 在同 seed 下曲線相近 / 指標超越 A4</td><td>1 週＋</td></tr>
+<tr><td><strong>B1</strong></td><td>文字版 GRPO，4×4，Qwen3.5-4B 或 Gemma 4 E2B（照 Sudoku notebook 改）</td><td>通關率顯著高於未微調 baseline；reward 曲線非平坦</td><td>3–5 天</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="redline">10. 紅線與期望值管理</h2>
+<ul>
+  <li><strong>不要再用調 reward 權重的方式對付迴圈</strong>——根因在觀測與約束設計（2.1／2.2）。</li>
+  <li><strong>評估一律 deterministic</strong>，且<strong>軟成功率與合法一筆畫率要分開報</strong>（4.5 的誠實點）。</li>
+  <li><strong>先有 baseline 再談進步</strong>：masked random ＋ greedy。</li>
+  <li><strong>相依升級要你拍板</strong>：新增套件由本人 <code>uv add</code>（repo 規範），尤其動 <code>torch</code> pin 會影響整個子專案。</li>
+  <li><strong>長時間訓練前先確認</strong>；訓練成品放 <code>models/</code>、資料放 <code>datasets/</code>，都不進版控。</li>
+  <li><strong>RL 不會取代 CP-SAT</strong>——把這句寫進 README，避免未來誤解專案定位。</li>
+  <li>先讀的教材：<code>../more_simple_reinforcement_learning/chap_05_ppo</code>、<code>chap_02_dqn</code>；<code>board-game-rl/ai-collab/handover.md</code> 的 MCTS/AlphaZero 規劃。</li>
+</ul>
+
+<h2 id="unverified">11. 本報告未驗證的部分</h2>
+<ul>
+  <li><strong>沒有執行任何訓練或評估</strong>：所有成功率、工期、行數都是設計階段預估。</li>
+  <li><strong>沒有跑 <code>uv run pytest</code></strong>：本次只讀檔與查證；46 tests passed 是 2026-08-08 的紀錄。</li>
+  <li><strong>2-cycle 的論證是靜態程式碼分析</strong>，與 dev_log 現象一致但<strong>未以實驗復現</strong>。驗證只需一支小腳本：讓 agent 在兩個已訪格間震盪，印出 <code>_get_obs()</code> 的 hash 是否只在兩個值間交替。建議 A0 順手做。</li>
+  <li><strong><code>sb3-contrib</code> 是否有相容 SB3 2.7.0 的版本未確認</strong>（PyPI 版本列表我沒讀到 2.7.0，但也不排除是解析遺漏）。</li>
+  <li><strong>SB3 2.9.0 的發布日期存疑</strong>（releases 頁面讀到 2024，與 sb3-contrib 的 2026-06-15 不一致）。版本相依關係本身有明確出處，日期不影響結論。</li>
+  <li><strong>PPO 超參與 reward 係數（λ=0.5、c=0.005、γ=0.99）未經調校</strong>，只是合理起點。</li>
+  <li><strong>路線 B 的 reward 階梯未經實驗</strong>。</li>
+</ul>
+
+<h2 id="ref">12. 參考資料</h2>
+<h4>本機一手</h4>
+<ul class="src">
+  <li><code>D:\it_project\github_sync\ml-workshop\linkedin-zip-challenge\src\core\rl\rl_env.py</code>（:104 觀測、:176 非法移動、:193 shaping、:199 終局、:71 步數上限）</li>
+  <li><code>…\src\core\rl\</code>：<code>dqn_agent.py</code>、<code>train_single_cnn_sb.py</code>、<code>evaluate_sb.py</code>、<code>generate_rl_dataset.py</code></li>
+  <li><code>…\src\core\puzzle_generation\puzzle_generator.py</code>（<code>generate_puzzle()</code> 回傳題目<strong>與解答路徑</strong>，反向 curriculum 的關鍵；<code>timeout_per_attempt=20s</code>）</li>
+  <li><code>…\src\core\utils.py</code>（<code>calculate_fitness_score</code> :138、<code>prepare_solver_input</code> :37 — 路線 B 的 verifier）</li>
+  <li><code>…\pyproject.toml</code> ＋ <code>uv.lock</code>（torch 2.4.1+cu121、gymnasium 1.2.1、stable-baselines3 2.7.0、無 sb3-contrib）</li>
+  <li><code>…\ai-collab\dev_log.md</code>（2025-10-12／10-13／10-15 的 RL 診斷與暫停紀錄）</li>
+</ul>
+<h4>外部</h4>
+<ul>
+  <li><a href="https://sb3-contrib.readthedocs.io/en/master/modules/ppo_mask.html">Maskable PPO · SB3-Contrib 官方文件</a>／<a href="https://pypi.org/pypi/sb3-contrib/json">PyPI metadata</a>／<a href="https://github.com/DLR-RM/stable-baselines3/releases">SB3 Releases</a></li>
+  <li><a href="https://pypi.org/project/gymnasium/">PyPI · Gymnasium 1.3.0</a>／<a href="https://arxiv.org/pdf/2407.17032">Gymnasium: A Standard Interface for RL Environments</a></li>
+  <li><a href="https://github.com/vwxyzjn/cleanrl">CleanRL</a>／<a href="https://docs.cleanrl.dev/rl-algorithms/ppo/">CleanRL PPO 文件</a>（單檔實作；masking 約 40 行）</li>
+  <li><a href="https://www.sciencedirect.com/science/article/pii/S2405959520300746">Implementing action mask in PPO</a>（masking 對組合型動作空間的效果）</li>
+  <li><a href="https://www.reinforcement-learning.com/kb/rl-libraries-and-frameworks">RL Libraries &amp; Frameworks: A 2026 Guide</a>（<span class="pill-bad">二手</span>，用於框架分類）／<a href="https://arxiv.org/html/2406.12905v1">PufferLib</a></li>
+  <li><a href="https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide/vision-reinforcement-learning-vlm-rl">Unsloth · Vision RL</a>／<a href="https://unsloth.ai/docs/models/gemma-4/train">Unsloth · Gemma 4（含 E2B Sudoku GRPO notebook）</a>／<a href="https://github.com/unslothai/notebooks">unslothai/notebooks</a></li>
+  <li><a href="https://www.cerebras.ai/blog/from-zero-to-sudoku-hero-an-rl-adventure">From Zero to Sudoku Hero: An RL Adventure</a>（網格謎題的 RLVR reward 設計實例）</li>
+  <li><a href="https://arxiv.org/html/2407.14790v1">Step-by-Step Reasoning to Solve Grid Puzzles: Where do LLMs Falter?</a></li>
+  <li><a href="https://github.com/Thinklab-SJTU/awesome-ml4co">awesome-ml4co</a>（神經組合最佳化：Kool 2019 attention model、POMO 2020、RL4CO 2024）</li>
+  <li>Ng, Harada &amp; Russell (1999), <em>Policy invariance under reward transformations</em>（potential-based shaping 理論基礎；經典文獻引用，未附連結）</li>
+</ul>
+<p class="src">搜尋關鍵字（去識別化）：<code>reinforcement learning library 2026 stable-baselines3 vs TorchRL vs CleanRL maskable PPO</code>、<code>action masking PPO invalid action combinatorial optimization</code>、<code>PufferLib 2026 throughput gridworld</code>、<code>Unsloth GRPO vision RL 2026</code>、<code>LLM GRPO RLVR grid puzzle sudoku verifiable reward</code>。</p>
+
+<footer>
+  linkedin-zip-challenge · ai-collab/reports/2026-08-15_rl-restart-plan.html（v2）<br>
+  姊妹報告：<code>2026-08-15_vlm-model-survey.html</code>（VLM 選型 v2：Gemma 4／Qwen3.5、OCR 專用模型、Unsloth 生態）
+</footer>
+
+</div>
+</body>
+</html>
