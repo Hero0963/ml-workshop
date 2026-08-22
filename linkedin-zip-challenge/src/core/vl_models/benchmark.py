@@ -13,9 +13,10 @@ Produces the metric layers the VLM track plan asks for (see
 4. Cost -- wall-clock latency, Ollama's own timing breakdown, and peak GPU
    memory sampled from ``nvidia-smi`` while the request is in flight.
 
-The few-shot prompt is imported from ``final_puzzle_parser`` on purpose: the
-baseline has to measure the prompt that already exists, not a copy that can
-drift away from it.
+The few-shot prompt is imported from ``prompt_baseline`` on purpose: the baseline
+has to measure the prompt that already exists, not a copy that can drift away from
+it. Transports come from ``backends`` for the same reason -- this harness must
+measure the code the app runs.
 
 Usage:
     uv run python -m src.core.vl_models.benchmark --model qwen3.5:4b
@@ -23,7 +24,6 @@ Usage:
 """
 
 import argparse
-import base64
 import json
 import subprocess
 import threading
@@ -32,7 +32,6 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-import httpx
 from loguru import logger
 from PIL import Image
 from pydantic import ValidationError
@@ -40,16 +39,21 @@ from pydantic import ValidationError
 from src.core.solvers.cp import solve_puzzle_cp
 from src.core.tests.conftest import puzzles_to_test
 from src.core.utils import parse_puzzle_layout
-from src.core.vl_models.final_puzzle_parser import (
-    SimplePuzzleOutput,
-    build_puzzle_prompt,
-    extract_json_block,
+from src.core.vl_models.backends import (
+    BACKEND_NATIVE,
+    BACKEND_OPENAI_COMPAT,
+    build_backend,
 )
+from src.core.vl_models.prompt_baseline import build_puzzle_prompt
 from src.core.vl_models.prompt_variants import (
     PROMPT_BASELINE,
     PROMPT_CHOICES,
+    PROMPT_FINETUNE,
+    PROMPT_SIZED,
+    build_finetune_prompt,
     build_sized_puzzle_prompt,
 )
+from src.core.vl_models.puzzle_parser import SimplePuzzleOutput, extract_json_block
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 ILLUSTRATIONS_DIR = PROJECT_ROOT / "illustrations"
@@ -70,7 +74,6 @@ NVIDIA_SMI_COMMAND = (
     "--format=csv,noheader,nounits",
 )
 SUBPROCESS_TIMEOUT_SECONDS = 15.0
-NANOSECONDS_PER_SECOND = 1_000_000_000
 
 # CP-SAT has no time limit inside solve_puzzle_cp, so refuse oversized
 # hallucinated grids rather than risk an unbounded solve.
@@ -79,9 +82,23 @@ END_TO_END_MAX_CELLS = 100
 EMPTY_CELL = ""
 BLOCKED_CELL = "xx"
 
-CLIENT_NATIVE = "native"
-CLIENT_PYDANTIC_AI = "pydantic-ai"
-CLIENT_CHOICES = (CLIENT_NATIVE, CLIENT_PYDANTIC_AI)
+CLIENT_NATIVE = BACKEND_NATIVE
+CLIENT_OPENAI_COMPAT = BACKEND_OPENAI_COMPAT
+# `pydantic-ai` was the name this transport shipped under before the transports moved
+# into backends.py. Artifacts in ai-collab/reports/artifacts/ still carry it, so the
+# flag keeps accepting it and normalises to the canonical name on the way in.
+CLIENT_LEGACY_PYDANTIC_AI = "pydantic-ai"
+CLIENT_ALIASES = {CLIENT_LEGACY_PYDANTIC_AI: CLIENT_OPENAI_COMPAT}
+CLIENT_CHOICES = (CLIENT_NATIVE, CLIENT_OPENAI_COMPAT, CLIENT_LEGACY_PYDANTIC_AI)
+
+# One entry per --prompt choice. A fine-tuned checkpoint has to be measured with the very
+# instruction it was trained on, so that variant lives here too rather than being a
+# special case at the call site.
+PROMPT_BUILDERS = {
+    PROMPT_BASELINE: build_puzzle_prompt,
+    PROMPT_SIZED: build_sized_puzzle_prompt,
+    PROMPT_FINETUNE: build_finetune_prompt,
+}
 
 
 # --- Ground truth ---------------------------------------------------------
@@ -349,35 +366,41 @@ def call_model(
 ) -> ModelCall:
     """One request to the model, timed and instrumented.
 
-    ``client`` picks the transport: ``native`` talks to Ollama's own
-    ``/api/chat``, which is the only one that reports load/eval timings,
-    token counts and a separate ``thinking`` field. ``pydantic-ai`` goes
-    through the OpenAI-compatible endpoint -- fewer counters, but it is the
-    path the shipped parser will use, so the two are kept comparable.
+    ``client`` picks the transport, built by ``backends.build_backend`` so this
+    harness and the shipped parser exercise the same code: ``native`` talks to
+    Ollama's own ``/api/chat`` (the only one that reports load/eval timings, token
+    counts and a separate ``thinking`` field), ``openai-compat`` goes through the
+    ``/v1`` endpoint -- fewer counters, but it is the path the app ships.
 
     ``think`` is left unset by default so each model keeps its own default;
     reasoning models spend both latency and context on it, so whether it
-    happened is recorded rather than assumed.
+    happened is recorded rather than assumed. Both transports now honour it --
+    before 2026-08-22 only ``native`` did, which made ``--no-think`` a silent
+    no-op on the other one and cost it 16x in latency.
     """
+    backend = build_backend(
+        name=CLIENT_ALIASES.get(client, client),
+        model=model,
+        base_url=base_url,
+        think=think,
+        num_ctx=num_ctx,
+        seed=seed,
+        temperature=temperature,
+        timeout_seconds=timeout_seconds,
+    )
+
     with GpuMemoryMonitor() as monitor:
         started = time.perf_counter()
         try:
-            if client == CLIENT_PYDANTIC_AI:
-                fields = _request_pydantic_ai(
-                    model, image_path, prompt, base_url, seed, temperature
-                )
-            else:
-                fields = _request_native(
-                    model,
-                    image_path,
-                    prompt,
-                    base_url,
-                    num_ctx,
-                    seed,
-                    temperature,
-                    timeout_seconds,
-                    think,
-                )
+            response = backend.generate(image_path, prompt)
+            fields = {
+                "raw_output": response.text,
+                "thinking_characters": response.thinking_characters,
+                "load_seconds": response.load_seconds,
+                "prompt_eval_count": response.prompt_tokens,
+                "eval_count": response.output_tokens,
+                "eval_seconds": response.eval_seconds,
+            }
         except Exception as error:
             return ModelCall(
                 model=model,
@@ -403,99 +426,6 @@ def call_model(
         ollama_ps=loaded_ps,
         **fields,
     )
-
-
-def _request_native(
-    model: str,
-    image_path: Path,
-    prompt: str,
-    base_url: str,
-    num_ctx: int,
-    seed: int,
-    temperature: float,
-    timeout_seconds: float,
-    think: bool | None,
-) -> dict[str, Any]:
-    """Ollama's own chat endpoint, which carries the full timing breakdown."""
-    encoded_image = base64.b64encode(image_path.read_bytes()).decode("ascii")
-    payload: dict[str, Any] = {
-        "model": model,
-        "stream": False,
-        "messages": [{"role": "user", "content": prompt, "images": [encoded_image]}],
-        "options": {"temperature": temperature, "seed": seed, "num_ctx": num_ctx},
-    }
-    if think is not None:
-        payload["think"] = think
-
-    response = httpx.post(
-        f"{base_url.rstrip('/')}/api/chat", json=payload, timeout=timeout_seconds
-    )
-    response.raise_for_status()
-    body = response.json()
-    message = body.get("message", {})
-    return {
-        "raw_output": message.get("content", ""),
-        "thinking_characters": len(message.get("thinking") or ""),
-        "load_seconds": _nanoseconds_to_seconds(body.get("load_duration")),
-        "prompt_eval_count": body.get("prompt_eval_count"),
-        "eval_count": body.get("eval_count"),
-        "eval_seconds": _nanoseconds_to_seconds(body.get("eval_duration")),
-    }
-
-
-def _request_pydantic_ai(
-    model: str,
-    image_path: Path,
-    prompt: str,
-    base_url: str,
-    seed: int,
-    temperature: float,
-) -> dict[str, Any]:
-    """The OpenAI-compatible path, i.e. the transport the shipped parser uses.
-
-    Kept on ``output_type=str`` on purpose: the 2025-10-24 experiments settled
-    on prompt engineering plus local parsing because the models that support
-    tool calling had broken vision.
-    """
-    from pydantic_ai import Agent
-    from pydantic_ai.messages import BinaryContent
-    from pydantic_ai.models.ollama import OllamaModel
-    from pydantic_ai.providers.ollama import OllamaProvider
-
-    agent = Agent(
-        model=OllamaModel(
-            model,
-            provider=OllamaProvider(base_url=_openai_compat_url(base_url)),
-        ),
-        output_type=str,
-    )
-    image_content = BinaryContent(
-        data=image_path.read_bytes(),
-        media_type=f"image/{image_path.suffix.lstrip('.')}",
-    )
-    result = agent.run_sync(
-        [prompt, image_content],
-        model_settings={"temperature": temperature, "seed": seed},
-    )
-    usage = result.usage
-    return {
-        "raw_output": result.output,
-        "thinking_characters": 0,
-        "load_seconds": None,
-        "prompt_eval_count": usage.input_tokens,
-        "eval_count": usage.output_tokens,
-        "eval_seconds": None,
-    }
-
-
-def _openai_compat_url(base_url: str) -> str:
-    """pydantic-ai's OllamaProvider expects the ``/v1`` OpenAI-compatible root."""
-    trimmed = base_url.rstrip("/")
-    return trimmed if trimmed.endswith("/v1") else f"{trimmed}/v1"
-
-
-def _nanoseconds_to_seconds(value: int | None) -> float | None:
-    return value / NANOSECONDS_PER_SECOND if value is not None else None
 
 
 # --- Evaluation -----------------------------------------------------------
@@ -575,11 +505,8 @@ def run_benchmark(
     client: str = CLIENT_NATIVE,
     prompt_variant: str = PROMPT_BASELINE,
 ) -> BenchmarkRun:
-    prompt = (
-        build_puzzle_prompt()
-        if prompt_variant == PROMPT_BASELINE
-        else build_sized_puzzle_prompt()
-    )
+    client = CLIENT_ALIASES.get(client, client)
+    prompt = PROMPT_BUILDERS[prompt_variant]()
     run = BenchmarkRun(
         model=model,
         seed=seed,
@@ -705,7 +632,8 @@ def main() -> None:
         choices=CLIENT_CHOICES,
         default=CLIENT_NATIVE,
         help="native = Ollama /api/chat (full timing counters); "
-        "pydantic-ai = the OpenAI-compatible path the shipped parser will use",
+        "openai-compat = the /v1 path the shipped parser uses "
+        "('pydantic-ai' is accepted as the legacy name for it)",
     )
     parser.add_argument(
         "--prompt",
@@ -749,7 +677,7 @@ def main() -> None:
     model_slug = args.model.replace(":", "_").replace("/", "_")
     out_path = (
         args.out_dir
-        / f"{time.strftime('%Y%m%d-%H%M%S')}_{model_slug}_{args.client}.json"
+        / f"{time.strftime('%Y%m%d-%H%M%S')}_{model_slug}_{run.client}.json"
     )
     out_path.write_text(
         json.dumps({"run": asdict(run), "summary": summary}, indent=2),
