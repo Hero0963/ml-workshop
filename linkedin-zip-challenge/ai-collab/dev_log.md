@@ -6,6 +6,123 @@
 
 ## 2026-08-22
 
+### VLM Track: P4c ran, reading is done, and the benchmark it was measured on is now saturated
+
+Full results and the raw numbers: [reports/2026-08-22_vl-p4c-results.md](reports/2026-08-22_vl-p4c-results.md).
+Execution record with every cell's output: `notebooks/p4c_finetune_8000.ipynb`.
+
+Baseline first: `uv sync` (resolved 131 / audited 116), `uv run pytest` **136 passed, 8 xfailed**,
+`ruff` clean — matching the handover, so nothing had drifted.
+
+**The result.** 7,800 samples, one epoch, 975 steps on a paid Colab L4. On 200 held-out
+samples that never entered training, every metric came out at **1.000** — JSON 200/200,
+grid size 200/200, cell accuracy 1.000, waypoint recall 1.000, wall F1 1.000 over the 189
+walled boards, micro wall precision and recall 1.000, end-to-end **200/200**. The
+per-wall-count breakdown is 1.00 in all thirteen buckets, including the 24 boards carrying
+twelve walls. The untuned baseline this had to beat scored wall F1 **0.438** and 2/6
+end-to-end on real screenshots.
+
+**A perfect score is a bug report until proven otherwise**, so it was attacked before it was
+believed:
+
+| check | result |
+|---|---|
+| is `raw_output` secretly the label? | identical 200/200 — but that is *expected*, the training target is exactly that serialisation |
+| is the timing real? | `generation_seconds` has **200 distinct values**, 17.4–50.8 s — measured per call, not a constant |
+| is the split what the notebook claimed? | file names match the tail slice in order; **intersection with training: 0** |
+| content-level leakage? | duplicate labels **0**, duplicate render recipes **0**, **duplicate image bytes 0** |
+| recompute without the project's scorer | independent structural comparison **200/200 agree** |
+
+It is real. Training measured 975 steps / **1.56 h** / **5.77 s/step** / peak VRAM **20.90 of
+22.03 GiB (94.9%)** / ~2.4 CU, with the vision stack moving more than the language stack
+(`max|B|` 0.272 against 0.166), consistent with the whole premise that the bottleneck was visual.
+
+**And that saturates the benchmark.** Every metric at 1.000 means the ruler can no longer
+measure anything: a vision-layer ablation, a CoD variant, less training data, a different
+batch size would all score 1.000 on this set. Regaining discrimination needs *harder synthetic
+data* — visual noise, several renderer styles, simulated screenshot compression and rescaling,
+larger boards. **The operator decided the same day not to collect real screenshots** and to
+stay on self-generated data, upgrading the earlier "deferred" to "not doing". The cost of that
+is stated everywhere it matters: these numbers prove the model learned *our renderer*, not
+that it can read a LinkedIn screenshot.
+
+Note also that the win is not shipped yet: the adapter lives on Drive, and
+`puzzle_parser.parse_puzzle_image()` still calls the untuned Ollama model. P4d (export) is
+what closes that gap, and is the next step.
+
+**Built this session:**
+
+-   **`src/core/vl_models/score_predictions.py`** — scores a held-out `predictions.jsonl`
+    offline, through `puzzle_parser.parse_model_output` (so hallucinated walls are dropped
+    exactly as the endpoint will) and `benchmark.score_layout` / `score_walls` (so the layers
+    match the published baseline). No metric is reimplemented anywhere, which is the same
+    discipline that fixed the transport drift. Beyond the existing layers it adds micro wall
+    precision/recall, a breakdown by wall count, and — after the operator articulated the
+    pipeline intent — `path_is_legal()` plus **`solution_valid_on_truth`**: solve the board the
+    model *read*, then check that answer against the board that was really there. That is the
+    product's actual criterion and it is deliberately weaker than `exact_match`, because
+    misreading a wall the route never touches costs the user nothing. On fabricated test data
+    the two differ by nearly a factor of two (0.250 vs 0.475), so reporting only `exact_match`
+    would badly understate the pipeline.
+-   **`notebooks/p4c_finetune_8000.ipynb`** — the real run: a lazy `datasets.Dataset` +
+    `set_transform` instead of P4a's materialised PIL list, a **learning-rate-0** five-step dry
+    run that exercises the whole path while provably not moving the weights, Drive checkpoints
+    with a `RESUME` switch, and no metrics computed in the notebook at all.
+-   Tests 136 → **167 passed, 8 xfailed**; `ruff` clean.
+
+**The pipeline asymmetry worth remembering.** Because an exact solver consumes the parse, the
+two wall errors fail differently. Predicting *extra* walls can only over-constrain, so any
+solution found is still legal on the true board — the risk is a visible "unsolvable". *Missing*
+a wall lets the solver walk straight through one and nothing complains. So recall is the
+safety-critical side, and the solver doubles as a free verifier: the generator builds every
+board from a Hamiltonian path, so an unsolvable prediction is *known* to be a misread without
+any ground truth. `solvable_but_wrong` counts the silent failures; P6 should surface this.
+
+**Four defects in code written this session, all found the expensive way:**
+
+1.  **The held-out set nearly leaked.** The obvious candidate was the existing 120-sample
+    `smoke_6x6` pack. Measured against the training pack: **render recipes identical 120/120,
+    labels identical 82/120**. `draw_recipe` seeds each item with `random.Random(seed + index)`,
+    and the two packs were built one seed apart, so one is the other shifted by an index. Only
+    the wall-clock non-determinism in `generate_puzzle` kept the other 38 apart. Fixed by
+    carving the held-out set from the tail of the same archive, which also costs nothing to
+    upload. (P4a is unaffected: it trained on `smoke[4:]` and evaluated `smoke[:4]`.)
+2.  **The dry run's timing projection was useless.** It measured **37.59 s/step** and printed
+    "projected 10.18 h" against an actual 5.77 s/step and 1.56 h — a 6.5× error, because the
+    first of five steps absorbs all the compilation and autotuning. Its other jobs (plumbing,
+    memory, proving the weights do not move) were sound; only the extrapolation must be
+    discarded-first-step or labelled an upper bound.
+3.  **★ Evaluating with batch-1 sequential generation cost more than the training run.**
+    Inference took 1.92 h / ~3.0 CU against training's 1.56 h / ~2.4 CU. At batch 1 each
+    generated token re-reads all 9.16 GB of weights, so the L4's 300 GB/s sets a 30.5 ms/token
+    floor — about 9.2 s per sample — yet it took 34.5 s, i.e. **27% of roofline**. The rest is
+    per-token fixed cost: 344 unmerged LoRA adapters adding 688 kernel launches per token, and
+    the Python overhead of an uncompiled `generate` loop. The GPU was mostly idle. Batch the
+    generation and merge the adapter next time.
+4.  **"Line-by-line flush to Drive survives a disconnect" was false.** Colab's Drive FUSE only
+    uploads on *close*; `flush()` reaches the FUSE layer and no further. The file was invisible
+    on drive.google.com for the entire two-hour run and a disconnect would have lost all of it.
+    Write to `/content` and `shutil.copy` to Drive per batch instead.
+
+A fifth, smaller correction: the P4a notebook's claim that training renders no `<think>` block
+is wrong — the measured prompt ends `...assistant\n<think>\n\n</think>\n\n`. That is the second
+time the prose description of the training rendering has been wrong while
+`build_inference_prompt` produced the right prefix anyway, because it derives from the training
+path rather than from anyone's description of it.
+
+**Hardware, measured rather than quoted**, since it decides where future runs go. The same
+matmul benchmark on both: local RTX 4070 Ti SUPER **90.06 TFLOP/s** bf16 and **588 GB/s**
+(measured copy) against the L4's **64.11 TFLOP/s** and 300 GB/s spec — the L4 is not faster, it
+just has more VRAM, and at a 20.90 GiB peak the local 15.99 GiB card cannot hold this
+configuration at batch 2. Training ran at roughly **42% MFU** with weight traffic accounting for
+about 4% of the step, so it is compute- and launch-bound, not bandwidth-bound. Raising the batch
+size is a trap here: images vary from 472 to 998 px, and a micro-batch pads to its longest
+member, so batch 2 already wastes **18.9%** of its compute on padding and batches of 4 and 8
+would waste 30.6% and 37.2%.
+
+Cost for the session: ~2.4 CU training + ~3.0 CU inference + ~0.6 CU setup ≈ **6.0 CU** against
+a 3.2 CU plan, with the entire overrun in defect 3.
+
 ### VLM Track: P5 skeleton, and the transport bug that made the shipped path 12x slower (branch `feat/vlm-parser`, worktree `zip-vlm`)
 
 Session goal was "refactor the two parsers"; the refactor turned up a defect that would have
