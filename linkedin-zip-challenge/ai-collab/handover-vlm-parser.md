@@ -28,14 +28,16 @@
 
 | 順序 | 檔案 | 什麼時候讀 |
 |---|---|---|
-| 1 | **本檔** | 一定 |
-| 2 | [`reports/2026-08-15_vl-p0-p1-baseline.html`](reports/2026-08-15_vl-p0-p1-baseline.html)（瀏覽器開） | 一定。所有數字、方法、限制、模型世代全表都在裡面 |
-| 3 | [`plans/2026-08-15_track-vlm-parser.md`](plans/2026-08-15_track-vlm-parser.md) | 一定。P2–P6 的階段任務與 done 條件 |
-| 4 | [`roadmap.md`](roadmap.md) 的「已定案，不要再重開的決策」表 | 一定 |
-| 5 | [`../AGENTS.md`](../AGENTS.md) | 動手前。環境、驗證、紅線、回報格式 |
-| 6 | [`project_guide.md`](project_guide.md) | 要改程式時 |
-| 7 | [`reports/2026-08-15_vlm-model-survey.html`](reports/2026-08-15_vlm-model-survey.html) | 想知道選型的完整推理時。⚠ 它有部分內容已被上面第 2 份修正（見 §7） |
-| 8 | [`dev_log.md`](dev_log.md) | 只在需要歷史脈絡時，**用關鍵字搜，不要整份讀**（900+ 行） |
+| 1 | **本檔的 §0（三件必知）→ §6（下一步 P4c）** | 一定，而且先讀這兩節 |
+| 2 | [`roadmap.md`](roadmap.md) 的「已定案，不要再重開的決策」表 | 一定，快速掃過。**那張表是為了不讓你重蹈已經踩過的坑** |
+| 3 | [`../AGENTS.md`](../AGENTS.md) | 動手前。環境、驗證、紅線、回報格式 |
+| 4 | [`plans/2026-08-15_track-vlm-parser.md`](plans/2026-08-15_track-vlm-parser.md) | 要看 P2–P6 各階段的 done 條件時 |
+| 5 | [`reports/2026-08-15_vl-p0-p1-baseline.html`](reports/2026-08-15_vl-p0-p1-baseline.html)（瀏覽器開） | 要看**未微調** baseline 的完整數字與方法時。⚠ 其中「Q4 完全不行」的結論**可能被混淆**，見 `dev_log.md` 2026-08-22 的 open question |
+| 6 | [`project_guide.md`](project_guide.md) | 要改 `src/app/`／`src/ui/` 時 |
+| 7 | [`reports/2026-08-15_vlm-model-survey.html`](reports/2026-08-15_vlm-model-survey.html) | 想知道選型的完整推理時。⚠ 部分內容已被第 5 份與 dev_log 修正 |
+| 8 | [`dev_log.md`](dev_log.md) | 只在需要歷史脈絡時。**1,000+ 行，用日期或關鍵字搜，不要整份讀**。2026-08-22 那一則是本次 session 的完整紀錄 |
+
+> **只想動手、不想讀完的話**：§0 ＋ §6 ＋ roadmap 的決策表，這三個就夠開工。其他等需要時再翻。
 
 ---
 
