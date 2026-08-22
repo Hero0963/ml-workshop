@@ -40,6 +40,18 @@ dependencies = [
 [tool.isort]
 profile = "black"
 
+[tool.ruff]
+# Notebooks are excluded on purpose. They are Colab artifacts, not library code: they run
+# against a different pinned stack (torch 2.8.0 there vs 2.4.1 here), they keep their
+# executed outputs as the record of a run, and they carry deliberately ad-hoc exploratory
+# cells that would be edited away by a linter -- which would rewrite that record.
+# "module level import not at top of cell" also simply is not a notebook rule.
+#
+# The one notebook defect that has actually bitten us -- a cell magic below line 1, which
+# silently skipped an entire install cell -- is caught by an assertion in the generator
+# instead, which is a check ruff does not offer.
+extend-exclude = ["notebooks"]
+
 
 [tool.uv.pip]
 extra-index-url = ["https://download.pytorch.org/whl/cu121"]
