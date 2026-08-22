@@ -40,6 +40,7 @@
 | `.env` | ❌ 不進版控 | **必須從主工作樹複製**，否則 `pydantic` 會因缺 `ollama_*` 設定而行為異常（2025-10 踩過） |
 | `.venv` | ❌ 不進版控 | 各 worktree 各自 `uv sync`（會抓 `torch==2.4.1+cu121`，數 GB，第一次很慢） |
 | `models/`、`logs/`、`datasets/`、`puzzle_dataset/` | ❌ 不進版控 | 新 worktree 是空的，需要就自己產 |
+| `src/custom_components/puzzle_editor/frontend/dist/` | ❌ 不進版控 | **必須自己 build**：`cd src/custom_components/puzzle_editor/frontend && npm install && npm run build`。沒有它 `/svelte-ui` 直接 404，而 `main.py:63` 的警告會被淹在啟動訊息裡（2026-08-22 踩到） |
 | `illustrations/puzzle_01..06.png` | ✅ **有**進版控 | 這 6 張真實截圖是你唯一的現成評估素材，直接可用 |
 | Ollama 模型（15GB） | Docker volume | 不隨 worktree，但已 pin 成全機共用（見下） |
 
@@ -157,11 +158,24 @@ curl http://127.0.0.1:11435/api/tags                    # 應回 200
 
 ### P5 — 整合（1–2 天）
 
-- [ ] 新增正式 `src/core/vl_models/puzzle_parser.py`（`image → Puzzle`）
-- [ ] backend 抽象：`backends/transformers_backend.py` 與 `backends/openai_compat_backend.py`，同一介面，用 `src/settings.py` 切換
-- [ ] 單元測試：**VL 呼叫要能 mock，測試不依賴 Ollama 或 GPU**
+- [x] 新增正式 `src/core/vl_models/puzzle_parser.py`（`image → ParseResult`，`.puzzle` 是 `Puzzle`）— 2026-08-22
+- [x] backend 抽象：`backends.py` 的 `OllamaNativeBackend` 與 `OllamaOpenAICompatBackend`，同一介面，
+      預設由 `src/settings.py` 建（`default_backend()`）— 2026-08-22
+- [x] 單元測試：**VL 呼叫可 mock，測試不依賴 Ollama 或 GPU**（39 個，`src/core/tests/vl_models/`）— 2026-08-22
+- [x] 模型不在時要有明確錯誤訊息，**不要靜默壞掉**（`VisionBackendError` / `ModelOutputError`，不再回 `None`）— 2026-08-22
+- [ ] `transformers` backend（GGUF 匯出失敗時的 fallback，見風險 #3）——**還沒做**，等 P4d 確認需不需要
 - [ ] Gradio 上傳分頁
-- [ ] 模型不在時要有明確錯誤訊息，**不要靜默壞掉**
+
+**★ 2026-08-22 新增的硬性 done 條件（實測踩到才發現）**
+
+- [x] **關思考的開關必須兩條傳輸層都真的生效。** 它們的旋鈕**不一樣**：`/api/chat` 吃 `think`，
+      而 `/v1` **完全忽略 `think`**、要用 `reasoning_effort="none"`。舊 `benchmark.py` 只把 `think`
+      接到 native，導致 `--no-think` 在 `pydantic-ai` 那條是無聲的 no-op ——
+      而**那條正是正式 parser 走的路**。實測代價：`qwen3.5:4b-q8_0` 六張圖設定下
+      **66.5s／JSON 0/2 vs 4.1s／JSON 2/2**。修好後 openai-compat 為 5.5s／JSON 2/2，與 native 一致。
+- [x] **傳輸層只准有一份實作。** `backends.py` 是唯一正本，`benchmark.py` 與 `puzzle_parser.py` 都用它——
+      當初就是因為兩邊各寫一份才會漂移。
+- [ ] 量測工具與正式流程**必須量同一條路**：報告若引用 native 的數字，要標明正式流程走哪條。
 
 **Done**：roadmap 第 2 項的 done 條件全數達成；`uv run pytest` 全綠；`experiment_*.py` 明確標為 scratchpad。
 

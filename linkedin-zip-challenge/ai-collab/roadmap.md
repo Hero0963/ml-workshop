@@ -46,7 +46,37 @@
      改完 Svelte 的下拉要重新 `npm run build` 才會反映。
    - Done 條件：`SOLVERS` 含全部 9 種、schema 支援 `attempts`、Gradio 與 Svelte 兩邊下拉都可選、新增對應 API 測試且全綠。
 
-2. **VL 圖片解析整合進主流程** ← **★ 現在做這個（P0／P1 已完成，下一步 P2）**
+2. **VL 圖片解析整合進主流程** ← **★ 現在做這個（P0／P1 ＋ P5 程式骨幹已完成，下一步 P2）**
+   - **✅ P5 程式骨幹已完成（2026-08-22）**：`backends.py`（傳輸層唯一正本）、`puzzle_parser.py`（正式 parser）、
+     `prompt_baseline.py`（凍結 prompt 搬出 scratchpad，雜湊釘住）、`src/core/tests/vl_models/`（39 個 mock 測試）。
+     測試 76 → **115 passed, 8 xfailed**，ruff 全綠。
+   - **★ 修掉一個會讓 P4 比較失效的缺陷**：關思考的開關**從來沒接到正式流程走的那條傳輸層**。
+     根因不是「忘了傳」，是**兩個 HTTP 介面吃的旋鈕不同**——`/api/chat` 吃 `think`，
+     `/v1` **完全忽略 `think`**、要 `reasoning_effort="none"`。實測 `qwen3.5:4b-q8_0`：
+     修前 `pydantic-ai` **66.5s／JSON 0/2** vs `native` 4.1s／2/2；修後 **5.5s／2/2**，兩條一致。
+     **P1 報告的好數字全是量在 native 上的，而正式 parser 走的是另一條。**
+   - **★ 量化不是這個任務的限制**：`qwen3.5:4b-q8_0` 峰值僅 **7,992 MiB / 16,376 MiB**，
+     4B 連 F16（約 8GB 權重）都放得下 ⇒ **沒有「為了塞進去而被迫量化」的壓力**，部署階段可把量化這個變數消掉。
+   - **✅ P2 前半已完成（2026-08-22）**：`render_puzzle.py`（LinkedIn 風格，**格線淺灰／牆粗黑**）、
+     `schema.py`（標籤 ＝ 推論格式，不再需要轉換）、`dataset_builder.py`（自己抽 0–12 道牆、
+     增強、CP-SAT 驗證、SHA-256 可驗證）。測試 115 → **136 passed**。
+     **★ 範圍縮到 6×6**（本人 2026-08-22 決定），但 renderer／builder 都吃 size 清單，之後要加只是一個旗標。
+   - **★ 舊資料集不能拿來訓練（2026-08-22 實測 4,000 對）**：標籤正確（60/60 可解），但
+     **格盤 100% 都是 6×6**、**牆只有 2–5 道**、**零障礙格**，而且**牆和格線同為黑色**——
+     它教的辨識線索在真實截圖上不存在。**可當 P4a 煙霧測試的輸入，不可當正式訓練集。**
+   - **★ 字型可攜性已解**：`ImageFont.load_default(size=N)` 回傳 Pillow 內建的 Aileron 可縮放字型，
+     不依賴系統字型 ⇒ 之前「Colab 上會畫出不同的圖」的風險解除。
+   - **★ 2025-10 真的跑過一輪微調**，資料與權重**只在 Google Drive**（`colab_finetune/`），
+     本機全碟搜尋無副本。`trained_models/` 裡是什麼**尚未確認**。
+   - **★ Colab 付費已定案（2026-08-22）** ⇒ 走 **Qwen3.5-4B ＋ L4 ＋ bf16 LoRA**。
+   - **✅ P4a 煙霧測試已完成（2026-08-22）**：L4 實測 **7.54 s/step**、峰值 VRAM 16.6/22.0 GiB、
+     loss 1.011 → 0.0019、adapter 168MB 存到 Drive。**1 epoch（8,000 筆）＝ 2.09 小時 ＝ 3.2 CU。**
+     視覺層確認有訓到（`visual` 96/96 `lora_B` 非零，且動得比語言層大）。
+   - **★ 抓到一個會讓 P4c 比較失效的缺陷**：訓練與推論的 prompt 渲染不一致（① thinking 區塊
+     ② text/image 順序）。同一個 adapter、同樣 4 張 held-out，只換 prompt：
+     **修好 = JSON 4/4、版面全對、牆 F1 0.958（3 題每道牆都對）；壞掉 = 0/3 完全不可用。**
+     修法 `build_inference_prompt()` 從**訓練那條渲染路徑**推導，不依賴人工同步兩邊的參數。
+   - **下一步是 P4c**（8,000 筆正式訓練）。
    - 📋 **接手請直接讀計畫書：[plans/2026-08-15_track-vlm-parser.md](plans/2026-08-15_track-vlm-parser.md)**
      （worktree 環境建置、P0–P6 分階段 done 條件、與 RL track 的協作約定）
    - ✅ **P0＋P1 已完成（2026-08-15，分支 `feat/vlm-parser`，worktree `zip-vlm`）**：
@@ -141,6 +171,15 @@
 | **`think` 開關逐模型實測，不可跨模型沿用** | 2026-08-15 實測：關閉思考讓 `qwen3.5:4b-q8_0` JSON 解析率 3/6→6/6、快 5.8 倍；同一開關讓 `gemma4:e4b` 全面變差。量化選擇亦然（qwen 需 Q8，gemma4 的 Q8 反而比 Q4 差） |
 | **`pydantic-ai` 釘 `==1.107.5`** | 2026-08-15。v1 維護線最新（2026-08-14）；1.2.1 缺三個已 backport 的資安修補，且只有 1.107+ 才有官方文件現行示範的 `OllamaModel`。**不上 2.x**——它 10 天內連發 8 個 minor，不是穩定目標 |
 | **DiffusionGemma 只觀察，不進 VLM track** | 2026-08-15 查證：雖然真的吃圖（Google 模型卡：text/image/video 輸入），但 Q4 推論最低 **18GB > 本機 16GB**、**不在 Ollama library**（registry 404）、微調官方示範要 **A100** → 與「本機推論＋免費 T4 微調」的前提全數衝突。唯一值得追蹤處是 Unsloth 那本 **26B-A4B Sudoku GRPO** notebook，與 RL 路線 B 同構（同樣卡 A100） |
+| **★ 現階段只追求「學會我們畫的圖」，不追真實截圖** | **2026-08-22 本人明示決定**（不是疏漏）。P3 的 30–50 張真實截圖暫緩，評估一律用**合成 held-out**。**代價要講清楚：這樣量不到 domain gap**——所有數字只證明「學會這個 renderer」，不證明「看得懂 LinkedIn 截圖」。要主張後者，P3 是唯一途徑 |
+| **推論 prompt 一律從訓練那條渲染路徑推導** | 2026-08-22 實測。訓練與推論曾有**兩處**不一致（thinking 區塊、text/image 順序），代價是同一個模型「內容全對但格式全錯」。`build_inference_prompt()` 用 sentinel 切訓練渲染字串，**by construction 相符**，不靠人工同步參數——事實證明有效：我當時對訓練渲染的描述是錯的，但修法照樣正確 |
+| **不要為了省時間縮訓練圖** | 2026-08-22 量過：縮到 384px 省一半（7.54 → 3.89 s/step），但 1 epoch 只值 3.2 CU（3.3% 餘額），而真實截圖是 ~920×1018 ⇒ 訓練縮圖會製造新的 train/inference 不一致。**槓桿留著，等有真實驗證集能確認牆沒被縮掉再用。** 另注意：640 完全沒省到（patch 取整），768 反而貴 33% |
+| **Colab 走 VS Code 的 Colab kernel，不裝 WSL2** | 2026-08-22 實測成功：助理透過 `mcp__ide__executeCode` 直接在 Colab 的 `/content` 上執行。官方 Colab CLI 只支援 Linux/macOS（issue #12 的 `fcntl`），本來以為 Windows 非 WSL2 不可——**不必**。人只要點一次連線 |
+| **微調走 Qwen3.5-4B ＋ bf16 LoRA（付費 L4）** | 2026-08-22 實測 L4：`compute_cap 8.9`、**22.03 GiB**、**bf16 原生支援**。matmul 實測 bf16 **64.11 TFLOP/s** vs fp32 12.43（5.2 倍），確認是硬體加速而非模擬。⚠ 9B 需 22GB 對上 22.03 GiB **是臨界值，不要當可行方案** |
+| **`torch.cuda.is_bf16_supported()` 不可直接採信** | 2026-08-22。簽章是 `(including_emulation: bool = True)`，**免費 T4（Turing，無 bf16 硬體）也回 `True`**；問 `including_emulation=False` 才回 `False`。照預設值會得出「免費層也能訓 bf16」——跑得動但沒加速。**一律問原生** |
+| **資料集的可重現單位是「產物」，不是「指令」** | 2026-08-22 實測。`generate_puzzle` 用 **wall-clock** 中止隨機回溯，被切斷的嘗試消耗的亂數量與完成的不同 ⇒ 同 seed 兩次跑，0.5s 預算下 **30 筆差 8 筆**，改 5s 仍差 3 筆且慢 3 倍（6×6 搜尋時間重尾：中位數 0.07s、最大 5.4s）。根治要把搜尋改成「以工作量計量」，那在唯讀的共用模組裡。**改成用 SHA-256 驗證產物**（`--check`），這才是真正需要的性質：確認 Colab 上那份等於本機檢查過的那份 |
+| **`multiprocessing.Pool` 在本機 Windows 不能用** | 2026-08-22：32 筆 10 分鐘零產出，有沒有 CP-SAT 都一樣，`spawn` 會在每個子行程重新 import 模組。**已移除，不留會卡死的旗標**。單執行緒 200 筆／72 秒，8,000 筆約 45–50 分鐘，一次性成本可接受 |
+| **傳輸層只有一份實作，且關思考的旋鈕逐介面翻譯** | 2026-08-22 實測。Ollama 的 `/api/chat` 吃 `think`，`/v1` **忽略 `think`**、只認 `reasoning_effort="none"`（9.7s／reasoning 1392 字元 → 0.9s／0）。當初 benchmark 與 parser 各寫一份傳輸，才會讓 `--no-think` 在正式路徑上變成無聲 no-op，代價是 **66.5s／JSON 0/2**。現在 `backends.py` 是唯一正本，**不要在別處重寫傳輸** |
 | **VL 採「混合策略」，不用 tool-calling** | 2025-10-24 實測：`bsahane/Qwen2.5-VL-7B-Instruct` 支援 tool-calling 但**視覺模組壞掉**（回傳結構正確但空的物件）；`openbmb/minicpm-o2.6` 視覺正常但**不支援 tools**（400 Bad Request）。結論：用 `pydantic-ai` 但把 `output_type` 設成 `str`，靠 prompt engineering 要模型吐 JSON 字串再自己 parse——已驗證完全成功 |
 | **Docker 雙環境（dev／prod 分開）** | 2025-10-28。`docker-compose.dev.yml` 兩容器＋volume mount 換 hot-reload；`docker-compose.yml` 單一 multi-stage 映像檔換 production 乾淨。不要合併成一個 |
 | **牆一律叫 `walls`** | 曾與 `blocked_cells` 混用造成前後端資料格式不符。`walls` ＝牆，`blocked_cells`／障礙是另一回事，不可互換 |
@@ -175,3 +214,5 @@
 | 2025-10-30 | 文件精修 ＋ 本機／Docker dev／Docker prod 三種環境全部實測驗證 |
 | 2026-08-08 | **建立 AI 協作骨架**：`AGENTS.md`／`CLAUDE.md`／`ai-collab/`（roadmap・project_guide・dev_log・commands），`dev_log.md` 移入 `ai-collab/`，補 `.python-version` |
 | 2026-08-15 | **兩份方案報告**（純研究，未動程式）：VLM 選型與微調計畫、RL 重啟方案（含 2025-10 policy loop 的機制層根因） |
+| 2026-08-22 | **VLM P2 ＋ P4a**：8,000 張合成資料集（新 renderer：格線淺灰／牆粗黑、Pillow 內建字型跨平台）、標籤 ＝ 推論 schema；Colab L4 打通（VS Code kernel，不用 WSL2）；P4a 煙霧測試 **7.54 s/step**、修好訓練／推論渲染不一致後 **held-out 牆 F1 0.958** |
+| 2026-08-22 | **VLM P5 程式骨幹 ＋ 傳輸層缺陷修復**：`backends.py`／`puzzle_parser.py`／`prompt_baseline.py` ＋ 39 個 mock 測試；查出關思考在 `/v1` 要用 `reasoning_effort` 而非 `think`（66.5s → 5.5s、JSON 0/2 → 2/2）；補 `.env.example`、修 worktree 的 `/svelte-ui` 404；盤點出 renderer 已存在、2025-10 訓練資產只在 Drive |

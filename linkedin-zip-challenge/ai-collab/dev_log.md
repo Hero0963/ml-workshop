@@ -4,6 +4,307 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-08-22
+
+### VLM Track: P5 skeleton, and the transport bug that made the shipped path 12x slower (branch `feat/vlm-parser`, worktree `zip-vlm`)
+
+Session goal was "refactor the two parsers"; the refactor turned up a defect that would have
+invalidated the whole P4 comparison, so that is the headline.
+
+-   **The thinking switch was never wired into the transport the app ships.** `benchmark.py` passed
+    `think` only to the native `/api/chat` path; `_request_pydantic_ai()` did not even take the
+    argument, so `--no-think` was a silent no-op there. Measured on `qwen3.5:4b-q8_0`, `--prompt
+    sized`, `puzzle_01` + `puzzle_05`: **`pydantic-ai` 66.5s/JSON 0/2 against `native` 4.1s/JSON
+    2/2**. Every good number in the P1 report was measured on `native`, while the production parser
+    was built on the other one.
+-   **Root cause is not "the flag was forgotten" — the two surfaces take different knobs.** Probed
+    `/v1/chat/completions` directly: a top-level `think: false` is **ignored** (9.7s, 1392 reasoning
+    characters, identical output to the control), while `reasoning_effort: "none"` works (0.9s, 0
+    reasoning characters). Confirmed the same through `pydantic-ai` with both
+    `openai_reasoning_effort="none"` and `extra_body={"reasoning_effort": "none"}` (6.2s → 0.7s).
+-   **New `src/core/vl_models/backends.py`** — the single source of truth for transports, holding
+    that translation. `benchmark.py` and the new parser both build backends from it, so they cannot
+    drift apart again. After the fix, the same two images on `openai-compat` give **5.5s / JSON 2/2 /
+    cell accuracy 0.944 / shape 2/2**, matching `native` (6.4s / 2/2 / 0.944 / 2/2).
+-   **New `src/core/vl_models/puzzle_parser.py`** — the supported `image → ParseResult` entry point.
+    Reads the model tag and URL from `src.settings` instead of hard-coding `openbmb/minicpm-o2.6` and
+    port 11434 (the project publishes Ollama on **11435**, so the scratchpad had been pointing at
+    another project's daemon). Logs through `loguru`, raises `VisionBackendError` /
+    `ModelOutputError` instead of returning `None`, and **drops hallucinated walls** (out of bounds,
+    or between non-adjacent cells) into `ParseResult.warnings` — P1 showed false-positive walls are
+    as fatal as missed ones, so they must be visible rather than silently accepted.
+-   **New `src/core/vl_models/prompt_baseline.py`** — the frozen few-shot prompt lifted out of the
+    scratchpad, verified byte-identical (SHA-256 `b8e75a8c…cfaa`) and now pinned by a hash test.
+    `final_puzzle_parser.py` is marked SCRATCHPAD and re-exports it; nothing was deleted.
+-   **New `src/core/tests/vl_models/`** — 39 tests, all mocked. Suite goes 76 → **115 passed, 8
+    xfailed**; `ruff` clean.
+
+### P4a: the smoke test passed, and caught a defect that would have invalidated P4c
+
+Ran `notebooks/p4a_finetune_smoke.ipynb` on a paid Colab **L4** (capability 8.9, 22.03 GiB,
+native bf16). 120 synthetic samples, 50 steps, adapted from the official Unsloth
+`Qwen3_5_(4B)_Vision.ipynb`.
+
+**Measured:**
+
+| | |
+|---|---|
+| speed | **7.54 s/step** (50 steps in 377s), effective batch 8 |
+| extrapolated | 1 epoch over 8,000 = 1,000 steps = **2.09 h**; 3 epochs = 6.28 h |
+| peak VRAM | 16.568 / 22.034 GiB (75.2%) -- little room to raise batch size |
+| loss | 1.011 -> 0.0019 over 50 steps |
+| adapter | 168 MB, saved to Drive |
+| cost | L4 bills **1.54 compute units/hour**; 1 epoch = 3.2 CU, i.e. 3.3% of a 98.99 CU balance |
+
+Loss collapsing to ~0.002 is memorisation of 116 samples over 4 epochs, which is expected
+here and is *not* a result. It is worth remembering as a tripwire for the real run: on
+8,000 samples the loss should not do that.
+
+**Unsloth confirmed the intended setup** with `QLoRA and full finetuning all not selected.
+Switching to 16bit LoRA.` -- bf16, unquantised, which is exactly why this route needs an
+L4 rather than the free T4.
+
+### The vision tower really is being trained
+
+`get_peft_model` emitted a warning that it could not register an input-embedding hook on
+`model.base_model.model.model.visual` and was falling back to a pre-forward hook. Since the
+entire premise of this track is that the failure is *visual*, a silently untrained vision
+tower would have wasted the whole run. Checked directly rather than trusted:
+
+```
+trainable params : visual=6,291,456   language=32,464,896
+visual   : 96/96  lora_B non-zero, max|B| = 1.137e-01
+language : 248/248 lora_B non-zero, max|B| = 5.866e-02
+```
+
+`lora_B` initialises to zeros, so non-zero after training proves gradients flowed. The
+warning is noise. Note the vision adapters moved *further* than the language ones, which is
+consistent with the premise.
+
+### The defect: training and inference rendered the prompt differently
+
+P4a's post-training output was **correct content in the wrong shape** -- every wall it named
+matched ground truth, but it arrived as prose inside a thinking block instead of as JSON.
+Two mismatches, either of which alone is enough:
+
+| | training | inference (as first written) |
+|---|---|---|
+| thinking | `<think>
+
+</think>
+
+` then the answer | `<think>
+`, opened and never closed |
+| content order | `[text, image]` | `[image, text]` |
+
+`build_inference_prompt` fixes both *by construction*: it renders a conversation through the
+same `apply_chat_template` call training uses and cuts at the answer, so the prefix matches
+by definition. Measured on the same adapter, same 4 held-out images, changing nothing but
+the prompt:
+
+| prompt | JSON parsed | layout exact | wall F1 |
+|---|---|---|---|
+| **fixed** | **4/4** | **4/4** | 0.833, 1.000, 1.000, 1.000 (mean **0.958**) |
+| broken (P4a control) | 0/3 before it crashed | - | - |
+
+Three of the four had **every wall exactly right**, from an adapter trained on 116 samples
+for 50 steps. That establishes the task is learnable from this renderer.
+
+⚠ Not comparable to the 0.470 wall F1 quoted elsewhere: that was measured on the six *real*
+screenshots, this on *synthetic held-out*. It says "it learned our renderer", not "it can
+read a real screenshot".
+
+**Correction to an earlier claim in this log's 2026-08-22 entry:** the training rendering was
+described as having no `<think>` at all. It does -- an empty closed block. The mistake came
+from inspecting only the tail of the rendered string, where the JSON ends. The diagnosis was
+right and the fix works, but it works because it derives from the training path rather than
+from my description of it; `enable_thinking=False` would in fact also have been correct.
+
+### E1: what image resolution costs
+
+7.54 s/step is slow for a 4B model on an L4, and the dataset renders at 472-975 px. Counted
+tokens per sample instead of timing runs (instant, and it does not train the adapter further):
+
+| longest side | tokens | vs base | est s/step |
+|---|---|---|---|
+| original (656) | 529 | 1.00x | 7.54s |
+| 768 | 705 | 1.33x | 10.05s |
+| 640 | 529 | 1.00x | 7.54s |
+| 512 | 385 | 0.73x | 5.49s |
+| 448 | 325 | 0.61x | 4.63s |
+| 384 | 273 | 0.52x | 3.89s |
+
+Two things worth keeping: **640 buys nothing** (the patch grid rounds to the same count as
+656, so small downscales are wasted effort), and **768 costs 33% more** -- never upscale for
+the sake of a uniform size.
+
+**Not applying it to P4c.** Halving the step time saves an hour on a run that costs 3.2 CU
+out of 99, while real screenshots are ~920x1018 and training smaller would reintroduce a
+train/inference mismatch of exactly the kind that just cost a run. The number is banked as a
+lever for later, once there is a real validation set to check that walls survive the
+downscale.
+
+### Colab access settled: the VS Code kernel is enough, and the runtime is an L4
+
+Ran the smoke test through `mcp__ide__executeCode` against the notebook's Colab kernel, i.e.
+the assistant executing directly on the remote runtime from a VS Code session.
+
+```
+python   3.12.13          cwd /content          colab True
+NVIDIA L4, 23034 MiB, driver 580.82.07, compute_cap 8.9
+torch 2.11.0+cu128    capability (8, 9)    VRAM 22.03 GiB
+bf16 NATIVE  True
+```
+
+-   **The WSL2 + `google-colab-cli` route is unnecessary.** The official Colab CLI is
+    Linux/macOS only (`fcntl`, issue #12), which made WSL2 look mandatory on Windows. It is
+    not: the VS Code Colab extension exposes the runtime as an ordinary Jupyter kernel, and
+    the IDE tool drives it. One human click to connect, then no further local setup.
+-   **L4 gives 22.03 GiB, more headroom than the local 16 GiB card.** Qwen3.5-4B bf16 LoRA
+    (~10GB per the survey) fits comfortably. Whether 9B fits is *borderline* -- the survey
+    puts it at 22GB against 22.03 GiB available, which leaves nothing for activations, so it
+    should not be planned for without measuring.
+-   **`torch.cuda.is_bf16_supported()` is a trap and the smoke test had fallen into it.**
+    Its signature is `(including_emulation: bool = True)`, so on the free **T4** it returned
+    `True` despite Turing having no bf16 hardware at all; asking for
+    `including_emulation=False` returned `False`. Reporting the default would have supported
+    the conclusion "the free tier can train Qwen3.5-4B in bf16" -- it runs, unaccelerated,
+    and would have been a slow and expensive way to discover the mistake. The notebook now
+    prints both and states which model the answer implies.
+-   **bf16 is fully accelerated on L4** (4096x4096 matmul, 30 iterations):
+
+    | dtype | time | throughput |
+    |---|---|---|
+    | fp32 | 11.05 ms | 12.43 TFLOP/s |
+    | fp16 | 2.26 ms | 60.74 TFLOP/s |
+    | bf16 | **2.14 ms** | **64.11 TFLOP/s** |
+
+    5.2x over fp32 and marginally ahead of fp16, which is what native tensor-core bf16 looks
+    like. **So the model choice resolves to Qwen3.5-4B + bf16 LoRA**, the preferred branch.
+
+### Two workflow traps worth knowing
+
+-   **Selecting L4 does not move a running session.** The first connection had already
+    created a T4 VM; changing the runtime type only affects the *next* one. It takes
+    `Runtime -> Disconnect and delete runtime`, then a fresh connect.
+-   **vscode-jupyter #17094**: after a server is removed and another created, the notebook
+    controller stays disposed and cell execution fails silently (`Cannot call start again`).
+    Closed, fixed in #17097/#17362. Workaround if it appears: reload the notebook file.
+-   `mcp__ide__executeCode` needs the notebook to be the **active editor**; typing in the
+    assistant panel steals focus, so it fails with `No active notebook editor found` more
+    often than not. Running the cells by hand and reading the saved outputs back out of the
+    `.ipynb` is the reliable path.
+
+⚠ **Pay-as-you-go: an idle runtime burns compute units.** Disconnect and delete when not
+training. Google's own Colab agent skill leads with this rule.
+
+### P2 first half: a renderer that teaches the right cue, and a label that is the answer
+
+Scope narrowed to **6x6 only** at the user's request; the renderer and builder both take a
+size list, so widening it later costs a flag, not a rewrite.
+
+-   **New `src/core/vl_models/render_puzzle.py`.** Rebuilt against the real screenshots
+    rather than the old white-grid style. The decisive change is contrast: the 2025-10
+    renderer drew cell borders with `outline="black"` *and* walls in black, so a wall was
+    "a slightly thicker black line among black lines" -- while the real UI draws a light
+    grey grid with heavy black bars. Training on the old images teaches a discriminating
+    cue that does not exist at inference, which is a plausible structural reason wall F1
+    sits at 0.31. Also switched waypoints to a filled disc with the number knocked out in
+    white, rounded the board, and added optional Undo/Hint chrome and a cursor artefact.
+-   **Fonts are now portable.** `ImageFont.truetype("arial.ttf")` with a silent
+    `load_default()` fallback meant the same code rendered differently on Linux.
+    `ImageFont.load_default(size=N)` returns a scalable **Aileron** face bundled inside
+    Pillow (11.3.0 here), so there is no system-font dependency, no vendored file and no
+    licence question.
+-   **New `src/core/vl_models/schema.py`** -- the root fix for the label mismatch. One
+    Pydantic model now defines both the training target and what the parser validates, and
+    `to_prompt_json` reproduces the few-shot layout exactly: 22 lines for a 6x6 board,
+    rows on one line each. Plain `json.dumps(indent=2)` was the first attempt and it
+    exploded a board to ~40 lines, which is both a shape the prompt never demonstrates and
+    roughly ten times the tokens on every example.
+-   **New `src/core/vl_models/dataset_builder.py`.** Walls are sampled by this module, not
+    by the generator: `puzzle_generator.py:123` hard-codes 2-5 with no override, and the
+    real 6x6 screenshots carry 0, 4, 4 and 10. It asks for a wall-free puzzle, recomputes
+    the safe edges from the returned solution path and samples 0-12 itself, so
+    `src/core/puzzle_generation/` stays untouched. Augmentation covers light/dark theme,
+    five cell sizes, optional buttons and cursor, +-2 degree rotation and JPEG 60-95.
+
+### Two things that were tried and rejected, with measurements
+
+-   **`multiprocessing.Pool` hangs on Windows here.** 32 items produced no output in 10
+    minutes, with or without the CP-SAT step, because `spawn` re-imports this module in
+    every child. Removed rather than shipped behind a flag. Sequential throughput measured
+    at 200 samples in 72s, so 8,000 is roughly 45-50 minutes -- a one-off cost.
+-   **Bit-identical regeneration is not achievable without touching the shared generator,
+    so the claim was dropped.** `generate_puzzle` aborts its randomized backtracking on
+    *wall-clock* time, and a clipped attempt consumes a different amount of the global
+    `random` stream than a completed one. Same seed, two runs: **8 of 30** samples differed
+    at a 0.5s budget. Raising the budget to 5s only moved it to **3 of 30** and made the
+    build 3x slower, because 6x6 search times are heavy-tailed -- measured over 30 seeded
+    searches: median 0.07s, 8 of 30 above 0.5s, maximum 5.4s. Fixing it properly means
+    bounding the search on *work* rather than time, which lives in the module this track
+    may not modify.
+    Instead the **artifact** is now the unit of reproducibility: the manifest carries
+    SHA-256 digests of `metadata.jsonl` and of the image bytes, and
+    `--check <dir>` re-verifies them. That is what confirms the copy on Colab is the copy
+    inspected locally -- which is the property actually needed.
+
+Suite: 115 -> **136 passed, 8 xfailed**; `ruff` clean.
+
+### Open question this session raised: the Q4 verdict may be confounded
+
+P1 concluded "qwen needs Q8" because `qwen3.5:4b` at Q4 never emitted JSON. That measurement was
+taken **with thinking on** — the failure mode described was 16,505 reasoning characters and 6,215
+output tokens hitting the ceiling, which is the *thinking* budget running out, not the quantisation
+losing information.
+
+Re-measured 2026-08-22 with reasoning off (`--no-think`, `--prompt sized`, `openai-compat`,
+`puzzle_01` + `puzzle_05`):
+
+| model | JSON | cell acc | shape | wall F1 (walled) | mean latency |
+|---|---|---|---|---|---|
+| `qwen3.5:4b-q8_0` | 2/2 | 0.944 | 2/2 | 0.314 | 5.5s |
+| `qwen3.5:4b` (Q4) | 2/2 | 0.944 | 2/2 | 0.305 | 6.1s |
+
+**Indistinguishable.** Not enough to overturn the decision table — two images, one run, and the
+report's own warning that `seed` plus `temperature=0` is not deterministic still applies — but enough
+that the "Q8 is required" line should be re-measured over all six images with repeats before P4
+budgets anything on it. The GPU peak from that Q4 run (12,142 MiB) is **not usable**: the Q8 model
+was still resident, the same contamination the handover already flags.
+
+Practical consequence either way: peak VRAM for the Q8 run is **7,992 MiB of 16,376**, so a 4B model
+fits at F16 (~8GB of weights) on this card. Quantisation is a variable this project can simply
+remove at deployment time rather than tune.
+
+### Environment findings
+
+-   **`/svelte-ui` 404 in any fresh worktree**: `frontend/dist/` is not in version control and
+    `main.py:63` only prints a warning that gets buried. `npm install && npm run build` fixes it.
+    Added to the plan's "does not come with the worktree" table.
+-   **Chasing that 404 cost more than it should have.** Repeated `python -m src.app.main` spawns left
+    several LISTENING entries on port 7440, and Windows kept routing requests to the *oldest* live
+    process — the one started before `dist/` existed. `TestClient` returned 200 while `curl` returned
+    404. Verify on a clean port (`APP_PORT=7441`) when a change appears not to take effect.
+-   **`.env.example` was three variables behind `.env`** — no `OLLAMA_HOST_PORT`,
+    `OLLAMA_PROVIDER_URL` or `OLLAMA_MODEL_NAME`, although `src/settings.py` reads the last two.
+-   `feat/vlm-parser` fast-forwarded to `main` (it was a strict ancestor, so nothing was rewritten).
+
+### Inventory: what already exists for P2
+
+-   **A renderer already exists.** `src/core/puzzle_generation/generate_cod_dataset.py` generates
+    puzzles, renders PNGs and writes Chain-of-Draft labels in parallel — this is what produced
+    `zip_puzzles/cod_dataset_*`. Its wall drawing (a `width=5` black line on the grid line) is
+    already the right idea; its white-grid/black-outline style, its lack of a seed, its hard-coded
+    2–5 wall count and its `arial.ttf` dependency are not. P2 should modify it, not start over.
+-   **The 8,000 synthetic images do not exist.** Local totals: `zip_puzzles/` 10 PNGs,
+    `illustrations/` 14, everything else zero. `datasets/` is empty.
+-   **A fine-tuning run really happened in 2025-10**, and its artifacts survive **only on Google
+    Drive** (`colab_finetune/`: `cod_dataset_20251024_170006.zip` 14.3MB, two
+    `finetune_dataset_20251024_*.zip`, plus `all_trained_runs/` and `trained_models/`). A full-disk
+    search found no local copy — only a stale `generate_finetune_dataset.cpython-311.pyc`; the source
+    was deleted in `422643d` (2025-10-28). The 2026-08-15 baseline report never evaluated any
+    fine-tuned model, so what is in `trained_models/` is unknown.
+
 ## 2026-08-15
 
 ### VLM Track P0 + P1: Deployment Smoke Test and Untuned Baseline (branch `feat/vlm-parser`, worktree `zip-vlm`)
