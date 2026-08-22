@@ -1,0 +1,6502 @@
+{
+  "summary": {
+    "items": 200,
+    "json_parse_rate": 1.0,
+    "shape_correct": 200,
+    "mean_cell_accuracy": 1.0,
+    "mean_waypoint_recall": 1.0,
+    "mean_wall_f1": 1.0,
+    "mean_wall_f1_walled_only": 1.0,
+    "walled_items": 189,
+    "micro_wall_precision": 1.0,
+    "micro_wall_recall": 1.0,
+    "exact_match": 200,
+    "exact_match_rate": 1.0,
+    "solution_valid_on_truth": 200,
+    "solution_valid_rate": 1.0,
+    "solvable": 200,
+    "solvable_but_wrong": 0,
+    "by_wall_count": {
+      "0": {
+        "items": 11,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "1": {
+        "items": 16,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "2": {
+        "items": 18,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "3": {
+        "items": 15,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "4": {
+        "items": 12,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "5": {
+        "items": 15,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "6": {
+        "items": 13,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "7": {
+        "items": 16,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "8": {
+        "items": 15,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "9": {
+        "items": 20,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "10": {
+        "items": 16,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "11": {
+        "items": 9,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      },
+      "12": {
+        "items": 24,
+        "exact_match_rate": 1.0,
+        "solution_valid_rate": 1.0,
+        "mean_wall_f1": 1.0
+      }
+    }
+  },
+  "results": [
+    {
+      "file_name": "images/007800.png",
+      "generation_seconds": 45.508,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007801.jpg",
+      "generation_seconds": 45.727,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007802.jpg",
+      "generation_seconds": 25.526,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007803.jpg",
+      "generation_seconds": 25.031,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007804.jpg",
+      "generation_seconds": 25.804,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007805.jpg",
+      "generation_seconds": 35.583,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007806.png",
+      "generation_seconds": 35.646,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007807.jpg",
+      "generation_seconds": 47.785,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007808.jpg",
+      "generation_seconds": 33.001,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007809.png",
+      "generation_seconds": 35.628,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007810.jpg",
+      "generation_seconds": 30.269,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007811.jpg",
+      "generation_seconds": 17.55,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007812.jpg",
+      "generation_seconds": 45.718,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007813.jpg",
+      "generation_seconds": 48.844,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007814.png",
+      "generation_seconds": 17.389,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007815.png",
+      "generation_seconds": 20.619,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007816.jpg",
+      "generation_seconds": 25.873,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007817.jpg",
+      "generation_seconds": 27.845,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007818.jpg",
+      "generation_seconds": 28.011,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007819.jpg",
+      "generation_seconds": 20.624,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007820.jpg",
+      "generation_seconds": 32.706,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007821.jpg",
+      "generation_seconds": 35.668,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007822.png",
+      "generation_seconds": 20.591,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007823.png",
+      "generation_seconds": 17.739,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007824.png",
+      "generation_seconds": 41.366,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007825.png",
+      "generation_seconds": 24.476,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007826.jpg",
+      "generation_seconds": 50.494,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007827.png",
+      "generation_seconds": 38.298,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007828.jpg",
+      "generation_seconds": 33.243,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007829.png",
+      "generation_seconds": 43.177,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007830.png",
+      "generation_seconds": 34.554,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007831.png",
+      "generation_seconds": 44.811,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007832.png",
+      "generation_seconds": 34.713,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007833.jpg",
+      "generation_seconds": 44.232,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007834.jpg",
+      "generation_seconds": 28.967,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007835.jpg",
+      "generation_seconds": 23.652,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007836.jpg",
+      "generation_seconds": 50.757,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007837.png",
+      "generation_seconds": 28.605,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007838.png",
+      "generation_seconds": 46.834,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007839.png",
+      "generation_seconds": 23.251,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007840.png",
+      "generation_seconds": 46.273,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007841.jpg",
+      "generation_seconds": 38.749,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007842.png",
+      "generation_seconds": 48.72,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007843.png",
+      "generation_seconds": 23.382,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007844.png",
+      "generation_seconds": 28.734,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007845.jpg",
+      "generation_seconds": 48.934,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007846.png",
+      "generation_seconds": 48.661,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007847.jpg",
+      "generation_seconds": 40.872,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007848.jpg",
+      "generation_seconds": 44.091,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007849.png",
+      "generation_seconds": 43.243,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007850.png",
+      "generation_seconds": 44.185,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007851.png",
+      "generation_seconds": 48.714,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007852.jpg",
+      "generation_seconds": 35.938,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007853.png",
+      "generation_seconds": 38.649,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007854.png",
+      "generation_seconds": 26.632,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007855.jpg",
+      "generation_seconds": 25.655,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007856.png",
+      "generation_seconds": 48.682,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007857.png",
+      "generation_seconds": 41.913,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007858.png",
+      "generation_seconds": 23.998,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007859.png",
+      "generation_seconds": 49.722,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007860.png",
+      "generation_seconds": 31.087,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007861.jpg",
+      "generation_seconds": 36.131,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007862.png",
+      "generation_seconds": 36.084,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007863.png",
+      "generation_seconds": 33.857,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007864.jpg",
+      "generation_seconds": 26.0,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007865.png",
+      "generation_seconds": 25.861,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007866.jpg",
+      "generation_seconds": 28.492,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007867.png",
+      "generation_seconds": 28.469,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007868.png",
+      "generation_seconds": 45.934,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007869.png",
+      "generation_seconds": 38.576,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007870.png",
+      "generation_seconds": 41.595,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007871.png",
+      "generation_seconds": 43.674,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007872.jpg",
+      "generation_seconds": 36.187,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007873.jpg",
+      "generation_seconds": 23.403,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007874.jpg",
+      "generation_seconds": 30.766,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007875.png",
+      "generation_seconds": 44.08,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007876.png",
+      "generation_seconds": 48.65,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007877.png",
+      "generation_seconds": 38.447,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007878.png",
+      "generation_seconds": 43.685,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007879.png",
+      "generation_seconds": 46.376,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007880.png",
+      "generation_seconds": 38.475,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007881.png",
+      "generation_seconds": 23.37,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007882.png",
+      "generation_seconds": 20.731,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007883.png",
+      "generation_seconds": 41.358,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007884.jpg",
+      "generation_seconds": 39.76,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007885.png",
+      "generation_seconds": 24.159,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007886.jpg",
+      "generation_seconds": 35.045,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007887.png",
+      "generation_seconds": 27.874,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007888.png",
+      "generation_seconds": 39.29,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007889.jpg",
+      "generation_seconds": 49.066,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007890.png",
+      "generation_seconds": 41.502,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007891.png",
+      "generation_seconds": 17.813,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007892.png",
+      "generation_seconds": 36.89,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007893.png",
+      "generation_seconds": 34.249,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007894.jpg",
+      "generation_seconds": 39.175,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007895.png",
+      "generation_seconds": 28.658,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007896.png",
+      "generation_seconds": 21.41,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007897.png",
+      "generation_seconds": 24.032,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007898.jpg",
+      "generation_seconds": 18.503,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007899.png",
+      "generation_seconds": 31.363,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007900.jpg",
+      "generation_seconds": 41.895,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007901.png",
+      "generation_seconds": 50.681,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007902.jpg",
+      "generation_seconds": 23.607,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007903.jpg",
+      "generation_seconds": 26.598,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007904.jpg",
+      "generation_seconds": 18.393,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007905.png",
+      "generation_seconds": 46.911,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007906.png",
+      "generation_seconds": 41.541,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007907.png",
+      "generation_seconds": 38.855,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007908.png",
+      "generation_seconds": 47.083,
+      "truth_wall_count": 11,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 11,
+        "truth_count": 11,
+        "true_positives": 11,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007909.png",
+      "generation_seconds": 42.393,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007910.jpg",
+      "generation_seconds": 44.718,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007911.jpg",
+      "generation_seconds": 24.26,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007912.png",
+      "generation_seconds": 24.289,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007913.jpg",
+      "generation_seconds": 31.918,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007914.jpg",
+      "generation_seconds": 31.835,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007915.jpg",
+      "generation_seconds": 21.371,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007916.png",
+      "generation_seconds": 36.755,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007917.png",
+      "generation_seconds": 26.832,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007918.png",
+      "generation_seconds": 21.286,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007919.png",
+      "generation_seconds": 34.322,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007920.jpg",
+      "generation_seconds": 23.963,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007921.png",
+      "generation_seconds": 26.444,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007922.png",
+      "generation_seconds": 39.275,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007923.png",
+      "generation_seconds": 49.677,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007924.jpg",
+      "generation_seconds": 28.666,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007925.jpg",
+      "generation_seconds": 20.914,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007926.png",
+      "generation_seconds": 44.115,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007927.png",
+      "generation_seconds": 41.602,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007928.jpg",
+      "generation_seconds": 39.201,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007929.png",
+      "generation_seconds": 34.097,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007930.png",
+      "generation_seconds": 26.374,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007931.jpg",
+      "generation_seconds": 49.422,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007932.png",
+      "generation_seconds": 23.64,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007933.png",
+      "generation_seconds": 21.395,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007934.jpg",
+      "generation_seconds": 49.827,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007935.png",
+      "generation_seconds": 42.117,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007936.jpg",
+      "generation_seconds": 21.174,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007937.png",
+      "generation_seconds": 42.269,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007938.png",
+      "generation_seconds": 29.179,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007939.jpg",
+      "generation_seconds": 50.212,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007940.png",
+      "generation_seconds": 50.283,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007941.png",
+      "generation_seconds": 37.136,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007942.png",
+      "generation_seconds": 29.266,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007943.png",
+      "generation_seconds": 37.417,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007944.png",
+      "generation_seconds": 34.538,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007945.jpg",
+      "generation_seconds": 23.788,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007946.jpg",
+      "generation_seconds": 42.21,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007947.jpg",
+      "generation_seconds": 38.954,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007948.png",
+      "generation_seconds": 26.455,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007949.png",
+      "generation_seconds": 39.197,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007950.jpg",
+      "generation_seconds": 17.972,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007951.jpg",
+      "generation_seconds": 49.284,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007952.jpg",
+      "generation_seconds": 31.358,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007953.jpg",
+      "generation_seconds": 31.399,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007954.png",
+      "generation_seconds": 48.864,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007955.png",
+      "generation_seconds": 41.353,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007956.png",
+      "generation_seconds": 17.909,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007957.jpg",
+      "generation_seconds": 20.525,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007958.png",
+      "generation_seconds": 39.121,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007959.png",
+      "generation_seconds": 48.624,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007960.png",
+      "generation_seconds": 48.664,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007961.jpg",
+      "generation_seconds": 30.721,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007962.png",
+      "generation_seconds": 33.279,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007963.png",
+      "generation_seconds": 44.015,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007964.png",
+      "generation_seconds": 35.698,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007965.jpg",
+      "generation_seconds": 41.045,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007966.png",
+      "generation_seconds": 48.745,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007967.jpg",
+      "generation_seconds": 18.166,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007968.png",
+      "generation_seconds": 33.318,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007969.png",
+      "generation_seconds": 49.168,
+      "truth_wall_count": 12,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 12,
+        "truth_count": 12,
+        "true_positives": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007970.png",
+      "generation_seconds": 20.601,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007971.jpg",
+      "generation_seconds": 38.452,
+      "truth_wall_count": 8,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 8,
+        "truth_count": 8,
+        "true_positives": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007972.jpg",
+      "generation_seconds": 30.363,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007973.png",
+      "generation_seconds": 30.898,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007974.png",
+      "generation_seconds": 41.37,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007975.png",
+      "generation_seconds": 43.885,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007976.png",
+      "generation_seconds": 20.572,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007977.jpg",
+      "generation_seconds": 42.884,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007978.png",
+      "generation_seconds": 25.59,
+      "truth_wall_count": 3,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 3,
+        "truth_count": 3,
+        "true_positives": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007979.png",
+      "generation_seconds": 28.208,
+      "truth_wall_count": 4,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 4,
+        "truth_count": 4,
+        "true_positives": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007980.png",
+      "generation_seconds": 35.781,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007981.png",
+      "generation_seconds": 43.253,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007982.jpg",
+      "generation_seconds": 23.321,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007983.jpg",
+      "generation_seconds": 22.803,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007984.png",
+      "generation_seconds": 30.546,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007985.png",
+      "generation_seconds": 30.859,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007986.jpg",
+      "generation_seconds": 17.999,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007987.png",
+      "generation_seconds": 40.965,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007988.png",
+      "generation_seconds": 43.289,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007989.png",
+      "generation_seconds": 20.627,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007990.png",
+      "generation_seconds": 23.188,
+      "truth_wall_count": 2,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 2,
+        "truth_count": 2,
+        "true_positives": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007991.png",
+      "generation_seconds": 40.793,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007992.png",
+      "generation_seconds": 40.288,
+      "truth_wall_count": 9,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 9,
+        "truth_count": 9,
+        "true_positives": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007993.png",
+      "generation_seconds": 33.149,
+      "truth_wall_count": 6,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 6,
+        "truth_count": 6,
+        "true_positives": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007994.png",
+      "generation_seconds": 20.849,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007995.jpg",
+      "generation_seconds": 35.833,
+      "truth_wall_count": 7,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 9
+      },
+      "walls": {
+        "predicted_count": 7,
+        "truth_count": 7,
+        "true_positives": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007996.jpg",
+      "generation_seconds": 43.742,
+      "truth_wall_count": 10,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 11
+      },
+      "walls": {
+        "predicted_count": 10,
+        "truth_count": 10,
+        "true_positives": 10,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007997.jpg",
+      "generation_seconds": 31.038,
+      "truth_wall_count": 5,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 12
+      },
+      "walls": {
+        "predicted_count": 5,
+        "truth_count": 5,
+        "true_positives": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007998.jpg",
+      "generation_seconds": 17.836,
+      "truth_wall_count": 0,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 0,
+        "truth_count": 0,
+        "true_positives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    },
+    {
+      "file_name": "images/007999.png",
+      "generation_seconds": 20.808,
+      "truth_wall_count": 1,
+      "json_parsed": true,
+      "parser_warnings": [],
+      "layout": {
+        "shape_match": true,
+        "predicted_shape": [
+          6,
+          6
+        ],
+        "truth_shape": [
+          6,
+          6
+        ],
+        "cell_accuracy": 1.0,
+        "waypoint_recall": 1.0,
+        "waypoint_total": 10
+      },
+      "walls": {
+        "predicted_count": 1,
+        "truth_count": 1,
+        "true_positives": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_match": true,
+      "solvable": true,
+      "solution_valid_on_truth": true
+    }
+  ]
+}
