@@ -15,6 +15,7 @@ from src.core.vl_models.prompt_baseline import (
     PUZZLE_01_JSON_STR,
     PUZZLE_02_JSON_STR,
     PUZZLE_03_JSON_STR,
+    build_puzzle_prompt,
 )
 
 PROMPT_BASELINE = "baseline"
@@ -107,3 +108,25 @@ Here are some examples of the required output format. Note that they are not all
 --- TASK ---
 Now, analyze the new image provided and generate the corresponding JSON object in the exact same format. Do not include any other text, explanations, or apologies in your response.
 """
+
+
+PROMPT_BUILDERS = {
+    PROMPT_BASELINE: build_puzzle_prompt,
+    PROMPT_SIZED: build_sized_puzzle_prompt,
+    PROMPT_FINETUNE: build_finetune_prompt,
+}
+
+
+def build_prompt(variant: str) -> str:
+    """Resolves a variant name to its prompt, so callers expose one flag, not a branch.
+
+    Pairing is not cosmetic: a fine-tuned checkpoint queried with the baseline few-shot
+    prompt is being asked a question it never saw, and an un-finetuned model handed the
+    short ``finetune`` instruction loses the examples it depends on.
+    """
+    builder = PROMPT_BUILDERS.get(variant)
+    if builder is None:
+        raise ValueError(
+            f"Unknown prompt variant {variant!r}; expected one of {PROMPT_CHOICES}."
+        )
+    return builder()
