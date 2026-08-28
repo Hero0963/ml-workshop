@@ -3,7 +3,7 @@
 > **本檔是這個子專案的操作規範正本。** `CLAUDE.md` 只用 `@AGENTS.md` 載入本檔。
 > repo 級規範（monorepo 地圖、venv 分工、紅線）在 [`../AGENTS.md`](../AGENTS.md)；Python 程式碼風格在 [`../rules.md`](../rules.md)。
 > **衝突時以本檔為準**（較具體者優先）。
-> Last Updated: 2026-08-08
+> Last Updated: 2026-08-29
 
 ---
 
@@ -13,7 +13,9 @@
 本質是**帶順序約束的 Hamiltonian path 問題**——精確解與啟發式解的取捨正是專案的主題。
 
 含：9 種 solver、FastAPI 後端、Gradio 主控台、Svelte Canvas 編輯器、出題器、GIF／PNG 視覺化、Docker 雙環境。
-另有兩塊**未進主流程**的實驗：`src/core/rl/`（⏸ 暫停）與 `src/core/vl_models/`（🧪 scratchpad）。
+**VL 圖片解析（`src/core/vl_models/`）已在主流程上**（2026-08-29）：微調模型由本機 Ollama 服務，
+接 `POST /api/vision/solve` 與 Gradio 的 `Solve from Screenshot` 分頁。
+另有一塊**未進主流程**的實驗：`src/core/rl/`（⏸ 暫停）。
 
 ## 1. 每次上線的標準動作
 
@@ -102,7 +104,8 @@ python run_docker_dev.py           # Docker 開發環境（hot-reload）
 | 改埠號／設定 | `src/settings.py`（唯一來源）＋ `.env.example`；**不要在程式裡硬寫** |
 | 改出題器 | `src/core/puzzle_generation/puzzle_generator.py`（回溯 ＋ retry/decrement ＋ 內部逾時） |
 | 碰 RL | `src/core/rl/`——**先讀 `roadmap.md` 的決策表**，不要重蹈「調 reward 權重硬解 policy loop」 |
-| 碰 VL 圖片解析 | `src/core/vl_models/`——目前是 scratchpad；混合策略（`output_type=str` ＋ prompt engineering）是已驗證路線 |
+| 碰 VL 圖片解析 | **先讀 [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)**。傳輸層唯一正本是 `vl_models/backends.py`、出貨 parser 是 `puzzle_parser.py`、端點在 `src/app/routers/vision.py`。混合策略（`output_type=str` ＋ prompt engineering）是已驗證路線，**不要回頭試 tool-calling** |
+| 操作／示範讀圖功能 | [`ai-collab/vlm-operating-guide.md`](ai-collab/vlm-operating-guide.md)（寫給使用者的，含測資與預期輸出） |
 
 ## 6. 程式慣例（承 `../rules.md`，此處只列本專案特有）
 

@@ -4,7 +4,7 @@
 > `CLAUDE.md` 只用 `@AGENTS.md` 載入本檔，不另外維護內容。
 > **子專案有自己的正本**：進某個子專案工作，以該子專案的 `AGENTS.md` 為準（見 §8）。
 > 適用對象：AI coding agent（Claude Code／Codex／Gemini CLI…）與本人。
-> Last Updated: 2026-08-08
+> Last Updated: 2026-08-29
 
 ---
 
@@ -15,7 +15,7 @@
 
 | 子專案 | 一句話 | 協作文件 |
 |--------|--------|----------|
-| `linkedin-zip-challenge/` | ★ **最大最活躍**。LinkedIn Zip 解謎：9 種 solver ＋ FastAPI ＋ Gradio ＋ Svelte 編輯器＋ RL／VL 實驗 | `AGENTS.md` ＋ `ai-collab/` |
+| `linkedin-zip-challenge/` | ★ **最大最活躍**。LinkedIn Zip 解謎：9 種 solver ＋ FastAPI ＋ Gradio ＋ Svelte 編輯器 ＋ **微調 VLM 讀圖解題**（已上線）＋ RL 實驗（⏸ 暫停） | `AGENTS.md` ＋ `ai-collab/` |
 | `board-game-rl/` | 井字遊戲 RL：Q-Learning／Alpha-Beta／DQN ＋ FastAPI ＋ Gradio，DDD 分層 | `ai-collab/` |
 | `deep-learning-karpathy/` | Karpathy 教材重現：minBPE tokenizer ＋ nanoGPT | `ai-collab/` |
 | `lingua-tutor/` | 語言學習助理：STT 轉錄與評分 | `dev_log.md` |

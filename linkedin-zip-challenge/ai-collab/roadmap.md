@@ -46,7 +46,7 @@
      改完 Svelte 的下拉要重新 `npm run build` 才會反映。
    - Done 條件：`SOLVERS` 含全部 9 種、schema 支援 `attempts`、Gradio 與 Svelte 兩邊下拉都可選、新增對應 API 測試且全綠。
 
-2. **VL 圖片解析整合進主流程** ← **★ 讀圖已達標（P4c 完成）；剩下的是接進產品：P4d → P5 → P6**
+2. **VL 圖片解析整合進主流程** ← **✅ 已完成並上線（2026-08-29 P4d/P5/P6）。下一件事是「把評估集變難」，見本項最後一段**
    - **✅ P5 程式骨幹已完成（2026-08-22）**：`backends.py`（傳輸層唯一正本）、`puzzle_parser.py`（正式 parser）、
      `prompt_baseline.py`（凍結 prompt 搬出 scratchpad，雜湊釘住）、`src/core/tests/vl_models/`（39 個 mock 測試）。
      測試 76 → **115 passed, 8 xfailed**，ruff 全綠。
@@ -252,6 +252,7 @@
 | 2026-08-08 | **建立 AI 協作骨架**：`AGENTS.md`／`CLAUDE.md`／`ai-collab/`（roadmap・project_guide・dev_log・commands），`dev_log.md` 移入 `ai-collab/`，補 `.python-version` |
 | 2026-08-15 | **兩份方案報告**（純研究，未動程式）：VLM 選型與微調計畫、RL 重啟方案（含 2025-10 policy loop 的機制層根因） |
 | 2026-08-22 | **VLM P2 ＋ P4a**：8,000 張合成資料集（新 renderer：格線淺灰／牆粗黑、Pillow 內建字型跨平台）、標籤 ＝ 推論 schema；Colab L4 打通（VS Code kernel，不用 WSL2）；P4a 煙霧測試 **7.54 s/step**、修好訓練／推論渲染不一致後 **held-out 牆 F1 0.958** |
+| 2026-08-29 | **VLM P4d/P5/P6 完成，讀圖整條上線**：adapter 從 Drive 撈回 → 自寫 `merge_lora.py` 併回 base → llama.cpp 轉 GGUF → Ollama `zip-qwen35-4b-p4c:f16` → `POST /api/vision/solve` ＋ Gradio `Solve from Screenshot` 分頁。**匯出零損失**（同 200 筆與 Colab 逐位元組相同、快 6.5 倍）；**六張真實截圖端到端 5/6、牆 F1 0.972**（未微調 2/6、0.438），兩張 7×7 也全對。測試 167 → **214 passed**。⚠ **下一步是把評估集變難**，否則任何改動都是 1.000。報告見 `reports/2026-08-29_vl-p4d-export-and-integration.md`、操作見 `vlm-operating-guide.md` |
 | 2026-08-22 | **VLM P4c 完成，讀圖告一段落**：7,800 筆 × 1 epoch（975 步 / 1.56 h / ~2.4 CU），**200 筆合成 held-out 四層指標全 1.000**，通過五項對抗性檢查；本人定案**不做真實截圖**。⚠ 評估集已飽和；成果仍在 Drive 上待 P4d 匯出。報告見 `reports/2026-08-22_vl-p4c-results.md` |
 | 2026-08-22 | **VLM P4c 備妥**：`p4c_finetune_8000.ipynb`（lazy 資料集，實測整包 materialise 要 10.7 GB / VM 只有 12.7 GB；lr=0 的不污染短跑；Drive checkpoint／resume）＋ `score_predictions.py`（離線算分，不重寫指標，19 個測試）；查出 `smoke_6x6` 與訓練集**渲染 recipe 120/120 相同、標籤 82/120 相同**，held-out 改為從 8,000 切 200 筆 |
 | 2026-08-22 | **VLM P5 程式骨幹 ＋ 傳輸層缺陷修復**：`backends.py`／`puzzle_parser.py`／`prompt_baseline.py` ＋ 39 個 mock 測試；查出關思考在 `/v1` 要用 `reasoning_effort` 而非 `think`（66.5s → 5.5s、JSON 0/2 → 2/2）；補 `.env.example`、修 worktree 的 `/svelte-ui` 404；盤點出 renderer 已存在、2025-10 訓練資產只在 Drive |
