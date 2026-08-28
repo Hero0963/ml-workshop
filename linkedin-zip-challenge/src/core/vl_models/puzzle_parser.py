@@ -20,7 +20,8 @@ Design notes:
 
 import json
 import re
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from loguru import logger
@@ -52,15 +53,32 @@ class VisionBackendError(PuzzleParseError):
 
 
 class ModelOutputError(PuzzleParseError):
-    """The model answered, but not with a puzzle we can use."""
+    """The model answered, but not with a puzzle we can use.
+
+    It carries the text that failed. An unusable answer is the single most useful thing
+    to keep -- it is the case no evaluation set contains and no retry fixes -- so losing
+    it inside the exception would throw away the evidence.
+    """
+
+    def __init__(self, message: str, raw_output: str = ""):
+        super().__init__(message)
+        self.raw_output = raw_output
 
 
 @dataclass(frozen=True)
 class ParseResult:
-    """The puzzle, plus anything the caller should show the user before solving."""
+    """The puzzle, plus anything the caller should show the user before solving.
+
+    ``raw_output`` and ``generation_seconds`` are carried so a caller can record what
+    the model actually said. Reconstructing the text from the parsed puzzle would lose
+    exactly the cases worth keeping -- a malformed answer, an invented wall that was
+    dropped -- and re-timing it outside would fold parsing into the model's number.
+    """
 
     puzzle: Puzzle
     warnings: tuple[str, ...] = ()
+    raw_output: str = ""
+    generation_seconds: float | None = None
 
 
 def extract_json_block(text: str) -> str | None:
@@ -152,19 +170,27 @@ def parse_model_output(text: str) -> ParseResult:
     if not json_str:
         raise ModelOutputError(
             "No JSON object found in the model output. This usually means reasoning "
-            "was left on and the answer was buried in it."
+            "was left on and the answer was buried in it.",
+            raw_output=text,
         )
     try:
         payload = json.loads(json_str)
     except json.JSONDecodeError as error:
-        raise ModelOutputError(f"The model emitted invalid JSON: {error}") from error
+        raise ModelOutputError(
+            f"The model emitted invalid JSON: {error}", raw_output=text
+        ) from error
     try:
         validated = SimplePuzzleOutput(**payload)
     except ValidationError as error:
         raise ModelOutputError(
-            f"The model's JSON does not match the expected schema: {error}"
+            f"The model's JSON does not match the expected schema: {error}",
+            raw_output=text,
         ) from error
-    return to_puzzle(validated)
+    try:
+        parsed = to_puzzle(validated)
+    except ModelOutputError as error:
+        raise ModelOutputError(str(error), raw_output=text) from error
+    return replace(parsed, raw_output=text)
 
 
 def parse_puzzle_image(
@@ -186,6 +212,7 @@ def parse_puzzle_image(
     logger.info(
         "Parsing {} with {} via {}", image_path.name, backend.model, backend.name
     )
+    started = time.perf_counter()
     try:
         response = backend.generate(image_path, prompt)
     except Exception as error:
@@ -194,8 +221,12 @@ def parse_puzzle_image(
             f"'{backend.model}': {type(error).__name__}: {error}"
         ) from error
 
+    generation_seconds = round(time.perf_counter() - started, 3)
+
     if response.thinking_characters:
         logger.debug(
             "Model spent {} characters on reasoning", response.thinking_characters
         )
-    return parse_model_output(response.text)
+    return replace(
+        parse_model_output(response.text), generation_seconds=generation_seconds
+    )
