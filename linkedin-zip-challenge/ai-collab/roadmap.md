@@ -2,7 +2,7 @@
 
 > **新 session 的第一站。** 每次工作告一段落就更新這裡（現況一句話、下一步順序、進度日誌加一列）。
 > 架構與啟動方式看 [project_guide.md](project_guide.md)、完整開發歷程看 [dev_log.md](dev_log.md)、規範看 [../AGENTS.md](../AGENTS.md)。
-> 最後更新：2026-08-22
+> 最後更新：2026-08-29
 
 ## 現況（2026-08-08）
 
@@ -28,7 +28,7 @@
 | Swagger `/docs` 的 Echo 端點重複兩份 | 🐞 小 bug：`main.py` 掛 router 時給 `tags=["Echo"]`，而 `echo.py` 的 router 自帶 `tags=["echo"]`，FastAPI 合併後產生兩個群組 |
 | Svelte UI 的 Instructions 顯示原始 Markdown | 🐞 小 bug：`**middle**`／`**border**` 直接印出星號，該處沒有走 Markdown 渲染 |
 | RL solver（`src/core/rl/`） | ⏸ **刻意暫停**（2025-10-15，見下方決策） |
-| VL 圖片解析（`src/core/vl_models/`） | ✅ **讀圖已完成（2026-08-22 P4c）**：微調後合成 held-out **200/200 全項滿分**。⚠ 但成果是 Drive 上的 LoRA adapter，**還沒接進產品**——待 P4d 匯出 ＋ P5 Gradio 分頁 ＋ P6 `/api/vision/solve` |
+| VL 圖片解析（`src/core/vl_models/`） | ✅✅ **已完成並接進產品（2026-08-29 P4d/P5/P6）**：微調模型由本機 Ollama 服務（`zip-qwen35-4b-p4c:f16`），`POST /api/vision/solve` ＋ Gradio `Solve from Screenshot` 分頁。合成 held-out 重現 **200/200**（與 Colab 逐位元組相同、快 6.5 倍）；**六張真實截圖端到端 5/6、牆 F1 0.972**。操作見 [vlm-operating-guide.md](vlm-operating-guide.md) |
 | 環境復原驗證（9 個月未動） | ✅ **2026-08-08 完成**：46 tests passed、ruff 全綠 |
 
 ## 下一步
@@ -90,8 +90,23 @@
      要重獲鑑別力只能把合成資料變難（視覺雜訊、多種渲染風格、模擬截圖失真、更大盤面）。
    - **⚠ 那個 200/200 現在還碰不到**：成果是 Drive 上的 LoRA adapter，
      `puzzle_parser.parse_puzzle_image()` 今天走的仍是 Ollama 上**未微調**的模型。
-   - **下一步：P4d（匯出，讓本機用得到）→ P5（Gradio 上傳分頁）→ P6（`/api/vision/solve`）。**
-     細節與 done 條件在 [handover-vlm-parser.md](handover-vlm-parser.md) §6。
+   - **✅✅ P4d／P5／P6 已完成（2026-08-29）——完整結果見
+     [reports/2026-08-29_vl-p4d-export-and-integration.md](reports/2026-08-29_vl-p4d-export-and-integration.md)**：
+     adapter 從 Drive 撈回（SHA-256 對得上）、自寫 `merge_lora.py` 併回 base（344 張量、14 秒，繞開 transformers 5.x 的相依衝突）、
+     llama.cpp 轉 GGUF（文字塔 8.42 GB ＋ mmproj 672 MB）、`ollama create` 成 `zip-qwen35-4b-p4c:f16`。
+     **匯出零損失**：同 200 筆與 Colab **逐位元組相同**、**快 6.5 倍**（34.5s → 5.3s／張）。
+   - **★ 真實截圖有新數字（六張）**：牆 F1 **0.438 → 0.972**、端到端 **2/6 → 5/6**、逐格與號碼召回 **1.000**，
+     **兩張 7×7 全對**（推翻「訓練全 6×6 所以 7×7 會答錯」的預期）。唯一失敗是多幻覺一道牆造成無解、**被 `solvable` 旗標抓到**，靜默錯誤 0 筆。
+     ⚠ **n=6 不足以宣稱「已驗證真實截圖」**，說法要保守。
+   - **⚠ 兩條匯出死路（別再試）**：`ADAPTER` 掛在已量化 base 上（base 必須是 safetensors 目錄）；
+     `ollama create --experimental` 吃 safetensors（匯入成功但執行走 **MLX runner**，Linux/NVIDIA 直接死）。
+   - **⚠ checkpoint 只剩 800／975**（`save_total_limit=2` 刪掉了 200/400/600），
+     「1,600 筆夠不夠」那個實驗**已經做不成**。
+   - **★ 每次 API 呼叫都會落盤**（`logs/vision/`，不進版控），而且刻意做成**資料集的形狀**——
+     欄位名與 `dataset_builder` 一致，**手動補一個 `label` 就能被 `score_predictions` 算分**。
+     讀不出來的（HTTP 422）也會記。這是累積真實截圖評估集最便宜的路。
+   - **下一步：★ 把評估集變難**（視覺雜訊、多渲染風格、模擬截圖失真、更大盤面）。
+     在那之前，換模型／CoD／減量／消融**在現有評估集上一律 1.000，量不出好壞**。細節在 [handover-vlm-parser.md](handover-vlm-parser.md) §6。
    - 📋 **接手請直接讀計畫書：[plans/2026-08-15_track-vlm-parser.md](plans/2026-08-15_track-vlm-parser.md)**
      （worktree 環境建置、P0–P6 分階段 done 條件、與 RL track 的協作約定）
    - ✅ **P0＋P1 已完成（2026-08-15，分支 `feat/vlm-parser`，worktree `zip-vlm`）**：

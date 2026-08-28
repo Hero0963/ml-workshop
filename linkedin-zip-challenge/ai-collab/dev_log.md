@@ -4,6 +4,109 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-08-29
+
+### VLM Track: the model is out of Drive and into the product, and it reads real screenshots better than expected
+
+Reports: [reports/2026-08-29_vl-p4d-export-and-integration.md](reports/2026-08-29_vl-p4d-export-and-integration.md)
+(export, the two dead ends, real-screenshot numbers, wiring) and
+[reports/2026-08-29_vl-training-reproducible.md](reports/2026-08-29_vl-training-reproducible.md)
+(how the training was actually done, reproducibly). User-facing how-to:
+[vlm-operating-guide.md](vlm-operating-guide.md).
+
+Baseline first: `uv sync` clean, `uv run pytest` **167 passed, 8 xfailed**, `ruff` clean.
+
+**The adapter was never lost, just misfiled.** A full-disk search found no copy, and the Drive
+MCP had no scope; the operator then downloaded it. Google Drive splits a large folder into
+several zips **and puts the big file in a different one from its config files** —
+`adapter_model.safetensors` was in `-002`, everything else in `-001`. Both have to be expanded
+into one tree. Verified it is the right artifact: the training tar and the 200 predictions both
+match the SHA-256 recorded in the P4c report, and the adapter carries **688 tensors, visual 96
+pairs / language 248 pairs** — exactly the `96/96` and `248/248` the P4c notebook printed.
+
+**One correction to the record**: the handover said checkpoints 200/400/600/800/975 were on
+Drive. `save_total_limit = 2` had deleted all but **800 and 975**, so the "would checkpoint-200
+also score 200/200, i.e. was 4/5 of the training wasted" experiment **can no longer be run**.
+`save_total_limit` decides which questions stay askable, not just disk usage.
+
+**Merging without peft.** The adapter's base needs `transformers` 5.x while this project pins
+`<5`; upgrading the whole stack to add two matrices is not worth it, and the arithmetic does not
+need it. `src/core/vl_models/merge_lora.py` reads and writes the tensors directly, implements
+only the plain case, and **refuses** every variant it does not implement rather than merging it
+wrongly. 344 tensors in 14 seconds; the per-tensor audit shows `visual 96/96` moved with
+`max|delta| 2.24e-2` against `language 248/248` at `6.03e-3` and **zero non-target tensors
+changed** — the vision stack moved more, matching the `max|B|` 0.272 vs 0.166 measured during
+training by an entirely different route.
+
+A trap worth naming: the obvious rule "prefer the adapter's copies of the config, since that is
+what training used" is **wrong here**. The trainer re-serialised `tokenizer_config.json` with
+transformers 5.2.0, naming a tokenizer class no 4.x tool can load, which breaks GGUF conversion.
+Measured: `chat_template.jinja`, `tokenizer.json` and `processor_config.json` are **byte-identical**
+between base and adapter, so nothing needed preserving. The merger now uses the base's copies and
+**verifies those three byte for byte, aborting on a mismatch** — that mismatch would be the
+train/inference rendering trap that has cost this track two rounds already.
+
+**Two export dead ends, recorded so nobody repeats them.** `ADAPTER` pointing at the safetensors
+adapter is refused because the base must also be a safetensors directory. And
+`ollama create --experimental` on the merged directory **imports successfully** — 738 tensors,
+747 layers, `ollama show` even reports `vision` — then dies on first use with
+`mlx runner failed: MLX not available`. Unquantized safetensors are served by the **MLX runner**,
+which does not exist on Linux/NVIDIA. GGUF is the only route. llama.cpp already registers
+`Qwen3_5ForConditionalGeneration` on both sides, so the conversion produced a 8.42 GB text tower
+and a 672 MB mmproj; **both `FROM` lines are required** or the model cannot see.
+
+**The export lost nothing.** Same 200 held-out samples, local GGUF against the Colab LoRA:
+**200/200 byte-identical output**, and 197 distinct timings so it is really generating. Scoring
+reproduces P4c exactly — every metric 1.000, exact match 200/200, `solvable_but_wrong` **0**.
+And it is **6.5x faster** (34.5 s -> 5.3 s per image), which is the batch-1-with-unmerged-LoRA
+cost from P4c section 5.3 being paid back.
+
+**The part that was not expected.** Six real LinkedIn screenshots, `finetune` prompt (no few-shot,
+so no `puzzle_01..03` leakage): cell accuracy **1.000**, waypoint recall **1.000**, wall F1
+**0.972**, end-to-end **5/6** — against 0.947 / 0.917 / **0.438** / 2/6 untuned. The single failure
+is `puzzle_03`, where recall is 1.00 and one **extra** wall was hallucinated, over-constraining the
+board into unsolvability — the *visible* failure mode, caught by the `solvable` flag. **Silent
+failures: 0.** And both **7x7** screenshots came out perfect, including the 21-waypoint one, which
+**contradicts** the handover's expectation that a model trained on 100% 6x6 would answer 7x7 as
+6x6. n=6 is far too small to claim "verified on real screenshots", and these six have been the
+development set since P0 — but the risk that synthetic training would collapse on real images did
+not materialise.
+
+**Wiring.** `POST /api/vision/solve` (multipart; `warnings`, the `solvable` confidence flag, the
+solver path and the rendered answer) and a `Solve from Screenshot` Gradio tab that hands the read
+board back as Python literals so a misread can be corrected in the other tabs. 503 / 422 / 415 are
+deliberately distinct: unreachable model, unusable answer, unsupported file type mean different
+things to a caller.
+
+**A bug the unit tests could not catch.** `pydantic-ai`'s `run_sync` cannot be called from inside a
+running event loop, and the endpoint was written `async def`, so the first live request returned
+`503 ... RuntimeError: This event loop is already running` while all 11 endpoint tests were green —
+the stub backend never touched the loop. Fixed by making the handler a sync `def` (FastAPI then
+runs the whole blocking chain in a threadpool, which it should have been anyway), and the stub now
+**asserts no loop is running**, so the constraint is held by a test. Verified the guard bites:
+reverting the handler to `async def` fails 8 of 12.
+
+**Every request is now kept, in a shape chosen on purpose.** `request_log.py` writes the
+uploaded image and the model's own words into `logs/vision/` (git-ignored) as
+`images/` + `metadata.jsonl` — the same field names `dataset_builder` uses. What
+`score_predictions` needs is `label` and `raw_output`, carrying `file_name` and
+`generation_seconds`; all of those are written except `label`, which nobody can know for
+a picture a user just uploaded. **So hand-writing one `label` turns a line of real usage
+into a scoreable evaluation sample** — the cheapest route to the real-screenshot set that
+section 6.3 of the report names as the only thing standing between "it did well on six"
+and "verified". Demonstrated end to end: two logged lines plus hand-written labels scored
+`EXACT MATCH 1/2`, with the 0.889 wall F1 landing on `puzzle_03`, as it should.
+The **422** case is logged too (`usable: false` plus `parse_error`), which is why
+`ModelOutputError` now carries the text that failed — an unusable answer is the case no
+evaluation set holds and no retry fixes, so locking it inside the exception threw away
+the best evidence there is. Logging never raises, and the endpoint tests redirect it to a
+temp folder so the suite cannot quietly fill the very folder meant to become a dataset.
+
+Tests **167 -> 214 passed, 8 xfailed**; `ruff` clean. `.env` and `.env.example` now carry the
+fine-tuned tag plus `VISION_PROMPT_VARIANT`, and `docker-compose.dev.yml` mounts `./models` into
+the ollama container read-only and overrides `OLLAMA_PROVIDER_URL` for the app container so both
+"run on the host" and "run in compose" stay correct without editing `.env`.
+
 ## 2026-08-22
 
 ### VLM Track: P4c ran, reading is done, and the benchmark it was measured on is now saturated

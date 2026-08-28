@@ -1,0 +1,94 @@
+{
+  "run": {
+    "model": "qwen3.5:4b-q8_0",
+    "seed": 20260815,
+    "temperature": 0.0,
+    "num_ctx": 8192,
+    "base_url": "http://127.0.0.1:11435",
+    "started_at": "2026-08-29T02:21:45+0800",
+    "prompt_characters": 3201,
+    "client": "openai-compat",
+    "prompt_variant": "sized",
+    "think": false,
+    "images": [
+      {
+        "puzzle_id": "puzzle_01",
+        "path": "puzzle_01.png",
+        "size": [
+          998,
+          1062
+        ]
+      }
+    ],
+    "results": [
+      {
+        "puzzle_id": "puzzle_01",
+        "call": {
+          "model": "qwen3.5:4b-q8_0",
+          "image": "puzzle_01.png",
+          "wall_seconds": 12.534767599776387,
+          "client": "openai-compat",
+          "raw_output": "```json\n{\n  \"layout\": [\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"],\n    [\"  \", \"01\", \"  \", \"  \", \"  \", \"02\"],\n    [\"  \", \"  \", \"03\", \"04\", \"  \", \"  \"],\n    [\"  \", \"  \", \"06\", \"05\", \"  \", \"  \"],\n    [\"  \", \"08\", \"  \", \"  \", \"  \", \"07\"],\n    [\"  \", \"  \", \"  \", \"  \", \"  \", \"  \"]\n  ],\n  \"walls\": [\n    {\"cell1\": [1, 1], \"cell2\": [1, 0]},\n    {\"cell1\": [1, 1], \"cell2\": [2, 1]},\n    {\"cell1\": [1, 1], \"cell2\": [1, 2]},\n    {\"cell1\": [2, 2], \"cell2\": [3, 2]},\n    {\"cell1\": [2, 4], \"cell2\": [2, 5]},\n    {\"cell1\": [3, 4], \"cell2\": [4, 4]},\n    {\"cell1\": [4, 1], \"cell2\": [4, 2]},\n    {\"cell1\": [4, 1], \"cell2\": [5, 1]},\n    {\"cell1\": [4, 4], \"cell2\": [5, 4]},\n    {\"cell1\": [4, 5], \"cell2\": [5, 5]}\n  ]\n}\n```",
+          "error": null,
+          "load_seconds": null,
+          "prompt_eval_count": 2420,
+          "eval_count": 378,
+          "eval_seconds": null,
+          "gpu_baseline_mib": 2103,
+          "gpu_peak_mib": 8142,
+          "gpu_delta_mib": 6039,
+          "thinking_characters": 0,
+          "ollama_ps": "NAME               ID              SIZE      PROCESSOR    CONTEXT    UNTIL              \nqwen3.5:4b-q8_0    8722f47c2791    5.2 GB    100% GPU     8192       4 minutes from now"
+        },
+        "json_parsed": true,
+        "layout": {
+          "shape_match": true,
+          "predicted_shape": [
+            6,
+            6
+          ],
+          "truth_shape": [
+            6,
+            6
+          ],
+          "cell_accuracy": 0.8888888888888888,
+          "waypoint_recall": 0.75,
+          "waypoint_total": 8
+        },
+        "walls": {
+          "predicted_count": 10,
+          "truth_count": 10,
+          "true_positives": 2,
+          "precision": 0.2,
+          "recall": 0.2,
+          "f1": 0.20000000000000004,
+          "non_adjacent_dropped": 0
+        },
+        "end_to_end": {
+          "attempted": true,
+          "solved": false,
+          "path_matches_truth": false,
+          "solve_seconds": 0.011941799893975258
+        }
+      }
+    ]
+  },
+  "summary": {
+    "model": "qwen3.5:4b-q8_0",
+    "client": "openai-compat",
+    "prompt_variant": "sized",
+    "images": 1,
+    "json_parse_rate": 1.0,
+    "mean_latency_seconds": 12.534767599776387,
+    "max_latency_seconds": 12.534767599776387,
+    "peak_gpu_mib": 8142,
+    "mean_cell_accuracy": 0.8888888888888888,
+    "mean_waypoint_recall": 0.75,
+    "mean_wall_f1": 0.20000000000000004,
+    "mean_wall_f1_walled_only": 0.20000000000000004,
+    "walled_puzzles": 1,
+    "shape_correct": 1,
+    "end_to_end_solved": 0,
+    "end_to_end_matches_truth": 0
+  }
+}

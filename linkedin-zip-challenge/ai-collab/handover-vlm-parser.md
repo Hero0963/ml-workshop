@@ -1,37 +1,46 @@
 # 交接文件 — VLM Track（圖片解析）
 
 > **接手這條 track 的 agent／developer 從這一份開始讀，讀完就能動手。**
-> 最後更新：2026-08-22（Asia/Taipei）｜分支 `feat/vlm-parser`｜worktree `zip-vlm`｜對應 roadmap 第 2 項
+> 最後更新：2026-08-29（Asia/Taipei）｜分支 `feat/vlm-parser`｜worktree `zip-vlm`｜對應 roadmap 第 2 項
 > 其他文件是延伸閱讀，本檔會標明什麼時候該去翻哪一份。
 
 ---
 
 ## 0. 一句話現況
 
-**讀圖這件事已經做完了，而且做滿了：微調後的模型在 200 筆合成 held-out 上四層指標全部 1.000（端到端 200/200）。剩下的不是「讀得準不準」，是「怎麼把它接進產品」——P4d 匯出、P5 Gradio 分頁、P6 `/api/vision/solve`。**
+**讀圖做完了，而且已經接進產品：P4d 匯出、P5 Gradio 分頁、P6 `/api/vision/solve` 都於 2026-08-29 完成，微調後的模型由本機 Ollama 服務，整條 `截圖 → JSON → Puzzle → solver` 在應用程式裡跑得通。剩下的不是讀圖，是**把評估集變難**——現在那把尺已經飽和。**
 
 > ★ **接手前一定要知道的五件事：**
 >
-> **① 那個 200/200 現在還碰不到。** 微調成果是一個 **LoRA adapter，只存在 Google Drive 上**
-> （`colab_finetune/p4c_qwen35_4b_zip_lora`，168 MB）。`puzzle_parser.parse_puzzle_image()`
-> 今天走的仍然是 Ollama 上**未微調**的模型，實力是牆 F1 0.438、端到端 2/6。
-> **要讓產品拿到那個 200/200，P4d（匯出）是唯一的路，也是下一步。**
+> **① P4d 已完成（2026-08-29），模型已經接進產品。** adapter 已從 Drive 撈回本機、
+> merge 進 base、轉成 GGUF、由 Ollama 以 `zip-qwen35-4b-p4c:f16` 服務，
+> 並由 `POST /api/vision/solve` 與 Gradio 的 `Solve from Screenshot` 分頁使用。
+> **操作方式看 [`vlm-operating-guide.md`](vlm-operating-guide.md)**（那是寫給使用者的，不是給 agent 的）。
+> ⚠ 兩個匯出陷阱已踩過：`ollama create --experimental` 直接吃 safetensors 會走 **MLX runner**
+> 而在 Linux/NVIDIA 上跑不起來；adapter 目錄的 `tokenizer_config.json` 是 transformers 5.x 序列化的，
+> **不能覆蓋 base 的那份**。細節見 §6。
 >
 > **② 評估集已經飽和，這是好消息帶來的壞消息。** 所有指標都是 1.000 ⇒ **這把尺再也量不出差異**。
 > 任何後續改動（視覺層消融、CoD、減少訓練量、batch 調整）在它上面都會是 1.000。
 > **要重獲鑑別力，只能把合成資料變難**（視覺雜訊、多種渲染風格、模擬截圖壓縮與縮放、更大盤面）。
 > 沒做這件事之前，不要宣稱任何「改進」。
 >
-> **③ 不做真實截圖，就用自產的合成資料。** 2026-08-22 本人明示定案（原本 P3 是「暫緩」，現在是「不做」）。
-> **代價要講清楚**：所有數字證明的是「**學會了我們的 renderer**」，**不證明**「看得懂 LinkedIn 截圖」。
-> 這是明示接受的取捨。**不要再提議收真實截圖**，要做由本人開口。
+> **③ 不收真實截圖，就用自產的合成資料——決定不變，但證據變了。** 2026-08-22 本人明示定案
+> （原本 P3 是「暫緩」，現在是「不做」）。**不要再提議收真實截圖**，要做由本人開口。
+> ⚠ **2026-08-29 新增**：既有的六張真實截圖已經量過，結果比預期好得多——牆 F1 **0.438 → 0.972**、
+> 端到端 **2/6 → 5/6**、逐格與號碼召回都是 **1.000**，靜默錯誤 0 筆。
+> 所以「合成訓練會在真實截圖上失效」這個風險**在六張證據上沒有出現**；
+> 但 **n=6 撐不起「已驗證」**，說法仍然要保守。完整討論見
+> [`reports/2026-08-29_vl-p4d-export-and-integration.md`](reports/2026-08-29_vl-p4d-export-and-integration.md) §6。
 >
 > **④ 推論 prompt 必須用 `build_inference_prompt()` 產生**，不可自己拼。它從**訓練那條渲染路徑**
 > 推導，by construction 相符。這個設計已經救過兩次——兩次都是因為我對訓練渲染的描述是錯的，
 > 而方法不依賴描述正確（詳見 §7）。
 >
-> **⑤ 只做 6×6。** renderer 與 builder 都吃 size 清單，要加只是一個旗標，但訓練資料 100% 是 6×6，
-> 微調後模型很可能看到 7×7 也答 6×6。
+> **⑤ 訓練資料只有 6×6，但它沒有因此鎖死在 6×6。** renderer 與 builder 都吃 size 清單，要加只是一個旗標。
+> ⚠ **原本這裡寫的是「微調後模型很可能看到 7×7 也答 6×6」——2026-08-29 實測推翻了**：
+> 兩張真實 7×7 截圖（`puzzle_04` 14 道牆、`puzzle_06` 21 個號碼）**尺寸與逐格全對**。
+> 仍然沒有系統性量過非 6×6 的表現，所以不要反過來宣稱「支援任意尺寸」。
 
 ---
 
@@ -40,7 +49,9 @@
 | 順序 | 檔案 | 什麼時候讀 |
 |---|---|---|
 | 1 | **本檔的 §0（五件必知）→ §6（下一步）** | 一定，而且先讀這兩節 |
-| 2 | [`reports/2026-08-22_vl-p4c-results.md`](reports/2026-08-22_vl-p4c-results.md) | 一定。P4c 的完整結果、五項對抗性檢查、四個缺陷、硬體對照 |
+| 2 | [`reports/2026-08-29_vl-p4d-export-and-integration.md`](reports/2026-08-29_vl-p4d-export-and-integration.md) | **一定，先讀這份**。匯出怎麼做、兩條死路、真實截圖的新數字、產品接線 |
+| 2b | [`reports/2026-08-22_vl-p4c-results.md`](reports/2026-08-22_vl-p4c-results.md) | 一定。P4c 的完整結果、五項對抗性檢查、四個缺陷、硬體對照 |
+| 2c | [`reports/2026-08-29_vl-training-reproducible.md`](reports/2026-08-29_vl-training-reproducible.md) | 要重跑訓練、或想知道資料怎麼生的時候。含逐項超參數與從零復現步驟 |
 | 3 | [`roadmap.md`](roadmap.md) 的「已定案，不要再重開的決策」表 | 一定，快速掃過。**那張表是為了不讓你重蹈已經踩過的坑** |
 | 4 | [`../AGENTS.md`](../AGENTS.md) | 動手前。環境、驗證、紅線、回報格式 |
 | 5 | [`plans/2026-08-15_track-vlm-parser.md`](plans/2026-08-15_track-vlm-parser.md) | 要看 P0–P6 各階段的 done 條件時 |
@@ -66,7 +77,7 @@ Copy-Item .\linkedin-zip-challenge\.env ..\zip-vlm\linkedin-zip-challenge\.env  
 # 每次開工
 cd D:\it_project\github_sync\zip-vlm\linkedin-zip-challenge   # ★ 一定要進子專案再跑 uv
 uv sync
-uv run pytest                 # 基線 167 passed, 8 xfailed
+uv run pytest                 # 基線 214 passed, 8 xfailed（2026-08-29）
 uv run ruff check .           # 應為 All checks passed!
 ```
 
@@ -79,7 +90,7 @@ uv run ruff check .           # 應為 All checks passed!
 cd D:\it_project\github_sync\zip-vlm\linkedin-zip-challenge
 docker compose -f docker-compose.dev.yml up -d ollama
 docker exec zip_ollama_server ollama --version     # 應為 0.32.13 或更新
-docker exec zip_ollama_server ollama list          # 應看到 gemma4:e4b / qwen3.5:4b-q8_0 等
+docker exec zip_ollama_server ollama list          # 應看到 zip-qwen35-4b-p4c:f16（微調版）與 qwen3.5:4b-q8_0 等
 ```
 
 - 容器名 **`zip_ollama_server`**、host 埠 **11435**（不是 11434，11434 被本機另一專案佔用，**不要改回去**）。
@@ -107,8 +118,17 @@ VS Code → **Select Kernel → Colab → L4（付費）**。不必裝 WSL2，�
 
 - **975 步 / 1.56 h / 5.77 s/step / 峰值 VRAM 20.90 of 22.03 GiB (94.9%) / 約 2.4 CU。**
 - 視覺層有學到且動得比語言層大：`visual` max|B| **0.272** vs `language` **0.166**（96/96 與 248/248 非零）。
-- adapter 168 MB ＋ checkpoint 200/400/600/800/975 **都在 Drive 上**。
+- adapter 148 MB（688 張量）＋ checkpoint **只有 800 與 975**——訓練設了 `save_total_limit=2`，
+  200／400／600 已被自動刪除。**2026-08-29 已全部撈回本機** `models/colab_finetune/`（不進版控）。
 - **held-out 200 筆四層指標全 1.000**，並通過五項對抗性檢查（見報告 §2）。
+
+**匯出與部署（P4d，2026-08-29）**
+
+- adapter merge 進 base 後轉 GGUF，由 Ollama 以 **`zip-qwen35-4b-p4c:f16`** 服務（文字塔 8.42 GB ＋ mmproj 672 MB）。
+- **匯出零損失**：同一批 200 筆 held-out，本機輸出與 Colab 輸出 **200/200 逐位元組相同**，且 **快 6.5 倍**（34.5s → 5.3s／張）。
+- 推論峰值 GPU **11,986 MiB**（16 GB 卡有餘裕），首次載入約 50 s，之後每張圖 3–7 s。
+- ❌ **兩條走不通的路，不要再試**：`ADAPTER` 掛在已量化的 base 上（base 必須是 safetensors 目錄）；
+  `ollama create --experimental` 吃 safetensors（匯入成功但執行走 **MLX runner**，Linux/NVIDIA 上直接死）。
 
 **硬體對照（決定下一輪在哪裡跑時用）**
 
@@ -173,7 +193,8 @@ uv run python -m src.core.vl_models.benchmark `
 | `vl-benchmark/` | P0 矩陣（4 種模型／量化 × 冷暖） |
 | `vl-baseline-p1/`／`-nothink/`／`vl-prompt-sized/` | P1 baseline 與兩個消融 |
 | `vl-client-crosscheck/` | native vs pydantic-ai 傳輸層對照 |
-| **`vl-p4c/`** | **P4c 的 200 筆原始預測 ＋ 算分結果** |
+| **`vl-p4c/`** | **P4c 的 200 筆原始預測 ＋ 算分結果**（Colab，LoRA） |
+| **`vl-p4d/`** | **匯出後在本機重跑的同 200 筆 ＋ 算分**，以及**六張真實截圖的完整量測** |
 
 離線算分（Colab 只吐原始輸出，指標一律在本機算，**不在 notebook 裡重寫指標**）：
 
@@ -185,52 +206,55 @@ uv run python -m src.core.vl_models.score_predictions ai-collab\reports\artifact
 
 ## 6. 下一步
 
-讀圖已經達標，**接下來三件都是「把它接進產品」**。建議順序就是下面的順序，因為 P5／P6 沒有 P4d 就只能接到未微調的模型。
+**P4d／P5／P6 都做完了（2026-08-29）。** 這一節現在寫的是「還沒做的」。做法與踩過的坑見
+[`reports/2026-08-29_vl-p4d-export-and-integration.md`](reports/2026-08-29_vl-p4d-export-and-integration.md)；
+使用者怎麼操作見 [`vlm-operating-guide.md`](vlm-operating-guide.md)。
 
-### P4d — 把 adapter 變成本機跑得動的模型 ★ 先做這個
+### ★ 先做這個：把評估集變難
 
-**問題**：微調成果現在只是 Drive 上的一個 LoRA adapter，本機的 Ollama 用不到。
+**不做這件事，後面每一項都量不出好壞**（§0 ②：現在所有指標都是 1.000）。
 
-**路線**：
+`render_puzzle.py` 與 `dataset_builder.py` 都吃參數，改動範圍不大。方向：
 
-1. 在 Colab 上 merge adapter 進 base，匯出 **GGUF** → 拉回本機給 Ollama。
-   ⚠ **已知風險 unsloth#3899（vision 匯出缺陷）**，匯出後**一定要實測**視覺能力沒壞：
-   拿 `datasets/vl/main_6x6` 的幾張圖跑 `benchmark.py --prompt finetune`，對得上才算成功。
-2. GGUF 失敗就走 **`transformers` backend** —— `backends.py` 目前只有兩個 Ollama 傳輸，
-   要新增第三個（本機直接載 transformers ＋ adapter）。介面照 `VisionBackend` 抄，
-   **傳輸層只有這一份正本，不要在別處重寫**。
+- **視覺雜訊**：模糊、雜點、對比與亮度抖動
+- **多種渲染風格**：不只一套配色與線寬（現在的模型學到的就是這一套）
+- **模擬截圖失真**：先縮放再放大、更重的 JPEG 壓縮、手機截圖的比例
+- **更大盤面**：目前訓練 100% 6×6。⚠ 但注意 §0 ⑤——實測 7×7 是對的，所以
+  「加大盤面」的理由是**取得鑑別力**，不是「模型不會 7×7」
 
-**Done 條件**：`puzzle_parser.parse_puzzle_image()` 走微調後的模型，對合成圖能重現 P4c 的水準。
+**Done 條件**：新評估集上，微調模型的 `exact_match` 明顯低於 1.000，而且**未微調模型分數更低**
+（兩者都滿分或都掛零的尺一樣沒用）。
 
-### P5 — Gradio 上傳分頁
+### 然後才輪到這些（都需要上面那把尺）
 
-`src/ui/gradio_app.py` 是 **Adapter**，只負責把 UI 操作翻成 API 格式，**邏輯不要塞進去**。
-上傳圖 → 呼叫 P6 的端點 → 顯示解析出的盤面 ＋ 解答（沿用既有的 GIF/PNG 視覺化）。
-`ParseResult.warnings`（被丟掉的幻覺牆）**要顯示給使用者**，不要吞掉。
+| 想做的事 | 為什麼現在做不了 |
+|---|---|
+| 訓 Gemma 4 E4B 做對照 | 兩邊都會是 1.000，比不出來 |
+| CoD 變體（`generate_cod_dataset` 還在） | 同上 |
+| 減少訓練量（loss 在第 250 步就到地板） | 同上，而且 **checkpoint-200/400/600 已被 `save_total_limit=2` 刪掉**，這個實驗要重訓才做得成 |
+| 視覺層消融 | 同上 |
 
-### P6 — `/api/vision/solve`
+### 產品面還可以做的（不需要新尺）
 
-`src/app/routers/` ＋ `src/app/schemas/` **成對改**，跑 `src/app/tests/`。
-回應建議包含：解析出的 `Puzzle`、solver 的路徑、`warnings`、以及 **§4.1 那個「預測盤面是否有解」的信心旗標**。
-模型不在時要有明確錯誤訊息（`VisionBackendError` / `ModelOutputError` 已經備好，**不要讓端點靜默壞掉**）。
+- **把 9 種 solver 全掛上 API**（roadmap 第 1 項，本人已決定暫緩）——`/api/vision/solve` 目前也只吃 3 種。
+- **Svelte 編輯器接上讀圖**：現在只有 Gradio 有上傳分頁。讀完可以把盤面丟進 Canvas 編輯器手動修正，
+  比貼 Python literal 順手。改完要 `npm run build`。
+- **批次讀圖端點**：目前一次一張。`run_holdout.py` 已經是批次的雛形。
 
-### 想再訓練的話，先讀這個
+### 真實截圖（⚠ 本人定案不做，這裡只記錄狀態）
 
-**評估集已飽和（§0 ②）。在把合成資料變難之前，任何再訓練都量不出好壞。** 前置工作：
-更多視覺雜訊、多種渲染風格、模擬截圖的壓縮與縮放失真、更大盤面。
-`render_puzzle.py` 與 `dataset_builder.py` 都吃參數，改動範圍不大。
-
-**唯一還有鑑別力的現成實驗**：Drive 上還有 `checkpoint-200/400/600/800`。loss 在第 250 步就到雜訊地板，
-若 checkpoint-200 對同一批 200 筆 held-out 也是滿分 ⇒ **1,600 筆就夠了，本輪 4/5 的訓練量是白付的**。
-它比較的是「不同模型」而非「同一個滿分」，所以仍量得出東西，成本只有一次**批次**推論。
-
----
+2026-08-29 量到六張的成績遠優於預期（§0 ③）。**要不要因此重新考慮 P3 由本人決定，agent 不要主動提。**
 
 ## 7. 陷阱清單（都是實際踩過的）
 
 | 陷阱 | 說明 |
 |---|---|
 | **`uv` 路徑** | repo 根 `.venv` 是 py3.9 devtools。一律 `cd linkedin-zip-challenge` 再 `uv run` |
+| **★ Ollama 的 safetensors 匯入是 MLX 專用** | `ollama create --experimental` 吃 safetensors 目錄**會匯入成功**，`ollama show` 甚至顯示 `vision`，但一執行就 `mlx runner failed: MLX not available`。Linux/NVIDIA 一律走 **GGUF**（`--quantize` 只收 `int4/int8/nvfp4/mxfp4/mxfp8` 也是同一個線索） |
+| **★ adapter 的 `tokenizer_config.json` 不能覆蓋 base 的** | 它是 Colab 上 transformers **5.2.0** 重新序列化的，`tokenizer_class` 寫 `TokenizersBackend`，本專案的 4.x 工具全部載不動。實測 `chat_template.jinja`／`tokenizer.json`／`processor_config.json` **三份都逐位元組相同**，所以沒有東西需要保留。`merge_lora.py` 現在會逐位元組驗證這三份，不一致就中止 |
+| **★ `pydantic-ai` 的 `run_sync` 不能在事件迴圈裡呼叫** | 端點寫成 `async def` 會得到 `RuntimeError: This event loop is already running`，**而且單元測試抓不到**（stub 不碰迴圈）。handler 一律用同步 `def`，讓 FastAPI 丟進 threadpool。`test_vision_api.py` 的 stub 現在會檢查這件事 |
+| **★ `save_total_limit` 決定了你事後還能問哪些問題** | P4c 設 2，於是 checkpoint 200/400/600 被自動刪除，「1,600 筆夠不夠」這個實驗永遠做不成了。要留就別設限，或在刪除前另存 |
+| **Google Drive 下載會切包，而且大小檔分開** | 168 MB 的 `adapter_model.safetensors` 在第二個 zip、設定檔在第一個。**每一包都要解到同一個目錄樹** |
 | **★ 推論 prompt 不可自己拼** | 訓練與推論曾有**兩處**渲染不一致（thinking 區塊、text/image 順序），代價是「內容全對、格式全錯」（JSON 4/4 vs 0/3）。**一律用 `build_inference_prompt()`**，它從訓練渲染路徑推導。**它救過我兩次，兩次都是因為我對訓練渲染的描述是錯的** |
 | **★ 兩包資料集 seed 只差 1 ＝ 同一批資料** | `draw_recipe` 用 `random.Random(seed + index)`，seed 差 1 的兩包是同一亂數流**位移一格**。`smoke_6x6`(20260823) 與 `main_6x6`(20260822) 實測 **120/120 渲染 recipe 相同、82/120 標籤相同**。**要獨立資料集，seed 要差得夠遠，或直接從同一包切 disjoint 的 slice** |
 | **★ Colab 的 Drive FUSE 只在關檔時才上傳** | 逐行 `flush()` 只推到 FUSE 層，雲端上**看不到檔案**，斷線就全沒了。**寫本機 `/content`，每批用 `shutil.copy` 覆蓋到 Drive**（copy 會開檔關檔才會觸發上傳） |
@@ -281,15 +305,25 @@ uv run python -m src.core.vl_models.score_predictions ai-collab\reports\artifact
 | `src/core/vl_models/dataset_builder.py` | 自己抽 0–12 道牆、增強、CP-SAT 驗證、SHA-256 產物摘要與 `--check` |
 | `src/core/vl_models/benchmark.py` | 四層指標量測工具（對真實截圖），透過 `backends.py` |
 | **`src/core/vl_models/score_predictions.py`** | **離線算分**：把 Colab 產的 `predictions.jsonl` 在本機算成四層指標。走正式 parser ＋ benchmark 的指標函式，**不重寫指標**。含 `path_is_legal()`、`solution_valid_on_truth`、`solvable_but_wrong`、按牆數分層 |
+| **`src/core/vl_models/merge_lora.py`** | **把 LoRA 併回 base**。刻意不用 peft（base 需要 transformers 5.x，本專案鎖 <5），只實作最單純那一種並**拒絕**其他變體。會逐位元組驗證訓練關鍵檔 |
+| **`src/core/vl_models/request_log.py`** | **每次 API 呼叫的落盤**。寫成**資料集形狀**（`images/` ＋ `metadata.jsonl`，欄位名與 `dataset_builder` 一致），所以手動補一個 `label` 就能被 `score_predictions` 算分——這是累積真實截圖評估集最便宜的路。寫入失敗只記錄不拋出 |
+| **`src/core/vl_models/run_holdout.py`** | 本機版的 held-out 執行器，與 P4c notebook 第 11 節寫同一種 JSONL，所以 `score_predictions` 兩邊通吃。**不算指標** |
+| **`src/app/routers/vision.py`／`src/app/schemas/vision.py`** | **P6 端點**。同步 `def`（見 §7）；503／422／415 分開表示不同意義；回應含 `warnings` 與 `solvable` |
+| **`src/ui/gradio_app.py` 的 `solve_from_image_ui`** | **P5 分頁**，Adapter。輸出含可貼回其他分頁的 Python literal |
 | `src/core/vl_models/final_puzzle_parser.py` | **SCRATCHPAD**（未刪），改為 re-export |
 | `notebooks/colab_smoke_test.ipynb` | Colab kernel 的 GPU/bf16 煙霧測試（第 8 格是 matmul 對照，量新卡用它） |
 | `notebooks/p4a_finetune_smoke.ipynb` | P4a 訓練煙霧測試，**保留執行輸出當存證** |
 | `notebooks/p4a_verify_e0_e1.ipynb` | E0（渲染修法對照）＋ E1（解析度定價），載入已存 adapter，**不訓練** |
 | **`notebooks/p4c_finetune_8000.ipynb`** | **P4c 正式訓練**：lazy 資料集、lr=0 的不污染短跑、Drive checkpoint／resume、只輸出原始預測不算指標。**保留全部執行輸出** |
-| `src/core/tests/vl_models/` | 91 個測試，全部 mock 或小規模，**不需要 Ollama 或 GPU** |
+| `src/core/tests/vl_models/` | 全部 mock 或小規模，**不需要 Ollama 或 GPU**（含 `test_merge_lora.py` 16 個） |
+| `src/app/tests/test_vision_api.py` | 12 個端點測試，模型以 stub 取代 |
 | `ai-collab/reports/2026-08-22_vl-p4c-results.md` | **P4c 完整結果報告** |
+| **`ai-collab/reports/2026-08-29_vl-training-reproducible.md`** | **可復現的訓練報告**：資料怎麼生、哪些沒見過、逐項超參數、參考來源、成本拆解 |
+| **`ai-collab/reports/2026-08-29_vl-p4d-export-and-integration.md`** | **匯出與接線報告**，含真實截圖的新數字 |
+| **`ai-collab/vlm-operating-guide.md`** | **給使用者的操作手冊** |
+| `docker-compose.dev.yml` | ollama 服務多掛 `./models:/models:ro`；app 服務用 `environment:` 覆寫 `OLLAMA_PROVIDER_URL` |
 | `ai-collab/reports/artifacts/vl-p4c/` | P4c 的 200 筆原始預測 ＋ 算分結果 |
 | `.env.example`／`pytest.ini`／`pyproject.toml`／`uv.lock` | 設定與相依修正 |
 
 **沒有動到**：`src/core/rl/`（RL track 的地盤）、`src/core/puzzle_generation/`、`src/core/utils.py`（共用模組）、
-`src/core/solvers/`、`src/app/`、`src/ui/`。**P5／P6 會是第一次動到後兩者。**
+`src/core/solvers/`。**`src/app/` 與 `src/ui/` 於 2026-08-29 由 P5／P6 首次動到**（都是新增，沒有改既有端點或分頁）。

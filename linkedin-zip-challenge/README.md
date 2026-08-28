@@ -20,6 +20,7 @@ The game's objective is to draw a single, continuous path that visits every empt
 *   **Multiple Solver Algorithms**: A wide variety of solvers, from exact algorithms to metaheuristics.
 *   **Procedural Puzzle Generation**: A powerful script and UI to generate vast datasets of new puzzles.
 *   **Rich Visualization**: Generates detailed animated GIFs and static images of the solution process.
+*   **Solve From a Screenshot**: Upload a screenshot of a puzzle and a locally served, fine-tuned vision-language model reads the board for the solver (the `Solve from Screenshot` Gradio tab and `POST /api/vision/solve`). See `ai-collab/vlm-operating-guide.md` for how to run it.
 
 
 ## Project Structure
@@ -164,6 +165,7 @@ The main interface is the Gradio UI, accessible at `/ui`. It provides several ta
 *   **Generate Puzzle**: Create a new, random 6x6 puzzle. You can select the number of blocked cells.
 *   **Puzzle Solver (Naive)**: Paste a puzzle layout and walls as text to solve it.
 *   **Puzzle Solver (Interactive)**: A powerful WYSIWYG editor to create or edit puzzles by clicking on a grid, adding waypoints, obstacles, and walls.
+*   **Solve from Screenshot**: Upload a screenshot and let the vision model read the board before solving it. The answer carries **warnings** and a **solvable** confidence flag, because misreadings happen and those two are how you notice.
 *   **Echo Test**: A simple utility to confirm the backend API is responsive.
 
 ## Future Work
@@ -171,7 +173,7 @@ The main interface is the Gradio UI, accessible at `/ui`. It provides several ta
 The following areas are planned for future development and are currently not integrated into the main application:
 
 *   **Reinforcement Learning (RL) Solvers**: The code under `src/core/rl/` is an experimental framework for training RL agents to solve puzzles.
-*   **Vision Language (VL) Models**: The code under `src/core/vl_models/` is an experimental area for parsing puzzles from images using multi-modal AI models.
+*   **A harder vision evaluation set**: the current synthetic one is saturated (every metric at 1.000) and can no longer tell two approaches apart. Improving image reading further means making the synthetic data harder first: visual noise, several renderer styles, simulated screenshot distortion, larger boards.
 
 ## Development
 
