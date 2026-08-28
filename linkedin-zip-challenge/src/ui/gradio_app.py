@@ -1,6 +1,7 @@
 # src/ui/gradio_app.py
 import ast
 import pprint
+from pathlib import Path
 
 import gradio as gr
 import numpy as np
@@ -30,6 +31,10 @@ SOLVERS = {
 # Use a puzzle from conftest as the default layout
 DEFAULT_LAYOUT = pprint.pformat(puzzle_04_layout)
 DEFAULT_WALLS = pprint.pformat(puzzle_04_data.get("walls", set()))
+
+# Reading an image is a model call, not a solve: on a 4B vision model the first request
+# after a cold start pays the model load as well, which the solver timeouts never do.
+VISION_TIMEOUT_SECONDS = 300
 
 
 # --- UI Backend Functions ---
@@ -89,6 +94,84 @@ def solve_puzzle_ui(puzzle_layout_str: str, walls_str: str, solver_name: str):
         logger.error(f"API call to /api/solver/solve failed: {error_detail}")
         error_html = f"<p style='color:red;'>{error_detail}</p>"
         return error_html, error_html
+
+
+def _describe_reading(data: dict) -> str:
+    """Turns the vision endpoint's answer into the notes a user needs before trusting it."""
+    rows, columns = data.get("grid_size", (0, 0))
+    lines = [
+        f"**Read by** `{data.get('model_name')}` "
+        f"(prompt `{data.get('prompt_variant')}`), solved with **{data.get('solver_name')}**.",
+        f"**Grid**: {rows}x{columns}",
+    ]
+    if data.get("solvable"):
+        lines.append("**Solvable**: yes.")
+    else:
+        # Every real board is generated from a complete path, so this is not "hard
+        # puzzle" -- it is proof the reading is wrong, and the user should be told so.
+        lines.append(
+            "**Solvable**: NO. The board as read has no solution, which means at least "
+            "one wall or waypoint was misread. Fix it in the Interactive tab."
+        )
+    warnings = data.get("warnings") or []
+    if warnings:
+        lines.append("**Warnings**:")
+        lines.extend(f"- {warning}" for warning in warnings)
+    return "\n\n".join(lines)
+
+
+def solve_from_image_ui(image_path: str | None, solver_name: str, include_gif: bool):
+    """Uploads a screenshot to /api/vision/solve and lays out what came back."""
+    if not image_path:
+        return "Upload a screenshot first.", "", "", ""
+
+    try:
+        with open(image_path, "rb") as handle:
+            response = requests.post(
+                f"{API_BASE_URL}/api/vision/solve",
+                files={
+                    "image": (Path(image_path).name, handle, "application/octet-stream")
+                },
+                data={
+                    "solver_name": solver_name,
+                    "include_gif": str(include_gif).lower(),
+                },
+                timeout=VISION_TIMEOUT_SECONDS,
+            )
+        response.raise_for_status()
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        error_detail = f"API call failed: {e}"
+        try:
+            error_detail = e.response.json().get("detail", str(e))
+        except (AttributeError, ValueError):
+            pass
+        logger.error(f"API call to /api/vision/solve failed: {error_detail}")
+        return f"<p style='color:red;'>{error_detail}</p>", "", "", ""
+
+    # Handed back as Python literals so the board can be pasted straight into the
+    # Naive Solver tab and corrected there when the model got a wall wrong.
+    layout_text = pprint.pformat(data.get("layout"))
+    walls_text = pprint.pformat(
+        {
+            tuple(sorted((tuple(wall["cell1"]), tuple(wall["cell2"]))))
+            for wall in data.get("walls", [])
+        }
+    )
+
+    final_html = ""
+    if data.get("solution_final_image_b64"):
+        final_html = (
+            f"<img src='data:image/png;base64,{data['solution_final_image_b64']}' "
+            "alt='Final Solution' />"
+        )
+    if data.get("solution_gif_b64"):
+        final_html += (
+            f"<img src='data:image/gif;base64,{data['solution_gif_b64']}' "
+            "alt='Solution Animation' />"
+        )
+
+    return _describe_reading(data), layout_text, walls_text, final_html
 
 
 def draw_puzzle_from_data(puzzle_data: dict | None) -> Image.Image | None:
@@ -427,6 +510,36 @@ with gr.Blocks() as demo:
                 gr.Markdown("### Final Result")
                 solution_final_html_naive = gr.HTML()
 
+    with gr.Tab("Solve from Screenshot"):
+        gr.Markdown(
+            "Upload a screenshot of a Zip puzzle. The vision model reads the board, "
+            "and the solver runs on what it read.\n\n"
+            "**Read the warnings before trusting the answer.** The model can invent a "
+            "wall or miss one, and a missed wall is the dangerous case: the route may "
+            "cross it with nothing to show for it. The layout and walls are handed back "
+            "as Python literals so you can paste them into the other tabs and correct them."
+        )
+        with gr.Row():
+            with gr.Column(scale=1):
+                vision_image_input = gr.Image(
+                    label="Puzzle Screenshot",
+                    type="filepath",
+                    sources=["upload", "clipboard"],
+                )
+                solver_dropdown_vision = gr.Dropdown(
+                    label="Select Solver", choices=list(SOLVERS.keys()), value="CP-SAT"
+                )
+                vision_gif_checkbox = gr.Checkbox(
+                    label="Also render the animation (slower)", value=False
+                )
+                vision_button = gr.Button("Read and Solve", variant="primary")
+            with gr.Column(scale=2):
+                vision_summary = gr.Markdown()
+                vision_solution_html = gr.HTML()
+                with gr.Row():
+                    vision_layout_output = gr.Textbox(label="Layout read", lines=8)
+                    vision_walls_output = gr.Textbox(label="Walls read", lines=8)
+
     with gr.Tab("Puzzle Solver (Interactive)"):
         walls_state = gr.State(set())
         selected_wall_index = gr.State(None)
@@ -483,6 +596,16 @@ with gr.Blocks() as demo:
         fn=solve_puzzle_ui,
         inputs=[puzzle_input, walls_input, solver_dropdown_naive],
         outputs=[solution_gif_html_naive, solution_final_html_naive],
+    )
+    vision_button.click(
+        fn=solve_from_image_ui,
+        inputs=[vision_image_input, solver_dropdown_vision, vision_gif_checkbox],
+        outputs=[
+            vision_summary,
+            vision_layout_output,
+            vision_walls_output,
+            vision_solution_html,
+        ],
     )
     echo_button.click(fn=echo_from_api, inputs=echo_input, outputs=echo_output)
 
