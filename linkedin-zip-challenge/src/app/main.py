@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.app.routers import echo, solver
+from src.app.routers import echo, solver, vision
 from src.ui.gradio_app import demo as gradio_app
 
 # Create FastAPI instance
@@ -75,6 +75,7 @@ except FileNotFoundError:
 # Include API routers
 app.include_router(echo.router, prefix="/api", tags=["Echo"])
 app.include_router(solver.router, prefix="/api/solver", tags=["Solver"])
+app.include_router(vision.router, prefix="/api/vision", tags=["Vision"])
 
 
 @app.get("/", tags=["Root"])

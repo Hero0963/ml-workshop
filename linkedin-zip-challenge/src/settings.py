@@ -23,6 +23,18 @@ class Settings(BaseSettings):
     ollama_model_name: str = ""
     ollama_provider_url: str = ""
 
+    # Which prompt the vision endpoint pairs with `ollama_model_name`. It belongs next
+    # to the model tag rather than being guessed from it: the two must match what the
+    # checkpoint was trained on, and a tag can be renamed freely.
+    #   finetune -> the short instruction the P4c run trained against
+    #   sized    -> the best measured setting for an un-finetuned model
+    vision_prompt_variant: str = "finetune"
+
+    # Where /api/vision/solve keeps a copy of each image and what the model said, in the
+    # same shape as a training dataset so a hand-written `label` makes a line scoreable.
+    # Empty disables logging entirely. The path is relative to the project root.
+    vision_log_dir: str = "logs/vision"
+
 
 @cache
 def get_settings() -> Settings:
