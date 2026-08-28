@@ -13,3 +13,7 @@
 - **venv**：Python 3.11，一律 `cd linkedin-zip-challenge` 再 `uv run`；repo 根的 `.venv` 是 py3.9 devtools，不能拿來跑這個專案。
 - `ai-collab/dev_log.md` 有 600+ 行，**不要整份讀**，用關鍵字搜需要的段落。
 - SessionStart hook 設在 repo 根的 `.claude/settings.json`（從子專案目錄開時不會自動跑，可手動 `python ../.claude/session-brief.py`）。
+- ⚠ **那份簡報不能當現況的依據**（2026-08-29 實測）：hook 用**絕對路徑**指向 `ml-workshop/.claude/session-brief.py`，
+  而腳本內部又是 `git -C <腳本所在的 repo>`，所以**分支、工作區狀態、roadmap 三者全部來自 `ml-workshop` 那個 checkout**。
+  在別的 worktree 工作時它會報 `ml-workshop` 的分支；`ml-workshop` 沒 `git pull` 時它報的是舊的下一步。
+  **現況一律以 `ai-collab/roadmap.md` 與該 track 的 handover 為準。**

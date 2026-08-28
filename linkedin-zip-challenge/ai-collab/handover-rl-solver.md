@@ -48,10 +48,14 @@ uv sync
 
 ```powershell
 cd D:\it_project\github_sync\zip-rl\linkedin-zip-challenge
-uv run pytest        # 期待 76 passed, 8 xfailed
+uv run pytest        # 通過數見下；xfailed 應為 8
 uv run ruff check .  # 期待 All checks passed!
 ```
 
+- ⚠ **通過數取決於這條 branch 帶了哪些 commit，不要當固定值**：
+  `feat/rl-masked-ppo` 在 A1 當時是 **76 passed**；`main` 於 2026-08-29 併入 VLM track 後是
+  **214 passed**（多出來的都是 `src/core/vl_models/`、`src/app/` 與 `src/ui/` 的測試，與 RL 無關）。
+  **拉了 main 之後數字變大是正常的**，不是壞掉。真正的基線用法是：開工先跑一次記下來，之後拿它比較。
 - **8 個 xfailed 是刻意的**，不是壞掉：它們釘住 env v1 的缺陷（`xfail(strict=True)`），**若哪天變成 XPASS 會失敗**，代表有人改了 `rl_env.py`，那時要回頭更新 A0 報告。
 - **venv 陷阱**：一律 `cd linkedin-zip-challenge` 再 `uv run`。repo 根的 `.venv` 是 py3.9 devtools，跑不動這個子專案。
 - 相依已就緒：`torch 2.4.1+cu121`、`stable-baselines3 2.7.0`、`sb3-contrib 2.7.1`（含 `MaskablePPO`）。**不需要再裝任何東西就能做 A2。**
