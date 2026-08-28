@@ -15,6 +15,11 @@ services:
       - "${OLLAMA_HOST_PORT:-11435}:11434"
     volumes:
       - ollama_data:/root/.ollama
+      # Read-only so `ollama create` can import a locally merged checkpoint without
+      # copying ~9GB into the container layer. `models/` is git-ignored; the directory
+      # is created by the P4d merge step and is absent on a fresh clone, which Docker
+      # handles by creating an empty one.
+      - ./models:/models:ro
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
@@ -39,6 +44,13 @@ services:
       - "${APP_PORT}:${APP_PORT}"
     env_file:
       - ./.env
+    environment:
+      # `.env` holds the host-side address, because that is how the app is usually run
+      # (`uv run python -m src.app.main`). Inside the compose network 127.0.0.1 is this
+      # container, not the ollama one, so it is overridden here -- `environment:` takes
+      # precedence over `env_file:`, which keeps both ways of running correct without
+      # asking anyone to remember to edit `.env` when they switch.
+      - OLLAMA_PROVIDER_URL=http://ollama:11434/v1
     volumes:
       - ./src:/app/src
     stdin_open: true
