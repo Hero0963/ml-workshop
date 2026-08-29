@@ -14,7 +14,11 @@ section 4.8. No sensitivity study has been run, so treat any result as "this set
 import os
 from dataclasses import dataclass, field
 
-DEFAULT_DATASET = "main_n1700_456"
+# A2 (2026-08-29) was measured on `main_n1700_456`, 1,360 training puzzles per size, and
+# showed both goals memorising it. This pack is ~11x larger and deduplicated, which is the
+# experiment handover section 6 asks for. To reproduce an A2 number, pass
+# `--dataset main_n1700_456`.
+DEFAULT_DATASET = "seed20300000_n20000_4-6"
 
 # Leave the machine usable while anything here is running. This is the *one* place the
 # budget is defined: it caps PyTorch's threads during training and the worker pool during

@@ -56,6 +56,15 @@ WALL_PROBABILITY = 0.5
 
 def _generate_one(task: dict[str, Any]) -> dict[str, Any] | None:
     """Generates a single puzzle deterministically from `task['seed']`."""
+    # Every worker is a fresh process under `spawn`, so this has to happen *here*: a call
+    # in the parent never reaches the child. `generate_puzzle` logs a line per attempt, and
+    # a 40k build emitted ~90k lines from 16 processes onto one inherited stderr. When that
+    # stderr is a pipe the writers deadlock -- measured 2026-08-29, an identical build hangs
+    # indefinitely piped and finishes in seconds either with this line or writing to a file.
+    # `vl_models/dataset_builder.py:291` disables the same logger in its worker for the same
+    # reason, and its docstring records the same hang.
+    logger.disable("src.core.puzzle_generation.puzzle_generator")
+
     for attempt in range(MAX_GENERATION_RETRIES):
         seed = task["seed"] * 100 + attempt
         random.seed(seed)
@@ -140,6 +149,25 @@ def verify_dataset(dataset_dir: Path) -> bool:
     return ok
 
 
+def deduplicate(records: Sequence[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Drops repeat puzzles, keeping the first by seed order.
+
+    Small boards run out of distinct puzzles long before a large request is filled: at
+    20,000 requested, 4x4 yielded 97.2% unique and put 111 puzzles in both train and test
+    (measured 2026-08-29), which would flatter any held-out score. Deduplicating before the
+    split makes the three splits disjoint by construction rather than by luck.
+    """
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    for record in records:
+        fingerprint = sample_fingerprint(record["sample"])
+        if fingerprint in seen:
+            continue
+        seen.add(fingerprint)
+        unique.append(record)
+    return unique, len(records) - len(unique)
+
+
 def _split_indices(
     total: int, split: tuple[float, float, float]
 ) -> dict[str, tuple[int, int]]:
@@ -192,12 +220,14 @@ def build_dataset(
         of_size = sorted(
             (r for r in results if r["size"] == size), key=lambda r: r["seed"]
         )
+        of_size, duplicates_dropped = deduplicate(of_size)
         bounds = _split_indices(len(of_size), split)
         for name, (start, end) in bounds.items():
             splits[name].extend(r["sample"] for r in of_size[start:end])
         per_size_stats[size] = {
             "generated": len(of_size),
             "requested": count_per_size,
+            "duplicates_dropped": duplicates_dropped,
             "retried": sum(1 for r in of_size if r["retries"] > 0),
             "walls": sum(1 for r in of_size if r["has_walls"]),
             "split_sizes": {name: end - start for name, (start, end) in bounds.items()},

@@ -162,12 +162,14 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
         timesteps = 4096
         n_envs = 2
         vec = "subproc"
+        dataset = "main_n1700_456"
 
     resolved = resolve_goal(Args())
 
     assert resolved.timesteps == Args.timesteps
     assert resolved.ppo.n_envs == Args.n_envs
     assert resolved.resources.vec_env == Args.vec
+    assert resolved.dataset == Args.dataset
     registered = GOALS["goal1_4x4"]
     assert registered.timesteps != Args.timesteps
     assert registered.ppo.n_envs != Args.n_envs

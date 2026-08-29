@@ -565,6 +565,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--run-id", type=str, default=None, help="Defaults to the goal key."
     )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default=None,
+        help="Overrides the goal's dataset; use it to reproduce an older run.",
+    )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
         "--vec",
@@ -590,6 +596,8 @@ def resolve_goal(args: argparse.Namespace) -> Goal:
         goal = replace(goal, ppo=replace(goal.ppo, n_envs=args.n_envs))
     if args.vec is not None:
         goal = replace(goal, resources=replace(goal.resources, vec_env=args.vec))
+    if args.dataset is not None:
+        goal = replace(goal, dataset=args.dataset)
     return goal
 
 

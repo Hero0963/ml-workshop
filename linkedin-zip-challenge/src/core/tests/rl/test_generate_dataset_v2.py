@@ -16,6 +16,7 @@ import pytest
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.generate_dataset_v2 import (
     content_digests,
+    deduplicate,
     sample_fingerprint,
     split_digest,
     verify_dataset,
@@ -99,6 +100,33 @@ def test_verify_rejects_a_dataset_built_before_digests_existed(
     _write_dataset(tmp_path, {"train": samples, "val": [], "test": []}, None)
 
     assert verify_dataset(tmp_path) is False
+
+
+def test_deduplicate_keeps_the_first_of_each_repeat(
+    samples: list[PuzzleSample],
+) -> None:
+    records = [
+        {"sample": samples[0], "seed": 1},
+        {"sample": samples[1], "seed": 2},
+        {"sample": samples[0], "seed": 3},
+        {"sample": samples[2], "seed": 4},
+    ]
+
+    unique, dropped = deduplicate(records)
+
+    assert dropped == 1
+    assert [record["seed"] for record in unique] == [1, 2, 4]
+
+
+def test_deduplicate_makes_splits_disjoint(samples: list[PuzzleSample]) -> None:
+    """4x4 at 20k put 111 puzzles in both train and test; splits must not overlap."""
+    records = [{"sample": sample, "seed": i} for i, sample in enumerate(samples * 3)]
+
+    unique, dropped = deduplicate(records)
+    fingerprints = [sample_fingerprint(record["sample"]) for record in unique]
+
+    assert dropped == len(records) - len(samples)
+    assert len(set(fingerprints)) == len(fingerprints)
 
 
 def _write_dataset(directory, splits, digests) -> None:
