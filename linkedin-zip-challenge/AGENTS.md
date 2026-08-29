@@ -84,6 +84,16 @@ python run_docker_dev.py           # Docker 開發環境（hot-reload）
 - 測試失敗**不要順手改測試讓它變綠**——先判斷是環境漂移、ground truth 錯、還是真的壞了。
 - 動到 solver 一定要跑 `src/core/tests/solvers/` 的對應測試；動到 API 要跑 `src/app/tests/`；動到 Gradio 要跑 `src/ui/tests/`。
 
+**本機資源上限（2026-08-29 因實際吃滿 CPU 而新增）**
+
+- 本機是本人的工作機。**跑訓練、資料生成、批次評估時，CPU／GPU／記憶體最多用到 75%**。
+- 上限要涵蓋**每一個會開工作的地方**，不是只有你當下想到的那個：
+  `multiprocessing.Pool(processes=None)` ＝ `os.cpu_count()`，會直接開滿；
+  `torch` 的 intra-op 執行緒預設是實體核心數。把預算寫成**一個共用常數**，不要各腳本各寫一次
+  （RL track 的範例：`src/core/rl/train_config.DEFAULT_CPU_FRACTION`）。
+- ⚠ **「N% 的核心數」不等於「N% CPU」**（父程序與 OS 也吃）。**上限沒有在工作實際跑的時候取樣過就不算設好。**
+- 吃資源或長時間的工作**開跑前先問**；跑到一半發現超標，**先停再修**。
+
 **實作後三件事**
 1. **驗證底線**：測試全過、既有功能沒被破壞、任務定義的功能有實際驗過。
 2. **清理**：移除 debug log、沒用到的變數與 import、臨時註解；實驗探針放 `../hi-collab/scratch/`。

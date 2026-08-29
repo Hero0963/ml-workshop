@@ -146,6 +146,71 @@ enlarge the dataset"): it does, so the next move is **a larger dataset before a 
 budget** — training longer on 1,360 puzzles only memorises them harder. Generation is cheap
 (5,100 puzzles in 45 seconds), so this is minutes of work.
 
+**Decisions taken this session, so they are not re-litigated.**
+
+-   **Two goals, both reported.** 4×4 was first proposed as a throwaway smoke test; the
+    developer made it `goal1` in its own right, with 6×6 as `goal2`. Both numbers are
+    published, not just the 6×6 ones.
+-   **6×6 trains on all 1,360 puzzles, walled ones included**, rather than the 668 wall-free
+    ones. The observation already carries `wall_right` / `wall_down` channels — excluding
+    walls would leave them permanently zero — and episode difficulty is set by `k`, not by
+    walls, so keeping them does not impede the early curriculum.
+-   **`GRID_PAD` stays 8.** It is a padded canvas, not a board size: a 6×6 board sits in the
+    top-left and `valid_mask` says which cells are real. A fixed input shape is exactly what
+    lets goal1's weights carry into goal2 (plan A3 requires continuing, not reinitialising)
+    and 7×7 later (A4). Shrinking it would break both and force a rewrite of the 21 env tests
+    for a saving of 84 MiB of GPU that is not under any pressure.
+-   **`DummyVecEnv` over `SubprocVecEnv`**, on measurement rather than on the restart plan's
+    recommendation.
+-   **No psutil in production code.** It would have made the resource accounting easier, but
+    it is present only as a transitive dependency of another track, and this repo requires
+    dependencies to be declared and installed by the developer.
+-   **Datasets are identified by digest, and a new pack gets a distant base seed.** Reusing
+    `base_seed=20260815` for the larger set would have made its 4×4 half a shifted copy of the
+    existing pack — the same trap the VLM track hit with seeds one apart — so the new pack
+    starts at 20300000, past the old range entirely.
+
+**Lessons, each paid for in this session.**
+
+1.  **A resource budget has to cover every process the work starts, not just the one you had
+    in mind.** The developer's "keep it under 75% so I can still use the machine" was wired
+    into training — torch threads and GPU memory — while `generate_dataset_v2` kept
+    `Pool(processes=None)`, which is `os.cpu_count()`. Dataset generation then ran 24 workers
+    and pegged the machine at 99-100%, which the developer noticed before I did. The budget
+    now lives once in `train_config.DEFAULT_CPU_FRACTION` and both call sites read it.
+    *Next time:* when a limit is agreed, grep for everything that spawns work — `Pool`,
+    `set_num_threads`, `n_envs`, subprocesses — before reporting that the limit is in place.
+2.  **"75% of the cores" is not "75% CPU".** The first fix budgeted `int(24 × 0.75)` = 18
+    workers and still measured 74-82% system CPU, because the parent process feeds tasks and
+    collects results while the OS takes its own cut. Two workers are now reserved for that,
+    and 16 workers measured a mean of 68% with a single 77% spike.
+    *Next time:* a resource limit is not in place until it has been **sampled while the work
+    is running**. Computing it is not measuring it.
+3.  **A train/test gap is not evidence of overfitting until the two splits are shown to be
+    equally hard.** The memorisation claim went out before that control existed, and the
+    developer challenged it. Running both baselines — which have learned nothing from either
+    split — over the same two sets showed the held-out set is as hard or marginally easier,
+    which is what makes the model's own gap mean something.
+    *Next time:* pair every "the model generalises worse than it fits" claim with a policy
+    that could not have generalised or fitted.
+4.  **A generator that gives up on wall-clock time is not reproducible from its arguments.**
+    `generate_dataset_v2`'s docstring claimed "the same arguments reproduce the same dataset";
+    they do not, because `generate_puzzle` abandons its search on elapsed time and a clipped
+    attempt is retried under a different derived seed. The VLM track had already measured this
+    on the shared generator. The claim is corrected, and the manifest now carries a SHA-256
+    over the canonical *content* of each split — not over the pickle bytes, which would hash
+    the encoding rather than the puzzles — with `--verify` to recheck it.
+    *Next time:* a reproducibility claim in a docstring is a claim like any other, and needs
+    the same evidence as one in a report.
+5.  **A probe that exercises construction but not the hot path proves less than it looks
+    like.** The probe written specifically to de-risk the wrapper stack never called the mask
+    lambda, so it missed that Gymnasium 1.x had removed attribute pass-through; the smoke run
+    found it immediately.
+6.  **Neither curriculum progress nor cost per step survives extrapolation from its own early
+    segments.** Both mid-run readings were wrong — "×1.29 growth ⇒ full length by 1.3M steps"
+    missed by three times, and "stalled at k=27" was contradicted at 1.73M steps. The
+    numbers in a report should come from the finished run, not from a log being watched.
+
 Suite after A2: **232 passed, 8 xfailed**, `ruff check` clean. Nothing outside `src/core/rl/` and
 `src/core/tests/rl/` was modified.
 
