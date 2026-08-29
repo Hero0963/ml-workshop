@@ -211,7 +211,55 @@ budget** — training longer on 1,360 puzzles only memorises them harder. Genera
     missed by three times, and "stalled at k=27" was contradicted at 1.73M steps. The
     numbers in a report should come from the finished run, not from a log being watched.
 
-Suite after A2: **232 passed, 8 xfailed**, `ruff check` clean. Nothing outside `src/core/rl/` and
+7.  **Many worker processes writing to one stderr pipe deadlock, and the symptom looks like
+    slowness.** Building the larger dataset hung twice. The state was diagnostic once
+    looked at properly: all 16 workers idle with near-identical CPU time (415.0-417.1s),
+    the parent idle at 10.1s, every thread in `UserRequest` wait, and nothing written for
+    fifteen minutes — that is everyone blocked on one thing, not work in progress. The
+    accumulated 6,640 CPU-seconds also already exceeded the ~5,500 the whole job needs, so
+    the computation was finished and only the output was stuck. `generate_puzzle` logs a
+    line per attempt and a 40k build emits **19.8 MB and ~90k lines** from 16 processes onto
+    one inherited stderr; when that stderr is a pipe, the writers deadlock. Three controls
+    isolate it: piped with worker logging **hangs past 120s**; the same pool writing to a
+    file finishes in **2.2s**; the same pipeline with worker logging disabled finishes in
+    **2.1s**.
+    *Two hypotheses were disproven on the way, both mine:* that `grep`/`tail` stall on a
+    carriage-return stream with no newline (a single writer pushes 200k updates through in
+    461 ms) and that `grep` degrades as the unterminated line grows (it is linear:
+    131/305/461 ms at 20k/100k/200k). The variable was the **number of concurrent writers**,
+    not the format of the output.
+    *And the first fix did not work.* `logger.disable(...)` was added to `build_dataset`,
+    which runs in the parent — under `spawn` a child never executes it, and the log stayed
+    at 19,787,873 bytes, unchanged. Moving it into `_generate_one` took an equivalent build
+    to 1,868 bytes and zero worker lines, and a 10,000-puzzle build through the exact
+    pipeline that had deadlocked now finishes in 109s.
+    `vl_models/dataset_builder.py:291` already disables the same logger inside its worker,
+    with the same comment, and its docstring records the same Windows hang. **The shared
+    generator's logging has now cost two tracks; the RL builder simply never got the
+    treatment the VLM builder wrote down.**
+
+8.  **Small boards run out of distinct puzzles, and the duplicates leak across splits.**
+    Asked for 20,000 per size, 4×4 returned 97.2% unique and put **111 puzzles in both train
+    and test — 5.57% of the held-out split** — which would have flattered exactly the
+    generalization measurement the larger dataset exists to make. 6×6 was 100% unique. The
+    builder now deduplicates by content fingerprint before splitting, so the splits are
+    disjoint by construction; the new pack drops 726 duplicates at 4×4 and none at 6×6, and
+    all pairwise split intersections are zero. The old pack was re-checked and had **no**
+    train/test overlap at 1,700 per size, so the A2 conclusion is unaffected.
+    *This was the developer's question, not my check.* Asking for more data without asking
+    how much of it is new is how a dataset gets bigger without getting more informative.
+
+9.  **A fix is not in place until its effect is measured.** Both of this session's resource
+    and logging fixes looked correct in the diff and were wrong: the CPU cap computed 18
+    workers and measured 74-82%, and the logger was disabled in a process that does not
+    spawn the writers. In both cases a single measurement — sample the CPU, look at the log
+    size — settled it in seconds.
+
+The dataset the next run trains on is `seed20300000_n20000_4-6`: 15,419 / 1,927 / 1,928 at 4×4
+and 16,000 / 2,000 / 2,000 at 6×6, roughly 11x the training rows A2 had, digests verified.
+`DEFAULT_DATASET` now points at it, and `--dataset main_n1700_456` reproduces an A2 number.
+
+Suite after A2: **242 passed, 8 xfailed**, `ruff check` clean. Nothing outside `src/core/rl/` and
 `src/core/tests/rl/` was modified.
 
 ### VLM Track: the model is out of Drive and into the product, and it reads real screenshots better than expected
