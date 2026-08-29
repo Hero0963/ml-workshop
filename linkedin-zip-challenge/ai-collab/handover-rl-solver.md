@@ -1,7 +1,7 @@
 # 交接文件 — RL Track（一筆畫 solver）
 
 > **接手這條 track 的 agent／developer 從這一份開始讀，讀完就能動手。**
-> 最後更新：2026-08-15（Asia/Taipei）｜分支 `feat/rl-masked-ppo`｜worktree `zip-rl`｜對應 roadmap 第 3 項
+> 最後更新：2026-08-29（Asia/Taipei）｜分支 `feat/rl-a2-training`｜worktree `zip-rl`｜對應 roadmap 第 3 項
 > 其他文件是延伸閱讀，本檔會標明什麼時候該去翻哪一份。
 > 姊妹 track 的交接文件：[`handover-vlm-parser.md`](handover-vlm-parser.md)
 
@@ -9,9 +9,36 @@
 
 ## 0. 一句話現況
 
-**A0（環境健全性）與 A1（env v2 ＋ 資料集 ＋ baseline）已完成並落盤；下一步是 A2 —— 第一次真正的訓練（4×4 ＋ 反向 curriculum ＋ MaskablePPO）。**
+**A0／A1／A2 都跑完了。訓練機制是好的，但兩個 goal 都沒過門檻——而且根因已查明：不是訓練不夠，是資料太少，模型在背答案。下一步是加大資料集再重訓，不是調參。**
 
-A0 的結論改變了整條 track 的前提：**2025-10 的舊環境不是「難學」，是「餵標準答案也不會過關」**，
+> ★ **接手前一定要知道的四件事：**
+>
+> **① A2 首次訓練已完成（2026-08-29）**，成績與門檻如下（held-out test，`deterministic=True`）：
+>
+> | goal | 步數 | 耗時 | curriculum | test | 門檻 | greedy／random |
+> |---|---|---|---|---|---|---|
+> | 4×4 | 1M | 248s | 推到全長（152k 步） | **0.788** | 0.90 ❌ | 0.102／0.088 |
+> | 6×6 | 5M | 1,203s | 只到 **k=33/36** | **0.253** | 0.85 ❌ | 0.007／0.001 |
+>
+> 兩個 baseline **完全重現 2026-08-15 的數字** ⇒ 評估協定已對齊，這些數字可以直接和舊表比。
+>
+> **② 根因是泛化，不是訓練量。** 把最終策略用 deterministic 同時打訓練集與 held-out：
+> 4×4 **0.947 vs 0.788**、6×6 **0.553 vs 0.253**。訓練集的 deterministic 成績等於訓練曲線，
+> 所以落差**不是** argmax／取樣的差別。**每個尺寸 1,360 題訓練資料不夠**（§9 那個未決問題有答案了）。
+> **先加步數不加資料，只會背得更熟。**
+> **對照已做**：兩個 baseline（沒看過任何一邊）打同一組 train／test，四項全部顯示 test **一樣難或略易**
+> （4×4 random 0.0753/0.0876、greedy 0.1038/0.1018；6×6 random 0.0000/0.0009、greedy 0.0041/0.0074），
+> 所以「test 比較難」這個解釋被排除。模型自己的落差 z ＝ **+4.32／+5.64**。
+> ⚠ **還沒證明的部分**：train 只抽 170/1,360、只訓一個 seed ⇒「資料不夠」是**最合理解釋、不是唯一解**
+> （網路容量與缺正則化都還沒排除）。**真正的證明是加大資料集後落差縮小**——所以那是 §6 的 done 條件。
+>
+> **③ 6×6 沒有卡住，是預算不夠。** k=33 的成功率在剩下 2.6M 步一路單調爬 0.518 → **0.800**（門檻 0.90），
+> 死路率同步降到 0.200。再約 1.2M 步有機會過關，而且 `--resume` 會帶著 curriculum 續訓，不必重跑。
+>
+> **④ 改設定只改 `src/core/rl/train_config.py`。** goal（盤面／牆策略／步數預算／done 門檻）、PPO 超參、
+> 網路、curriculum、資源上限全在那一個檔。訓練腳本只負責執行一個 goal。
+
+A0 的結論仍然是整條 track 的前提：**2025-10 的舊環境不是「難學」，是「餵標準答案也不會過關」**，
 而且它的獎勵與 Zip 規則反相關。所以 env v2 是重寫，不是修補。
 
 ---
@@ -58,7 +85,10 @@ uv run ruff check .  # 期待 All checks passed!
   **拉了 main 之後數字變大是正常的**，不是壞掉。真正的基線用法是：開工先跑一次記下來，之後拿它比較。
 - **8 個 xfailed 是刻意的**，不是壞掉：它們釘住 env v1 的缺陷（`xfail(strict=True)`），**若哪天變成 XPASS 會失敗**，代表有人改了 `rl_env.py`，那時要回頭更新 A0 報告。
 - **venv 陷阱**：一律 `cd linkedin-zip-challenge` 再 `uv run`。repo 根的 `.venv` 是 py3.9 devtools，跑不動這個子專案。
-- 相依已就緒：`torch 2.4.1+cu121`、`stable-baselines3 2.7.0`、`sb3-contrib 2.7.1`（含 `MaskablePPO`）。**不需要再裝任何東西就能做 A2。**
+- 相依已就緒：`torch 2.4.1+cu121`、`stable-baselines3 2.7.0`、`sb3-contrib 2.7.1`（含 `MaskablePPO`）、`tensorboard`。
+  **A2 全程沒有新增任何套件**（2026-08-29 實測確認）。
+- ⚠ **分支換了**：A2 起在 `feat/rl-a2-training`（從 `main` 開，因為 `feat/rl-masked-ppo` 已整條併進 main）。
+  同一個 worktree `zip-rl`，重建方式相同，只是 `git worktree add ..\zip-rl feat/rl-a2-training`。
 
 **重建資料集**（`datasets/` 不進版控，新 worktree 不會有）：
 
@@ -94,6 +124,18 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
    失敗中 **90–100% 是死路**（不是超時）。**greedy ＝距離型 shaping 的天花板，6×6 就崩掉**——
    這是報告 §2.2「距離位能與真目標不同構」的實驗證據。
 
+**A2 新增（2026-08-29 實測）**
+
+8. **反向 curriculum 本身有效，而且晉級成本可預期地上升。** 每往前推一級所需步數：
+   4×4 是 416 → 13,600 → 19,872 → 28,496 → 89,680（到全長）；
+   6×6 是 416 → 960 → 41,584 → 53,024 → 57,312 → 130,432 → 314,208 → 445,168 → 690,736 → 662,064（到 k=33）。
+   **但不能用前段外推後段**——跑到一半用 ×1.29 推「1.3M 步到全長」，實際差三倍。
+9. **兩個 goal 都在背答案。** deterministic 打訓練集 vs held-out：4×4 **0.947 / 0.788**、6×6 **0.553 / 0.253**。
+   訓練集的 deterministic 成績等於訓練 rollout 曲線 ⇒ 落差是**泛化**，不是 argmax／取樣的差別。
+10. **訓練成本與資源**：`DummyVecEnv` ＋ 16 env 約 **4,000–4,200 fps**；4×4 1M 步 248s、6×6 5M 步 1,203s。
+    GPU 峰值只有 **83.8 MiB**，整個訓練程序約吃 1 個核心 ⇒ **瓶頸是單執行緒的 Python env step**，
+    不是 GPU、不是網路。
+
 ---
 
 ## 4. 已定案的設計決策（不要重開）
@@ -120,6 +162,9 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/rl/generate_dataset_v2.py` | 決定性資料集產生器，**保留 solution path**（舊的 `generate_rl_dataset.py:59` 會丟掉） |
 | `src/core/rl/baselines.py` | masked random ／ greedy 兩個對照組與評估器 |
 | `src/core/rl/diagnose_env_v1.py` | A0 的六個 probe，可重跑產生證據 JSON |
+| `src/core/rl/train_config.py` | **A2 新增。改設定只改這裡**：`GOALS` 定義每個訓練目標（盤面、牆策略、步數預算、done 門檻），以及 `PPOSettings`／`NetworkSettings`／`CurriculumSettings`／`ResourceSettings` |
+| `src/core/rl/train_maskable_ppo.py` | **A2 新增**。只負責執行一個 goal：`GridScalarExtractor`、curriculum callback、checkpoint ＋ `train_state.json`、評估。CLI 是 `--goal <key>` |
+| `src/core/tests/rl/test_train_maskable_ppo.py` | **A2 新增**。18 個測試，含「SB3 會把 grid 攤平」與 curriculum state round-trip 兩個防呆 |
 | `src/core/tests/rl/test_rl_env_v2.py` | 21 個測試：mask 四規則、死路邊界、reward 邊界、ground-truth 重播 |
 | `src/core/tests/rl/test_rl_env_v1_diagnosis.py` | 釘住 v1 缺陷（8 個 strict xfail ＋ 對照測試） |
 | `ai-collab/reports/2026-08-15_a0-env-v1-findings.md` | A0 完整報告 |
@@ -146,25 +191,43 @@ env.set_reverse_curriculum_k(6)  # 訓練中調整起點距離；k >= 2
 
 ---
 
-## 6. 下一步：A2（Phase 1 訓練）
+## 6. 下一步
 
-**目標**：4×4 無牆，反向 curriculum 從 k=3 起，達標後往前推到真正起點。
-**Done 條件**：k 推到全長時通關率 ≥ 90% **且顯著高於 masked random 的 8.8%**；各 k 的學習曲線與 seed 落盤。
+**A2 做完了**（結果見 §0）。這一節寫的是還沒做的，順序是有理由的——**不要跳過第一項**。
 
-要做的事：
+### ★ 先做這個：加大資料集，然後重訓
 
-1. 寫 `src/core/rl/train_maskable_ppo.py`（新檔，**不要覆寫舊的 `train_single_cnn_sb.py`**）。
-2. **⚠ 預期會踩的坑（未驗證，只是預判）**：SB3 的 `MultiInputPolicy` 對 image-like 空間預設用 `NatureCNN`，
-   它有最小尺寸要求，**8×8 很可能過不了**，需要自訂 `BaseFeaturesExtractor`（3 層 3×3 conv、padding=1、不 pooling
-   → flatten → 接純量 → MLP 256 → policy(4) ＋ value(1)，報告 §4.7）。**動手前先實跑一次確認，不要照抄我的猜測。**
-3. **反向 curriculum 的推進要自動化**：用 callback 監看近期成功率，達標就 `env.set_reverse_curriculum_k(k+3)`，
-   並把每個 k 的成功率與 step 數記進 tensorboard／JSON。**同時記死路率隨 k 的變化**——那是判斷要不要啟用備案的依據。
-4. PPO 超參起手值見報告 §4.8（`n_envs=16`、`n_steps=512`、`lr=3e-4`、`gamma=0.99`、`ent_coef=0.01`）。**未調校**。
-5. **評估一律 `deterministic=True`**，並與 baseline 一起報。訓練期的高分不算數——那正是 2025 年被騙的地方。
+**根因是泛化不是訓練量**（§0 ②），所以在資料變多之前，加步數、調超參、改網路都只會讓模型把
+同一批 1,360 題背得更熟。
 
-**⚠ 長時間訓練（小時級）開跑前要先問本人。** 訓練成品放 `models/`、資料放 `datasets/`，都不進版控。
+- 生成很便宜：`generate_dataset_v2.py` 產 5,100 題只要 45 秒，加大到每尺寸 10,000–20,000 題是分鐘級。
+  ```powershell
+  uv run python -m src.core.rl.generate_dataset_v2 --count 20000 --sizes 4,6 --timeout 0.5 --name main_n20000_46
+  ```
+- 改用新資料集只要動 `train_config.py` 的 `Goal.dataset`，不必碰訓練腳本。
+- **Done 條件**：deterministic 的「訓練集 vs held-out」落差明顯縮小（現在是 4×4 0.947→0.788、
+  6×6 0.553→0.253）。**落差沒縮小就不要往下走**——那代表瓶頸不在資料量。
 
-之後：A3（5×5→6×6 加牆）→ A4（6×6→7×7 完整規則、held-out 1000 題）→ A5（掛成 API 第 10 種 solver）。
+### 然後：把兩個 goal 的預算補足
+
+- **6×6 用 `--resume` 續訓**，不要重跑：`--goal goal2_6x6 --resume --timesteps 3000000`。
+  它會從 `train_state.json` 讀回 k=33 與 5M 的步數繼續。約 12 分鐘。
+- 4×4 已經推到全長，缺的是泛化，所以它等資料集。
+
+### 之後才輪到這些
+
+| 想做的事 | 為什麼要等 |
+|---|---|
+| 調 PPO 超參（`ent_coef`、`lr`、`n_steps`） | 超參是**未調校**的起手值沒錯，但現在的瓶頸是資料，調了也量不準 |
+| `shaping_lambda` 敏感度（現在 0.2，未調校） | 同上 |
+| A3（5×5、加牆、權重接續） | 6×6 都還沒到全長 |
+| A4（7×7、held-out 1,000 題） | 7×7 資料集也還沒生（`--sizes 7`，100 題 35 秒，已不是瓶頸） |
+| A5（掛成 API 第 10 種 solver） | ⚠ 會動 `src/app/routers/solver.py`，動之前先確認 VLM track 沒在改。
+  另外**牆的分布不同**：RL 訓練資料的牆是 0 或 2–5 道，VLM 讀出來的真實題目可到 10+ 道 ⇒ 分布外 |
+
+**⚠ 長時間訓練（小時級）開跑前要先問本人。** 目前的規模是分鐘級（4×4 1M ≈ 4 分、6×6 5M ≈ 20 分），
+資源上限已寫進 `ResourceSettings`（CPU 執行緒與 GPU 記憶體各 75%），實測只用約 1 個核心與 84 MiB GPU。
+訓練成品放 `models/`、資料放 `datasets/`，都不進版控。
 
 ---
 
@@ -180,6 +243,26 @@ env.set_reverse_curriculum_k(6)  # 訓練中調整起點距離；k >= 2
    （`test_dead_end_terminates_before_an_all_false_mask_is_sampled` 在守這件事）。
 6. **`dev_log.md` 與 `roadmap.md` 兩條 track 會同時改**，rebase 時常在 `## 2026-08-15` 區塊衝突：**兩邊都保留**。
 7. **不要從 `models/dqn_*.pth` 續訓**——那是失敗策略的權重。
+
+**A2 新增的五個（2026-08-29 實際踩到）**
+
+8. **★ SB3 會靜默把 grid 攤平，不會報錯。** `MultiInputPolicy` 靠 `is_image_space` 決定要不要用 CNN，
+   而它要求 `uint8` 0–255；我們是 `float32` 0–1 ⇒ `CombinedExtractor` 把 8×8×8 攤成 512 維丟給 MLP，
+   **盤面幾何整個消失，而且完全沒有警告**。反過來強制走圖片路徑（`normalized_image=True`）才會崩：
+   `Calculated padded input size per channel: (1 x 1). Kernel size: (4 x 4)`（NatureCNN 開頭是 8×8 stride-4）。
+   **一律用 `GridScalarExtractor`**，`test_sb3_would_flatten_the_grid` 在守這件事。
+9. **★ Gymnasium 1.x 移除了 wrapper 的屬性穿透。** `Monitor(env).action_masks()` 直接 `AttributeError`；
+   `VecEnv.env_method` 沒事只是因為 SB3 走 `get_wrapper_attr`。讀 mask 一律用 `read_action_masks()`。
+   **附帶教訓**：我為了預防這件事寫的探針沒抓到它，因為探針只建構、從沒呼叫那個 lambda——
+   **只驗建構不驗熱路徑的探針，證明力比看起來低**。
+10. **★ 續訓不會帶 curriculum。** SB3 的 `.zip` 只有 policy 與 optimizer，沒有 `reverse_curriculum_k`，
+    所以只載模型會**靜默從 `k_start` 重來，而且每條曲線都正常**。`train_state.json` 存在 checkpoint 旁邊，
+    `--resume` 會讀它。改動這一塊之後**要實際存檔→續訓→比對 k 與 timesteps**，不要只看程式碼。
+11. **★ `SubprocVecEnv` 在這個 env 比 `DummyVecEnv` 慢**（3,221 vs 3,880 fps，100k 步實測）。
+    env step 是很輕的單執行緒 Python（整個訓練程序只吃約 1 個核心），Windows 的行程間通訊成本大於平行收益。
+    **restart plan §4.8 寫的 `SubprocVecEnv` 對這個 env 是錯的**；預設已改成 `dummy`。
+12. **checkpoint 一個 14 MB，而且刻意不刪。** 控制磁碟用**間隔**（`Goal.checkpoint_every`）而不是保留上限——
+    VLM track 的 `save_total_limit=2` 刪掉中段 checkpoint，讓一個實驗永遠做不成。每次跑抓 25–50 個。
 
 ---
 
@@ -200,9 +283,12 @@ env.set_reverse_curriculum_k(6)  # 訓練中調整起點距離；k >= 2
 
 - **7×7 資料集還沒生**。當初因為「太慢」被本人喊停，但 §3.6 的修正之後 100 題只要 35 秒，**已經不是瓶頸**，
   A4 之前補生即可（`--sizes 7`）。
-- **資料集規模**：計畫書原寫 50k，目前是 5,100 題。判斷是這個網路（10⁵–10⁶ 參數）用不到 50k，
-  不夠再補生。**若 A2 出現明顯 overfit 再回頭加大。**
-- **`shaping_lambda=0.2` 未經調校**，γ、λ 都只是合理起點，A2 要做敏感度檢查。
-- **網路架構尚未實作**（見 §6.2 的預判）。
-- **訓練完全還沒開始**——目前沒有任何 RL 模型權重存在。
+- ~~**資料集規模**：判斷是這個網路用不到 50k，若 A2 出現明顯 overfit 再回頭加大~~
+  → **已有答案（2026-08-29）：overfit 出現了，要加大。** 每尺寸 1,360 題訓練資料不夠，
+  deterministic 的訓練集／held-out 落差是 4×4 0.947/0.788、6×6 0.553/0.253。**這是下一步第一件事**（§6）。
+- **`shaping_lambda=0.2` 未經調校**，γ、λ 都只是合理起點。**敏感度檢查要等資料集加大之後做**，
+  現在量到的差異會被泛化落差蓋過去。
+- **網路架構已實作**：`GridScalarExtractor`（3 層 3×3 conv、padding=1、不 pooling、policy 共 1,170,949 參數）。
+  ⚠ **SB3 預設不會用 CNN**，原因見 §7.8。
+- **6×6 還沒推到全長**（停在 k=33/36），但那是預算問題不是能力問題，`--resume` 可續。
 - **出題器的 parity 根治**（奇數盤只從多數色挑起點）要動共用模組，**已提報但未做**，由本人決定。

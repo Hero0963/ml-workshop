@@ -6,6 +6,149 @@
 
 ## 2026-08-29
 
+### RL Track A2 — the first training run, and three defects that never raise an error (branch `feat/rl-a2-training`, worktree `zip-rl`)
+
+Branched from `main`, which already carries the merged `feat/rl-masked-ppo` work, so the A1
+baseline was re-measured rather than assumed: **214 passed, 8 xfailed**, `ruff` clean,
+`MaskablePPO` imports, CUDA available on an RTX 4070 Ti SUPER. `tensorboard` was already
+installed, so A2 needed no new dependency.
+
+Added `src/core/rl/train_config.py` — the single place a goal is defined (board size, wall
+policy, step budget, done condition, and the PPO / network / curriculum / resource settings) —
+plus `src/core/rl/train_maskable_ppo.py` and `src/core/tests/rl/test_train_maskable_ppo.py`.
+`rl_env_v2.py` gained a public `observation()`, and `baselines.evaluate()` now also accepts a
+callable, so a trained model and the two controls are scored through **one** accounting path
+instead of two copies of it.
+
+**Three defects that produce no error message.** All three were found by running, not by reading.
+
+-   **SB3 was flattening the board.** `MultiInputPolicy` chooses between `NatureCNN` and a plain
+    `Flatten` via `is_image_space`, which requires `uint8` in 0-255; our grid is `float32` in
+    0-1, so `CombinedExtractor` reduced the 8×8×8 observation to a 512-vector and trained an MLP
+    on it. No warning, no error — the board geometry was simply gone. Forcing the image path
+    (`normalized_image=True`) then *does* fail, with `Calculated padded input size per channel:
+    (1 x 1). Kernel size: (4 x 4)`, because `NatureCNN` opens with an 8×8 stride-4 convolution.
+    The handover predicted the crash but not the silent path, and the silent one is the
+    expensive one. `GridScalarExtractor` (three padded 3×3 convolutions, no pooling, 1,170,949
+    policy parameters) replaces both. Pinned by `test_sb3_would_flatten_the_grid`.
+-   **Gymnasium 1.x removed wrapper attribute pass-through.** `Monitor(env).action_masks()`
+    raises `AttributeError`; `VecEnv.env_method` survives only because SB3 routes it through
+    `get_wrapper_attr`. The probe written to de-risk exactly this missed it, because it
+    exercised construction but never called the mask lambda — a probe that does not touch the
+    hot path proves less than it looks like it proves. The smoke run caught it in seconds.
+    Masks now go through `read_action_masks`, which unwraps.
+-   **A resume restores the model but not the curriculum.** The SB3 zip carries policy and
+    optimiser state and nothing about `reverse_curriculum_k`, so resuming from the model alone
+    silently restarts the curriculum at `k_start` while every curve still looks healthy.
+    `train_state.json` is now written beside each checkpoint, and the round trip was verified
+    by doing it: saved at 8,192 steps / k=6, resumed, continued to 12,288 steps / k=9,
+    promotions 1→2, episodes 1,858→2,469.
+
+**Measured costs (100k-step pilots).**
+
+| run | wall clock | fps | GPU peak |
+|---|---|---|---|
+| 4×4, `DummyVecEnv` | 25.8s | 3,880 | 83.8 MiB |
+| 4×4, `SubprocVecEnv` | 31.0s | 3,221 | 83.8 MiB |
+| 6×6, `DummyVecEnv` | 27.4s | 3,647 | 83.8 MiB |
+
+`SubprocVecEnv` is **slower** here, and both produce identical promotion steps and identical
+solve rates. The environment step is cheap single-threaded Python — the training process uses
+about one core of 24 — so Windows process IPC costs more than the parallelism returns. The
+restart plan's §4.8 `n_envs = 16 (SubprocVecEnv)` is therefore wrong for this environment;
+`vec_env="dummy"` now lives in `ResourceSettings` with the measurement as its justification.
+
+**Resource limits.** 75% headroom was requested so the machine stays usable.
+`apply_resource_limits` scales PyTorch's *own* default intra-op thread count (torch sets it to
+the physical core count, 12 of 24 logical here) and caps GPU memory: **9 threads, 12,281 MiB of
+16,384**. Actual use is nowhere near either — about one core, 1.42 GiB RSS of 63.1, and **83.8
+MiB of GPU** — and capping made it marginally *faster* (4,036 vs 3,880 fps), confirming the
+workload is not thread-bound. psutil was deliberately not used: it is present only as a
+transitive dependency of another track, and this repo requires dependencies to be declared.
+
+**Checkpoints are never pruned** — the VLM track lost an entire experiment to
+`save_total_limit=2` — so disk is controlled by the *interval* instead: one checkpoint is 14 MB
+and `checkpoint_every` is set per goal to land 25-50 of them.
+
+**Evaluation protocol.** The model plays each puzzle once (`deterministic=True` is an argmax
+from a fixed start, so repeats would be identical) while the sampling baselines play 20 episodes
+per puzzle, which is how the 2026-08-15 baseline table was produced. The controls reproduced
+those numbers exactly on the 4×4 test split — masked random **0.088**, greedy **0.102** against
+the recorded 8.8% and 10.2% — which is the strongest available evidence that the two protocols
+are comparable.
+
+**Datasets: shared generator, different wall distributions.** Both tracks call
+`puzzle_generation.generate_puzzle`, so boards and numbers are drawn the same way, but the RL
+set takes the generator's own walls (absent, or the hard-coded 2-5 of
+`puzzle_generator.py:10-11,123`) while the VLM builder asks for a wall-free board and samples
+**0-12** itself, because real 6×6 screenshots carry 0, 4, 4 and 10. A5 will feed the RL solver
+boards read by the VLM parser, so those boards are out of distribution for it. Recorded now,
+not fixed.
+
+**goal1 (4×4, 1,000,000 steps): the curriculum finished, the done condition did not.**
+Full length (k=None) was reached at **152,064 steps** after 5 promotions, and the run took
+**248.0s at 4,032 fps**. Held-out test solve rate is **0.788** against a target of 0.90 — 7.7×
+masked random and 7.5× greedy, but short of the bar. Promotion cost grew steadily
+(416 → 13,680 → 20,144 → 29,312 → ~88,500 steps, roughly ×1.45 per step of k), which is the
+number to watch on larger boards. The gap worth recording is internal: at full length the
+training-split rollout success ran at **0.94-0.95** while held-out deterministic play scored
+**0.788**. That is precisely the "training-time scores do not count" failure the track plan
+warns about, and the first concrete evidence for handover §9's open question about dataset size
+(1,360 training puzzles at 4×4).
+
+**goal2 (6×6, 5,000,000 steps): the curriculum ran out of budget three cells short of the start.**
+1,203.1s at 4,156 fps, 10 promotions, ending at **k=33 of 36** — the final transition, to the
+true start cell, never happened. Held-out test solve **0.253** against a target of 0.85, which is
+34× greedy (0.0074) and 281× masked random (0.0009); both controls reproduced the 2026-08-15
+table (recorded 0.8% and 0.0%). Promotion cost per step of k was
+416 → 960 → 41,584 → 53,024 → 57,312 → 130,432 → 314,208 → 445,168 → 690,736 → 662,064.
+
+**It is not stalled, it is under-budgeted.** At k=33 the rollout success rate rose monotonically
+for the remaining 2.6M steps — 0.518 → 0.605 → 0.684 → 0.728 → 0.788 → **0.800** at the cutoff,
+against a 0.90 promotion threshold — with dead ends falling 0.482 → 0.200 in step. The last
+stretch gains about +0.02 per 250k steps, so roughly another 1.2M steps would plausibly clear the
+promotion, and `--resume` carries the curriculum so that is a continuation rather than a restart.
+Two readings made while the run was in flight were wrong and are recorded as such: an
+extrapolation of "×1.29 promotion-cost growth ⇒ full length by ~1.3M steps" was off by a factor
+of three, and "it has stalled at k=27" was simply false — it promoted at 1.73M.
+**Curriculum progress cannot be extrapolated from its own early segments**, which is the same
+shape of error the VLM track made extrapolating s/step from a short run.
+
+**The finding that matters: both goals are memorising.** Scoring the final policies
+deterministically on the *training* split as well as the held-out split separates the two
+candidate explanations for goal1's 0.95-versus-0.788 gap:
+
+| goal | deterministic, train split | deterministic, test split |
+|---|---|---|
+| goal1 4×4 | **0.947** | 0.788 |
+| goal2 6×6 | **0.553** | 0.253 |
+
+Deterministic play on the training split matches the training rollout curve, so the gap is **not**
+argmax-versus-sampling. The other candidate explanation — that the test split is simply harder —
+was ruled out by running both controls, which have seen neither split, over the same two sets:
+
+| policy | 4×4 train / test | 6×6 train / test |
+|---|---|---|
+| masked random | 0.0753 / 0.0876 (z −1.86) | 0.0000 / 0.0009 (z −1.73) |
+| greedy | 0.1038 / 0.1018 (z +0.28) | 0.0041 / 0.0074 (z −1.77) |
+
+Every one of the four says the test split is as hard or marginally *easier*, which pushes against
+the confound rather than towards it, while the model's own gaps are large (z +4.32 and +5.64 on
+170 puzzles a side). So it is generalization.
+
+⚠ **What this does not yet prove.** The training subsample was 170 of 1,360 puzzles and only one
+seed was trained, so "not enough data" is the best-supported explanation, not the only possible
+one — network capacity and the absence of any regularisation are untested. The actual proof is
+that the gap narrows when the dataset grows, which is why that is the done condition in
+handover §6 rather than a claim made here. 1,360 training puzzles per size is not enough.
+That settles the open question recorded in handover §9 ("if A2 shows obvious overfit, go back and
+enlarge the dataset"): it does, so the next move is **a larger dataset before a larger step
+budget** — training longer on 1,360 puzzles only memorises them harder. Generation is cheap
+(5,100 puzzles in 45 seconds), so this is minutes of work.
+
+Suite after A2: **232 passed, 8 xfailed**, `ruff check` clean. Nothing outside `src/core/rl/` and
+`src/core/tests/rl/` was modified.
+
 ### VLM Track: the model is out of Drive and into the product, and it reads real screenshots better than expected
 
 Reports: [reports/2026-08-29_vl-p4d-export-and-integration.md](reports/2026-08-29_vl-p4d-export-and-integration.md)

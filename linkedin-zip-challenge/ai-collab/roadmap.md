@@ -27,7 +27,7 @@
 | **API 只掛了 3/9 種 solver** | ⚠ 已知落差（`src/app/routers/solver.py` 的 `SOLVERS` 只有 DFS／A\*(heapq)／CP-SAT）；**Gradio 與 Svelte 兩邊的下拉選單也同樣只有 3 種**（2026-08-08 實測確認） |
 | Swagger `/docs` 的 Echo 端點重複兩份 | 🐞 小 bug：`main.py` 掛 router 時給 `tags=["Echo"]`，而 `echo.py` 的 router 自帶 `tags=["echo"]`，FastAPI 合併後產生兩個群組 |
 | Svelte UI 的 Instructions 顯示原始 Markdown | 🐞 小 bug：`**middle**`／`**border**` 直接印出星號，該處沒有走 Markdown 渲染 |
-| RL solver（`src/core/rl/`） | ⏸ **刻意暫停**（2025-10-15，見下方決策） |
+| RL solver（`src/core/rl/`） | 🚧 **重啟中**：A0／A1 完成（2026-08-15），**A2 首次訓練已跑（2026-08-29）**——4×4 端到端 0.788、6×6 0.253，都**未達門檻**且**確認在背答案**（訓練集 0.947／0.553 vs held-out 0.788／0.253）。下一步是**加大資料集**再重訓 |
 | VL 圖片解析（`src/core/vl_models/`） | ✅✅ **已完成並接進產品（2026-08-29 P4d/P5/P6）**：微調模型由本機 Ollama 服務（`zip-qwen35-4b-p4c:f16`），`POST /api/vision/solve` ＋ Gradio `Solve from Screenshot` 分頁。合成 held-out 重現 **200/200**（與 Colab 逐位元組相同、快 6.5 倍）；**六張真實截圖端到端 5/6、牆 F1 0.972**。操作見 [vlm-operating-guide.md](vlm-operating-guide.md) |
 | 環境復原驗證（9 個月未動） | ✅ **2026-08-08 完成**：46 tests passed、ruff 全綠 |
 
@@ -174,7 +174,26 @@
      **greedy 就是距離型 shaping 的天花板，6×6 就崩掉——等於用實驗證實了報告 §2.2**（原本只是靜態論證）。
    - **相依已安裝**：`sb3-contrib==2.7.1`（需加 `--index-strategy unsafe-best-match`，因為專案的 index 策略寫在 `[tool.uv.pip]`，`uv add` 不吃）。
      裝完確認 `torch 2.4.1+cu121` 與 SB3 2.7.0 都沒被動到、`MaskablePPO` 可 import、測試全綠。
-   - **下一步是 A2**（4×4 ＋ 反向 curriculum ＋ MaskablePPO 訓練），這是第一個真的會訓練的階段。
+   - **✅ A2 首次訓練已完成（2026-08-29，分支 `feat/rl-a2-training`）**：新增 `train_config.py`（**改設定只改這裡**：
+     `GOALS` 定義盤面／牆策略／步數預算／done 門檻）與 `train_maskable_ppo.py`，測試 214 → **232 passed, 8 xfailed**。
+
+     | goal | 步數 | 耗時 | 反向 curriculum | held-out test | 門檻 | 對照（greedy／random） |
+     |---|---|---|---|---|---|---|
+     | 4×4 | 1M | 248s | 推到全長（152k 步） | **0.788** | 0.90 ❌ | 0.102／0.088 |
+     | 6×6 | 5M | 1,203s | 只到 **k=33/36** | **0.253** | 0.85 ❌ | 0.007／0.001 |
+
+     兩個 baseline **完全重現 2026-08-15 的數字**（8.8%／10.2%、0.0%／0.8%）⇒ 評估協定已對齊。
+   - **★ 根因已查明：不是訓練不夠，是資料太少（在背答案）。** 把最終策略用 deterministic 同時打訓練集與 held-out：
+     4×4 **0.947 vs 0.788**、6×6 **0.553 vs 0.253**。訓練集的 deterministic 成績等於訓練曲線 ⇒
+     落差**不是** argmax／取樣的差別，是**泛化**。每個尺寸只有 1,360 題訓練資料不夠。
+     這回答了 handover §9 那個未決問題（「A2 若出現明顯 overfit 再回頭加大」）——**它出現了**。
+   - **★ 6×6 不是卡住，是預算不夠**：k=33 的成功率在剩下的 2.6M 步一路單調爬升 0.518 → **0.800**（門檻 0.90），
+     死路率同步降到 0.200。再約 1.2M 步有機會過關，而 `--resume` 會帶著 curriculum 續訓，不必重跑。
+   - **⚠ curriculum 進度不能用自己的前段外推**：跑到一半用「晉級成本 ×1.29」推得「1.3M 步到全長」，**實際差三倍**；
+     中途「k=27 卡住了」的判讀也是錯的（它在 1.73M 晉級了）。與 VLM track 用短跑外推 s/step 是同一類錯誤。
+   - **下一步（依序）**：① **加大資料集**（生成很便宜：5,100 題 45 秒）再重訓；
+     ② 6×6 用 `--resume` 續加步數；③ 兩者都做完才談調參／改架構。
+     **先加步數不加資料只會背得更熟。**
    - **根因已升級為機制層解釋**：`ch_path` 是二值、步數不在觀測裡 → 在兩個已訪格間震盪時觀測序列變成 `o_A, o_B, o_A…`，
      確定性策略必然卡死；非法移動則是更退化的單點迴圈。**所以不是調 reward 權重的問題**。
      另外觀測只給「下一個」waypoint，長程規劃在資訊上本來就不可能。
