@@ -255,12 +255,102 @@ budget** — training longer on 1,360 puzzles only memorises them harder. Genera
     spawn the writers. In both cases a single measurement — sample the CPU, look at the log
     size — settled it in seconds.
 
+**Retrying a puzzle only helps if the inference mode changes, and then it helps a lot.**
+`deterministic=True` is an argmax from a fixed start, so a replay is bit-identical: across 300
+held-out 4×4 puzzles, two evaluations seeded differently produced **the same action sequence
+300/300 times**. Repeating a deterministic evaluation is therefore pure waste, which is why the
+model plays each puzzle once while the sampling baselines play twenty. Sampling
+(`deterministic=False`) walks differently each time, and because a Zip solution is *checkable* -
+run it against the rules, no judge model required - best-of-N is a legitimate inference-time
+strategy rather than guesswork. The same goal1 policy on the same 300 puzzles:
+
+| inference | solve |
+|---|---|
+| deterministic | 0.870 |
+| sampled, 1 attempt | 0.863 |
+| sampled, best-of-2 | **0.903** |
+| sampled, best-of-4 | 0.930 |
+| sampled, best-of-8 | 0.947 |
+| sampled, best-of-16 | **0.967** |
+
+One sample scores *below* argmax, as expected, but two attempts already beat it because the two
+failures differ. The median attempt count when a puzzle is eventually solved is **1**, so the
+extra budget is spent almost entirely on the hard tail.
+
+**This exposes a problem with the done condition rather than solving one.** The same policy
+misses the 0.90 bar deterministically and clears it at best-of-2, so "did it pass" is currently a
+function of an inference setting the bar never specified. The 0.90 has no derivation anywhere in
+the plan or the restart report: it is inherited from the superseded three-phase design, where it
+was a *soft* success rate used as a **phase-promotion** threshold, and it now collides with
+`CurriculumSettings.promote_threshold`, a different 0.9 measuring stochastic rollouts on the
+*training* split. Two numbers should be reported from here on - deterministic solve rate for
+comparing training configurations, since it has no inference-budget variable in it, and
+best-of-N with N and the mean attempt count for what the solver is actually worth in use. The
+plan's "evaluate deterministically" rule was written to stop training-time scores being quoted as
+results; it is not an argument against reporting a sampled inference budget as well.
+
+⚠ These numbers are on 300 of the 1,928 test puzzles and are **not** comparable with the 0.788 /
+0.877 headline figures, which used the full split. The 0.870 here and the 0.877 there differ by
+less than the subsample error, and no claim is made that they differ at all.
+
 The dataset the next run trains on is `seed20300000_n20000_4-6`: 15,419 / 1,927 / 1,928 at 4×4
 and 16,000 / 2,000 / 2,000 at 6×6, roughly 11x the training rows A2 had, digests verified.
 `DEFAULT_DATASET` now points at it, and `--dataset main_n1700_456` reproduces an A2 number.
 
 Suite after A2: **242 passed, 8 xfailed**, `ruff check` clean. Nothing outside `src/core/rl/` and
 `src/core/tests/rl/` was modified.
+
+### The enlarged dataset settles the diagnosis, and hands 6×6 a different bottleneck
+
+Both goals were retrained on `seed20300000_n20000_4-6` - about 11x the training rows - with the
+same budgets, the same protocol, and the same evaluation split conventions as A2.
+
+| | A2 (1,360 / size) | enlarged (15,419 / 16,000) |
+|---|---|---|
+| 4×4 held-out test | 0.788 | **0.877** |
+| 6×6 held-out test | 0.253 | **0.344** |
+| 4×4 gap (train − test) | +0.162 | **+0.050** |
+| 6×6 gap (train − test) | +0.250 | **+0.009** |
+
+The gap is the result, not the solve rate. It collapsed on both boards, and it collapsed in the
+shape that means generalization rather than luck: **held-out went up while the training split went
+down** (4×4 0.950 → 0.927, 6×6 0.502 → 0.352). A policy that stopped memorising is exactly what
+that looks like. The done condition handover §6 set for this experiment is met.
+
+**The consequence is that 6×6 now has a different bottleneck.** At a gap of +0.009 there is
+essentially nothing left to overfit, so more data will not move it. What will: the curriculum
+reached only **k=27 of 36** inside 5M steps - shallower than A2's k=33, which is expected when the
+same budget has to cover eleven times the variety - and at k=27 the rollout success rate was still
+climbing monotonically when the budget ran out: 0.704 → 0.732 → 0.762 → 0.790 → **0.820** over the
+final 2.3M steps, against a 0.90 promotion threshold. So the next lever is budget, and `--resume`
+continues the curriculum from k=27 rather than restarting it. Neither goal met its target (0.877
+against 0.90; 0.344 against 0.85) - though see above for what that bar is actually worth.
+
+**Tracing where the reward came from surfaced a divergence nobody had recorded.** The restart
+plan's phase table specifies the shaping weight per phase: λ = 0.5, then 0.5 → 0.2, then **0 for
+the one-stroke phase** ("只剩 +1 與 γ"). The 2026-08-15 decision made every episode one-stroke,
+which is permanently that phase, so by the design's own spec shaping should be off. `PuzzleEnvV2`
+ships `shaping_lambda=0.2` and has never been run without it; measured, that is 14% of an episode's
+return (4×4 +0.171 of +1.171; 6×6 +0.158 of +1.158). Handover §9 recorded the value as untuned but
+not that the design called for zero. Untested in either direction - the env already accepts 0.0, so
+this is one run to settle.
+
+For the record, since the question came up: the ice-lake reward (success +1, everything else 0,
+speed expressed through γ) and the switch of the shaping potential from distance-to-next-number to
+coverage were both proposed in the restart plan report, which credits the developer with the
+"allow backtracking" and "visit counts in the observation" ideas that the same report was written
+around - and both of those were later overturned by the developer's own one-stroke decision. Git
+authorship settles none of this: every commit in this repo carries the same identity.
+
+**Lesson 9 claimed a third victim in the same session.** The first run of the train-vs-heldout
+diagnostic produced numbers that contradicted the training run's own evaluation - 0.754 where the
+run had reported 0.877, on the same model and the same split. Rather than report a number that
+could not be explained, reloading the checkpoint and re-running the trainer's own `score()`
+reproduced **0.8771 exactly**, which located the fault in the diagnostic rather than the run: its
+checkpoint path had been edited by a string replacement that matched single quotes against source
+using double quotes, so the edit did nothing and the script kept scoring the A2 model - while
+printing a line announcing that it had been repointed. It now takes the run id as a parameter and
+prints the path it actually loaded.
 
 ### VLM Track: the model is out of Drive and into the product, and it reads real screenshots better than expected
 
