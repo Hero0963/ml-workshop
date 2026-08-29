@@ -92,13 +92,19 @@ def run_episode(
 
 def evaluate(
     samples: Sequence[PuzzleSample],
-    policy_name: str,
+    policy: str | PolicyFn,
     seed: int = DEFAULT_SEED,
     episodes_per_puzzle: int = 1,
     reverse_curriculum_k: int | None = None,
+    label: str | None = None,
 ) -> dict[str, Any]:
-    """Runs one policy over every sample and aggregates overall and per-size."""
-    policy = POLICIES[policy_name]
+    """Runs one policy over every sample and aggregates overall and per-size.
+
+    `policy` is a name from `POLICIES` or any `PolicyFn`, so a trained model can be
+    scored through exactly this accounting rather than a parallel copy of it.
+    """
+    policy_name = label or (policy if isinstance(policy, str) else "policy")
+    policy = POLICIES[policy] if isinstance(policy, str) else policy
     rng = np.random.default_rng(seed)
     by_size: dict[int, list[dict[str, Any]]] = defaultdict(list)
 

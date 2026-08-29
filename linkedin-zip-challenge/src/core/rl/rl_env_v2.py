@@ -267,6 +267,14 @@ class PuzzleEnvV2(gym.Env):
         info["dead_end"] = terminated and not self._is_solved()
         return self._get_obs(), reward, terminated, truncated, info
 
+    def observation(self) -> dict[str, np.ndarray]:
+        """Public read of the current observation.
+
+        A `baselines.PolicyFn` is handed only the env, so scoring a trained model the
+        same way as the baselines needs a supported way to see what the agent sees.
+        """
+        return self._get_obs()
+
     def _get_obs(self) -> dict[str, np.ndarray]:
         grid = np.zeros((NUM_GRID_CHANNELS, GRID_PAD, GRID_PAD), dtype=np.float32)
         grid[CH_VALID : CH_VALID + 3] = self._static_layers
