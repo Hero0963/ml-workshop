@@ -8,26 +8,37 @@ Why not reuse `generate_rl_dataset.py`: that script drops the ground-truth path
 Reverse curriculum needs the path, and train/val/test splits need determinism, so this
 is a separate script and the old one is left untouched as the v1 control.
 
-Every puzzle is generated from `base_seed + index`, so the same arguments reproduce the
-same dataset regardless of how the worker pool schedules the tasks. Generation can fail
-by parity on odd open grids (see `ai-collab/reports/2026-08-15_a0-env-v1-findings.md` §6),
-so each task retries with derived seeds and the manifest records how often that happened.
+Every puzzle is generated from `base_seed + index` and each worker seeds itself, so pool
+scheduling does not affect the result. Generation can fail by parity on odd open grids
+(see `ai-collab/reports/2026-08-15_a0-env-v1-findings.md` §6), so each task retries with
+derived seeds and the manifest records how often that happened.
+
+⚠ **Re-running the same command does not reproduce a dataset bit-for-bit.** `generate_puzzle`
+abandons its randomized backtracking on *wall-clock* time, so whether a given attempt is cut
+short depends on machine load, and a clipped attempt is retried under a different derived
+seed. The VLM track measured the same effect on the shared generator: two runs of one seed
+differed on 8 of 30 samples at a 0.5s budget. **So the dataset is the unit of identity, not
+the command** — the manifest carries a SHA-256 over the canonical content of each split, and
+`--verify <name>` recomputes them. Build once, and refer to a dataset by its digest.
 """
 
 import argparse
+import hashlib
 import json
+import os
 import pickle
 import random
 from datetime import datetime, timezone
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from loguru import logger
 from tqdm import tqdm
 
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.rl_env_v2 import PuzzleSample
+from src.core.rl.train_config import capped_worker_count
 
 OUTPUT_ROOT = Path(__file__).resolve().parents[3] / "datasets" / "rl_datasets_v2"
 DEFAULT_SIZES = (4, 5, 6, 7)
@@ -69,6 +80,66 @@ def _generate_one(task: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+def sample_fingerprint(sample: PuzzleSample) -> str:
+    """Canonical text for one sample, independent of how Python happens to serialise it.
+
+    Hashing the pickle would hash the *encoding* -- set iteration order, protocol version --
+    rather than the puzzle, so two datasets with identical content could disagree.
+    """
+    puzzle = sample.puzzle
+    return json.dumps(
+        {
+            "grid_size": list(puzzle["grid_size"]),
+            "grid": puzzle["grid"],
+            "walls": sorted(sorted(map(list, edge)) for edge in puzzle["walls"]),
+            "blocked_cells": sorted(map(list, puzzle["blocked_cells"])),
+            "num_map": {
+                str(number): list(cell)
+                for number, cell in sorted(puzzle["num_map"].items())
+            },
+            "solution_path": [list(cell) for cell in sample.solution_path],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def split_digest(samples: Sequence[PuzzleSample]) -> str:
+    """SHA-256 over the split's samples in order; order is part of the identity."""
+    digest = hashlib.sha256()
+    for sample in samples:
+        payload = sample_fingerprint(sample).encode("utf-8")
+        digest.update(f"{len(payload)}:".encode("utf-8"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def content_digests(splits: dict[str, list[PuzzleSample]]) -> dict[str, str]:
+    return {name: split_digest(samples) for name, samples in sorted(splits.items())}
+
+
+def verify_dataset(dataset_dir: Path) -> bool:
+    """Recomputes every split digest and checks it against the manifest."""
+    with (dataset_dir / "dataset.pkl").open("rb") as handle:
+        dataset = pickle.load(handle)
+    recorded = json.loads(
+        (dataset_dir / "manifest.json").read_text(encoding="utf-8")
+    ).get("content_sha256")
+    if not recorded:
+        logger.error(
+            f"{dataset_dir.name} predates content digests; rebuild to get them."
+        )
+        return False
+
+    recomputed = content_digests(dataset["splits"])
+    ok = True
+    for name, digest in sorted(recomputed.items()):
+        matched = recorded.get(name) == digest
+        ok = ok and matched
+        logger.info(f"  {name:5s} {digest[:16]}... {'ok' if matched else 'MISMATCH'}")
+    return ok
+
+
 def _split_indices(
     total: int, split: tuple[float, float, float]
 ) -> dict[str, tuple[int, int]]:
@@ -103,9 +174,13 @@ def build_dataset(
                 }
             )
 
-    logger.info(f"Generating {len(tasks)} puzzles across sizes {sizes}...")
+    workers = processes or capped_worker_count()
+    logger.info(
+        f"Generating {len(tasks)} puzzles across sizes {sizes} on {workers} workers "
+        f"(of {os.cpu_count()} logical cores)..."
+    )
     results: list[dict[str, Any]] = []
-    with Pool(processes=processes) as pool, tqdm(total=len(tasks)) as progress:
+    with Pool(processes=workers) as pool, tqdm(total=len(tasks)) as progress:
         for result in pool.imap_unordered(_generate_one, tasks):
             if result is not None:
                 results.append(result)
@@ -139,6 +214,7 @@ def build_dataset(
             "total_generated": len(results),
             "total_requested": len(tasks),
             "per_size": per_size_stats,
+            "content_sha256": content_digests(splits),
         },
         "splits": splits,
     }
@@ -149,7 +225,12 @@ def main() -> None:
     parser.add_argument("--count", type=int, default=DEFAULT_COUNT_PER_SIZE)
     parser.add_argument("--sizes", type=str, default=",".join(map(str, DEFAULT_SIZES)))
     parser.add_argument("--base-seed", type=int, default=DEFAULT_BASE_SEED)
-    parser.add_argument("--processes", type=int, default=None)
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=None,
+        help="Worker processes; defaults to a capped share of the cores, not all of them.",
+    )
     parser.add_argument("--name", type=str, default=None)
     parser.add_argument(
         "--timeout",
@@ -157,7 +238,18 @@ def main() -> None:
         default=DEFAULT_TIMEOUT_PER_ATTEMPT,
         help="Per-attempt search cutoff in seconds; short is faster (see module docstring).",
     )
+    parser.add_argument(
+        "--verify",
+        type=str,
+        default=None,
+        help="Recheck an existing dataset directory against its manifest digests, then exit.",
+    )
     args = parser.parse_args()
+
+    if args.verify:
+        dataset_dir = OUTPUT_ROOT / args.verify
+        logger.info(f"Verifying {dataset_dir}")
+        raise SystemExit(0 if verify_dataset(dataset_dir) else 1)
 
     sizes = tuple(int(size) for size in args.sizes.split(","))
     dataset = build_dataset(
@@ -187,6 +279,8 @@ def main() -> None:
     )
     for size, stats in manifest["per_size"].items():
         logger.info(f"  size {size}: {stats}")
+    for name, digest in manifest["content_sha256"].items():
+        logger.info(f"  {name:5s} sha256 {digest}")
 
 
 if __name__ == "__main__":

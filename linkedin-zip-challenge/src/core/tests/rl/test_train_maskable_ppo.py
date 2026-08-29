@@ -12,6 +12,7 @@ Two of these pin defects that cost the track real time and would not show up as 
 Nothing here loads a pickled dataset: `datasets/` is not in version control.
 """
 
+import os
 import random
 
 import numpy as np
@@ -22,7 +23,13 @@ from stable_baselines3.common.preprocessing import is_image_space
 
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.rl_env_v2 import PuzzleEnvV2, PuzzleSample
-from src.core.rl.train_config import GOALS, Goal, NetworkSettings, ResourceSettings
+from src.core.rl.train_config import (
+    GOALS,
+    Goal,
+    NetworkSettings,
+    ResourceSettings,
+    capped_worker_count,
+)
 from src.core.rl.train_maskable_ppo import (
     WALL_FILTERS,
     apply_resource_limits,
@@ -165,6 +172,13 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
     assert registered.timesteps != Args.timesteps
     assert registered.ppo.n_envs != Args.n_envs
     assert registered.resources.vec_env == "dummy"
+
+
+def test_worker_count_leaves_cores_free() -> None:
+    """Generation used to run an unbounded pool and pegged every core; it must not again."""
+    cores = os.cpu_count() or 1
+    assert 1 <= capped_worker_count(0.75) <= max(1, int(cores * 0.75))
+    assert capped_worker_count(0.75) < cores or cores == 1
 
 
 def test_resource_limits_stay_under_the_configured_fraction() -> None:

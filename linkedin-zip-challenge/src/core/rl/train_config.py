@@ -11,9 +11,28 @@ section 4.8. No sensitivity study has been run, so treat any result as "this set
 "the best setting".
 """
 
+import os
 from dataclasses import dataclass, field
 
 DEFAULT_DATASET = "main_n1700_456"
+
+# Leave the machine usable while anything here is running. This is the *one* place the
+# budget is defined: it caps PyTorch's threads during training and the worker pool during
+# dataset generation, which was previously unbounded and pegged all 24 logical cores.
+DEFAULT_CPU_FRACTION = 0.75
+
+
+# The parent process works too (task feeding, progress, result collection) and the OS takes
+# its cut, so a worker per budgeted core overshoots: measured 2026-08-29 on 24 logical cores,
+# 18 workers held system CPU at 74-82% against a 75% target. Two are given back for that.
+WORKERS_RESERVED_FOR_PARENT = 2
+
+
+def capped_worker_count(fraction: float = DEFAULT_CPU_FRACTION) -> int:
+    """Worker processes to run so that generation leaves headroom for everything else."""
+    budgeted = int((os.cpu_count() or 1) * fraction)
+    return max(1, budgeted - WORKERS_RESERVED_FOR_PARENT)
+
 
 # The generator only ever emits 0 or 2-5 walls, so "all" is a mixed set, not a hard one.
 WALL_POLICIES = ("all", "none", "only")
@@ -71,7 +90,7 @@ class ResourceSettings:
     cheap enough that Windows process IPC costs more than the parallelism returns.
     """
 
-    cpu_fraction: float = 0.75
+    cpu_fraction: float = DEFAULT_CPU_FRACTION
     gpu_memory_fraction: float = 0.75
     vec_env: str = "dummy"
 
