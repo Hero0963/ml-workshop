@@ -63,6 +63,22 @@ rollout buffer never reaches the card at all — SB3 keeps it as `np.zeros` on t
 (`buffers.py:392`) and moves one minibatch at a time. The 12,281 MiB cap in `ResourceSettings`
 is therefore a guard rail, not a constraint anything currently approaches.
 
+**And the loop is not bound by the environment, which contradicts what this log has been
+saying.** The handover records "the bottleneck is the single-threaded Python env step, not the
+GPU", inferred from two correct observations — one core busy, 84 MiB of VRAM — but the inference
+does not survive measurement. `env.step()` including masks and observation assembly has a median
+cost of **10.40 us**, while 4,002 fps gives each step a **250 us** wall-clock budget: the step is
+about **4%** of the loop. An A/B settles it without arithmetic. Running the real training loop
+for 40,000 steps per arm, identical except that every step also runs a connectivity BFS whose
+result is thrown away, costs **4.6%** (3,825 → 3,657 fps) against **0.3%** run-to-run noise on
+the baseline. Nearly tripling the cost of a step cannot cost 4.6% of a loop that step dominates.
+What fits all three observations instead is that the one busy core is spending its time
+*launching small CUDA kernels*, which is also what 36-40% utilisation at 84 MiB looks like. Only
+the negative is established here — the remaining 95% has not been profiled, so whether it sits in
+torch or in SB3's Python plumbing is still open. If it is launch overhead, the way to go faster
+is bigger and fewer kernels (`n_envs`, `n_steps`, `batch_size`), which is the opposite of what
+this log previously pointed at.
+
 **Design notes were written down, on purpose.** The owner restated on this date that the point of
 this side project is learning by doing, not the metric, so the session's design questions — why
 the memory footprint is that small, what the 8 channels are, why `MaskablePPO` was chosen, how
@@ -75,6 +91,24 @@ Go lineage, though restart plan §9 already schedules an `AlphaZero-lite` compar
 the measured best-of-N result (deterministic 0.870 → best-of-16 0.967) is the same
 "policy prunes the search" idea that AlphaGo rests on, reachable here far more cheaply by
 ordering the existing DFS with the policy than by writing an MCTS.
+
+**A GNN was proposed and declined for now, on the same measurement.** Swapping the CNN for a
+graph network is meant to buy topological awareness, but connected-component count and
+articulation points *are* the topological answer, and computing them in the environment costs
+5.5-18 us — the 4.6% already measured. If handing the policy the answer directly changes nothing,
+a network that must spend several message-passing layers deriving that same answer will not do
+better, so the scalar feature is a falsification test for the GNN at two orders of magnitude less
+work. It is a necessary condition rather than a sufficient one: the one thing a GNN could still
+win is generalisation across board sizes, since message passing is not tied to the 8×8 padding
+that `Linear(4104→256)` is built around. Two claims made for the GNN do not hold here either.
+This board's graph topology is fixed for the whole episode — walls and blocked cells never move,
+only the visited mask does — so `edge_index` is built once at reset and shapes stay static;
+edges only churn if one chooses to delete visited nodes, which is a design choice. And PyTorch's
+caching allocator does not return freed memory to the OS, which is why `empty_cache()` exists, so
+varying shapes cost fragmentation and re-planning rather than a syscall per step. The feature is
+worth trying on its own merits regardless: 59.1% of held-out failures are dead ends, and the
+environment only terminates when all four directions are blocked, which is the *local* dead end —
+the puzzle is already unsolvable the moment the unvisited region splits in two.
 
 **One documentation trap worth naming.** `handover-rl-solver.md` exists in every worktree, and
 the copy in a *different* worktree is whatever that branch last committed — the `zip-vlm` copy

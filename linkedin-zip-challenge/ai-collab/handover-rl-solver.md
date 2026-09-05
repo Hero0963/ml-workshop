@@ -189,8 +189,9 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 9. **兩個 goal 都在背答案。** deterministic 打訓練集 vs held-out：4×4 **0.947 / 0.788**、6×6 **0.553 / 0.253**。
    訓練集的 deterministic 成績等於訓練 rollout 曲線 ⇒ 落差是**泛化**，不是 argmax／取樣的差別。
 10. **訓練成本與資源**：`DummyVecEnv` ＋ 16 env 約 **4,000–4,200 fps**；4×4 1M 步 248s、6×6 5M 步 1,203s。
-    GPU 峰值只有 **83.8 MiB**，整個訓練程序約吃 1 個核心 ⇒ **瓶頸是單執行緒的 Python env step**，
-    不是 GPU、不是網路。
+    GPU 峰值只有 **83.8 MiB**，整個訓練程序約吃 1 個核心。
+    ⚠ **這一條原本接著寫「⇒ 瓶頸是單執行緒的 Python env step」——那個因果推論在 2026-09-05 被量測推翻了，見下面第 14 條。**
+    上面這兩個觀測本身仍然成立。
 
 **2026-09-05 新增**（完整分析見 [`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md)）
 
@@ -208,6 +209,16 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
     batch 512 的 fwd+bwd+Adam 峰值 115.58 MiB（對照：7B 模型光 fp16 權重就 13.0 GiB）；
     參數約 90% 集中在 `Linear(4104→256)`，三層 conv 只有約 7.7 萬；
     **rollout buffer 根本不上顯卡**（SB3 用 `np.zeros`，`buffers.py:392`，每個 minibatch 才搬）。
+14. **★★ 瓶頸不是 `env.step()`。** `env.step()`（含 `action_masks()` 與觀測組裝）中位數 **10.40 µs**，
+    而 4,002 fps 代表每步的牆鐘預算是 **250 µs** ⇒ **env step 只佔約 4%**。
+    直接 A/B 佐證（40,000 步／臂，只在 step 裡多跑一次連通性 BFS、結果丟掉）：
+    baseline **3,825 fps** vs 加了特徵 **3,657 fps** ⇒ **只慢 4.6%**，而 baseline 重跑的雜訊是 **0.3%**。
+    把 env step 成本變成近三倍卻只慢 4.6%，**它就不可能是瓶頸**。
+    自洽的解釋是那一個核心在忙著**對小張量發射 GPU kernel**（配合 §3.13 的 36–40% utilization ＋ 84 MiB 顯存）。
+    ⚠ **只證明了「不是 env.step()」**；剩下 95% 落在 torch 還是 SB3 的 Python plumbing **沒有 profile 過**。
+    **實務影響**：想加速該把 kernel 變大變少（加大 `n_envs`／`n_steps`／`batch_size`），
+    **不是**去優化 env——與這份文件原本指的方向相反。
+    腳本：`../hi-collab/scratch/bench_graph_features.py`、`bench_graph_feature_training.py`。
 
 ---
 
@@ -324,6 +335,7 @@ restart 報告的階段表指定一筆畫階段的 shaping λ **是 0**（「只
 | `shaping_lambda` **敏感度掃描**（0.1／0.3…） | 先跑 §6 的 λ=0 對照，確認它到底有沒有用，再談掃描 |
 | A3（5×5、加牆、權重接續） | 6×6 還在 k=30/36，沒到全長 |
 | A4（7×7、held-out 1,000 題） | 7×7 資料集也還沒生（`--sizes 7`，100 題 35 秒，已不是瓶頸） |
+| **換成 GNN 表徵** | **先做「連通性 scalar 特徵」對照**（§9）——那是同一個假設便宜兩個數量級的證偽測試。而且 curriculum 停在 k=30/36，現在比架構會被 confound。詳見 [`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md) §5.6 |
 | A5（掛成 API 第 10 種 solver） | ⚠ 會動 `src/app/routers/solver.py`，動之前先確認 VLM track 沒在改。
   另外**牆的分布不同**：RL 訓練資料的牆是 0 或 2–5 道，VLM 讀出來的真實題目可到 10+ 道 ⇒ 分布外 |
 
@@ -465,4 +477,9 @@ restart 報告的階段表指定一筆畫階段的 shaping λ **是 0**（「只
   （加預算真的推動了一級），但**尚未證明能推到底**：每級成本約 ×2 成長，而「成本發散」這個替代解釋還沒排除。
   判別方式見 §0 ③。`--resume` 可續，備份要先做（§3.12）。
 - **⚠ 一輪訓練約 12 分鐘、推到全長估 1–2 小時**，後者是**小時級 ⇒ 開跑前要本人授權**（守則 4）。
+- **★ 拓撲特徵（連通分量數／割點）尚未試，成本已量、效果未量。** 成本 **+4.6% 訓練時間**（§3.14），
+  動機是 held-out 失敗有 **59.1% 是死路**，而 env 目前只在「四方向全被擋」時終止（**局部**死路）——
+  未訪區域分裂成兩塊時這題其實早就無解了。**這也是 GNN 那條路的證偽測試**（見 §6 表與報告 §5.6）：
+  把拓撲答案直接當 scalar 餵進去若無效，GNN 幾乎不可能有效。
+  ⚠ 但它**測不到 GNN 唯一真正的優勢——跨盤面尺寸的泛化**（現在的 `Linear(4104→256)` 綁死 8×8 padding）。
 - **出題器的 parity 根治**（奇數盤只從多數色挑起點）要動共用模組，**已提報但未做**，由本人決定。
