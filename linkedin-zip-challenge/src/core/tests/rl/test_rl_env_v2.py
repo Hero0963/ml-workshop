@@ -24,7 +24,10 @@ from src.core.rl.rl_env_v2 import (
     CH_VISITED,
     CH_WP_DONE,
     GRID_PAD,
+    MAX_TRACKED_COMPONENTS,
     NUM_ACTIONS,
+    NUM_BASE_SCALARS,
+    NUM_CONNECTIVITY_SCALARS,
     PuzzleEnvV2,
     PuzzleSample,
     SUCCESS_REWARD,
@@ -34,6 +37,9 @@ from src.core.utils import Puzzle, parse_puzzle_layout
 
 GENERATOR_SEED = 42
 REVERSE_CURRICULUM_K = 3
+SPLIT_SCALAR = NUM_BASE_SCALARS
+COMPONENT_SCALAR = NUM_BASE_SCALARS + 1
+SPLIT_COMPONENTS = 2
 
 
 def _make_env(
@@ -216,6 +222,82 @@ def test_dead_end_terminates_before_an_all_false_mask_is_sampled() -> None:
     assert (
         not env.action_masks().any()
     ), "The episode ended exactly at the all-masked state."
+
+
+def test_connectivity_features_are_appended_without_touching_the_base_scalars() -> None:
+    """The control arm has to be bit-identical, or the A/B compares two changes."""
+    puzzle, solution, _ = puzzles_to_test[1]
+    plain = _make_env(puzzle, solution)
+    enriched = _make_env(puzzle, solution, connectivity_features=True)
+
+    plain_observation, _ = plain.reset()
+    enriched_observation, _ = enriched.reset()
+
+    assert plain_observation["scalars"].shape == (NUM_BASE_SCALARS,)
+    assert enriched_observation["scalars"].shape == (
+        NUM_BASE_SCALARS + NUM_CONNECTIVITY_SCALARS,
+    )
+    assert enriched.observation_space.contains(enriched_observation)
+    assert np.array_equal(
+        enriched_observation["scalars"][:NUM_BASE_SCALARS],
+        plain_observation["scalars"],
+    ), "Turning the feature on must only append, never disturb the existing scalars."
+    assert (
+        enriched_observation["scalars"][SPLIT_SCALAR] == 0.0
+    ), "The tail of a solution path is connected, so a fresh board is never split."
+
+
+@pytest.mark.parametrize(
+    "rows, cols, has_walls",
+    [(4, 4, False), (5, 5, True), (6, 6, True)],
+    ids=["generated_4x4_open", "generated_5x5_walls", "generated_6x6_walls"],
+)
+def test_a_winning_path_never_reports_a_split(
+    rows: int, cols: int, has_walls: bool
+) -> None:
+    """The unvisited region is the tail of the path, so a false split is a BFS bug."""
+    random.seed(GENERATOR_SEED)
+    result = generate_puzzle(m=rows, n=cols, has_walls=has_walls, num_blocked_cells=0)
+    assert result is not None, "Puzzle generation failed; cannot run the replay check."
+
+    puzzle, solution_path = result
+    env = _make_env(
+        puzzle, solution_path, shaping_lambda=0.0, connectivity_features=True
+    )
+    observation, _ = env.reset()
+
+    for step, action in enumerate(path_to_actions(solution_path)):
+        assert (
+            observation["scalars"][SPLIT_SCALAR] == 0.0
+        ), f"{rows}x{cols}: the solution path was reported as split at step {step}."
+        observation, _, _, _, info = env.step(action)
+
+    assert info["solved"]
+    assert (
+        observation["scalars"][COMPONENT_SCALAR] == 0.0
+    ), "A solved board has no unvisited cells, so it has no components."
+
+
+def test_a_split_region_is_flagged_while_the_agent_still_has_moves() -> None:
+    """The whole point of the feature: visible before `action_masks()` can see it."""
+    puzzle, solution = _dead_end_puzzle()
+    env = _make_env(puzzle, solution, shaping_lambda=0.0, connectivity_features=True)
+    env.reset()
+
+    observation, _, _, _, _ = env.step(ACTION_RIGHT)
+    assert observation["scalars"][SPLIT_SCALAR] == 0.0
+
+    observation, _, terminated, _, _ = env.step(ACTION_DOWN)
+    logger.info(f"split-region scalars: {observation['scalars'][NUM_BASE_SCALARS:]}")
+
+    assert not terminated and env.action_masks().any(), (
+        "The board is lost but the agent can still move, which is exactly the gap "
+        "the dead-end check cannot cover."
+    )
+    assert observation["scalars"][SPLIT_SCALAR] == 1.0
+    assert observation["scalars"][COMPONENT_SCALAR] == pytest.approx(
+        SPLIT_COMPONENTS / MAX_TRACKED_COMPONENTS
+    )
 
 
 def test_ground_truth_still_solves_the_dead_end_board() -> None:

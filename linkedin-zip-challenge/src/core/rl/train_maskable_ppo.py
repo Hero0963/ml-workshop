@@ -467,6 +467,7 @@ def make_vec_env(
                 reverse_curriculum_k=curriculum_k,
                 shaping_lambda=goal.shaping_lambda,
                 gamma=goal.ppo.gamma,
+                connectivity_features=goal.connectivity_features,
             )
             env.reset(seed=seed + rank)
             # Gymnasium 1.x dropped attribute pass-through on wrappers, so the mask has
@@ -526,6 +527,7 @@ def score(
     seed: int,
     episodes_per_puzzle: int,
     with_baselines: bool,
+    connectivity_features: bool = False,
 ) -> dict[str, Any]:
     """Scores the model and the two controls on the same puzzles, always deterministic.
 
@@ -540,12 +542,17 @@ def score(
             seed=seed,
             episodes_per_puzzle=1,
             label="maskable_ppo",
+            connectivity_features=connectivity_features,
         )
     }
     if with_baselines:
         for name in POLICIES:
             results[name] = evaluate(
-                samples, name, seed=seed, episodes_per_puzzle=episodes_per_puzzle
+                samples,
+                name,
+                seed=seed,
+                episodes_per_puzzle=episodes_per_puzzle,
+                connectivity_features=connectivity_features,
             )
     return results
 
@@ -576,6 +583,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Overrides the goal's shaping weight; 0 leaves only the terminal +1 and gamma.",
+    )
+    parser.add_argument(
+        "--connectivity-features",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Adds the unvisited-region component count to the observation. "
+        "Changes the observation shape, so it cannot be turned on mid-run.",
     )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
@@ -608,6 +622,9 @@ def resolve_goal(args: argparse.Namespace) -> Goal:
     # specifies for the one-stroke phase, and it is the whole point of the override.
     if args.shaping_lambda is not None:
         goal = replace(goal, shaping_lambda=args.shaping_lambda)
+    # Same reason as above: `False` is the control arm's explicit setting, not an omission.
+    if args.connectivity_features is not None:
+        goal = replace(goal, connectivity_features=args.connectivity_features)
     return goal
 
 
@@ -710,6 +727,7 @@ def main() -> None:
         seed=args.seed,
         episodes_per_puzzle=args.eval_episodes,
         with_baselines=not args.no_baselines,
+        connectivity_features=goal.connectivity_features,
     )
     solve_rate = scores["model"]["overall"]["solve_rate"]
     report = {

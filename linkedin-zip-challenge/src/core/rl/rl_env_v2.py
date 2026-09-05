@@ -14,6 +14,10 @@ Design decisions (2026-08-15, see `ai-collab/plans/2026-08-15_track-rl-solver.md
   Optional potential-based coverage shaping, off by default in evaluation.
 * **Reverse curriculum.** The generator hands back the solution, so an episode can start
   `k` cells from the end with the prefix pre-marked as walked.
+* **Optional connectivity features.** A one-stroke walk cannot teleport, so the unvisited
+  region splitting in two already loses the puzzle -- several steps before `action_masks()`
+  can see it, since that only fires once the agent itself is boxed in. Off by default:
+  switching them on changes the observation shape, which older checkpoints cannot load.
 
 The step budget equals the number of unvisited cells, and each step consumes exactly one
 of them, so `truncated` is a defensive backstop only: episodes end either in success or
@@ -43,7 +47,12 @@ CH_WP_DONE = 7
 NUM_GRID_CHANNELS = 8
 
 # coverage, waypoint progress, last action one-hot(4), height, width
-NUM_SCALARS = 8
+NUM_BASE_SCALARS = 8
+# Appended when connectivity features are on: the split flag and the component count.
+NUM_CONNECTIVITY_SCALARS = 2
+# Every count above 1 carries the same news -- the board is already lost -- so the scale
+# saturates instead of tracking how badly the region shattered.
+MAX_TRACKED_COMPONENTS = 4
 
 SUCCESS_REWARD = 1.0
 DEFAULT_GAMMA = 0.99
@@ -76,7 +85,9 @@ class PuzzleEnvV2(gym.Env):
     | 7 | `wp_done`     | collected numbers marked 1                              |
 
     Scalars: coverage, waypoint progress, last action one-hot(4), height and width
-    (both normalised by `GRID_PAD`).
+    (both normalised by `GRID_PAD`). With `connectivity_features` two more are appended:
+    a flag for "the unvisited region is split" and the component count, saturated at
+    `MAX_TRACKED_COMPONENTS`.
     """
 
     metadata = {"render_modes": ["ansi"]}
@@ -87,6 +98,7 @@ class PuzzleEnvV2(gym.Env):
         reverse_curriculum_k: int | None = None,
         shaping_lambda: float = DEFAULT_SHAPING_LAMBDA,
         gamma: float = DEFAULT_GAMMA,
+        connectivity_features: bool = False,
     ):
         super().__init__()
         if not samples:
@@ -95,6 +107,10 @@ class PuzzleEnvV2(gym.Env):
         self.samples = list(samples)
         self.shaping_lambda = shaping_lambda
         self.gamma = gamma
+        self.connectivity_features = connectivity_features
+        self.num_scalars = NUM_BASE_SCALARS + (
+            NUM_CONNECTIVITY_SCALARS if connectivity_features else 0
+        )
         self.set_reverse_curriculum_k(reverse_curriculum_k)
 
         self.action_space = spaces.Discrete(NUM_ACTIONS)
@@ -107,7 +123,7 @@ class PuzzleEnvV2(gym.Env):
                     dtype=np.float32,
                 ),
                 "scalars": spaces.Box(
-                    low=0.0, high=1.0, shape=(NUM_SCALARS,), dtype=np.float32
+                    low=0.0, high=1.0, shape=(self.num_scalars,), dtype=np.float32
                 ),
             }
         )
@@ -222,6 +238,36 @@ class PuzzleEnvV2(gym.Env):
     def _coverage(self) -> float:
         return len(self._visited) / self.visitable_cells
 
+    def _unvisited_component_count(self) -> int:
+        """Connected components of the unwalked region, respecting walls and blocks.
+
+        Two or more components mean no one-stroke walk can still cover the board, which
+        is the earliest point the loss is knowable; the dead-end check in `step()` only
+        notices once the agent has no move left, which is strictly later.
+        """
+        remaining = {
+            (row, col)
+            for row in range(self.height)
+            for col in range(self.width)
+            if (row, col) not in self.blocked_cells and (row, col) not in self._visited
+        }
+        components = 0
+        while remaining:
+            components += 1
+            frontier = [remaining.pop()]
+            while frontier:
+                cell = frontier.pop()
+                row, col = cell
+                for delta_row, delta_col in ACTION_DELTAS.values():
+                    neighbour = (row + delta_row, col + delta_col)
+                    if neighbour not in remaining:
+                        continue
+                    if tuple(sorted((cell, neighbour))) in self.walls:
+                        continue
+                    remaining.discard(neighbour)
+                    frontier.append(neighbour)
+        return components
+
     def _is_solved(self) -> bool:
         """Matches `dfs.py:96-105`: full coverage plus every number collected in order."""
         return (
@@ -292,7 +338,7 @@ class PuzzleEnvV2(gym.Env):
         if next_pos is not None:
             grid[CH_WP_NEXT][next_pos] = 1.0
 
-        scalars = np.zeros(NUM_SCALARS, dtype=np.float32)
+        scalars = np.zeros(self.num_scalars, dtype=np.float32)
         scalars[0] = self._coverage()
         scalars[1] = (
             (self._next_waypoint - FIRST_WAYPOINT_NUMBER) / self.max_waypoint_number
@@ -303,6 +349,12 @@ class PuzzleEnvV2(gym.Env):
             scalars[2 + self._last_action] = 1.0
         scalars[6] = self.height / GRID_PAD
         scalars[7] = self.width / GRID_PAD
+        if self.connectivity_features:
+            components = self._unvisited_component_count()
+            scalars[8] = float(components > 1)
+            scalars[9] = (
+                min(components, MAX_TRACKED_COMPONENTS) / MAX_TRACKED_COMPONENTS
+            )
 
         return {"grid": grid, "scalars": scalars}
 

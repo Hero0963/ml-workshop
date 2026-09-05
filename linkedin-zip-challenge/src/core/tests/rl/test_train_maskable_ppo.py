@@ -14,6 +14,7 @@ Nothing here loads a pickled dataset: `datasets/` is not in version control.
 
 import os
 import random
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -22,6 +23,7 @@ from gymnasium import spaces
 from stable_baselines3.common.preprocessing import is_image_space
 
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
+from src.core.rl.baselines import make_eval_env
 from src.core.rl.rl_env_v2 import PuzzleEnvV2, PuzzleSample
 from src.core.rl.train_config import (
     GOALS,
@@ -37,6 +39,7 @@ from src.core.rl.train_maskable_ppo import (
     EpisodeOutcome,
     GridScalarExtractor,
     classify_episode,
+    make_vec_env,
     next_curriculum_k,
     read_action_masks,
     resolve_goal,
@@ -124,6 +127,38 @@ def test_observation_is_publicly_readable(sample: PuzzleSample) -> None:
     assert np.array_equal(published["scalars"], observation["scalars"])
 
 
+@pytest.mark.parametrize("connectivity_features", [False, True])
+def test_training_and_evaluation_envs_agree_on_the_observation_space(
+    sample: PuzzleSample, connectivity_features: bool
+) -> None:
+    """The gap that cost three evaluation runs on 2026-09-05.
+
+    `--connectivity-features` reached `make_vec_env` but not `baselines.evaluate`, so the
+    policy trained on 10 scalars was scored against an 8-scalar env. Training finished
+    clean and only the evaluation raised, from deep inside SB3's `predict`. Pinning the
+    two spaces together covers both construction sites in one assertion.
+    """
+    goal = GOALS["goal1_4x4"]
+    goal = replace(
+        goal,
+        connectivity_features=connectivity_features,
+        ppo=replace(goal.ppo, n_envs=1),
+    )
+
+    vec_env = make_vec_env(
+        [sample], goal, seed=GENERATOR_SEED, curriculum_k=None, vec="dummy"
+    )
+    try:
+        training_space = vec_env.observation_space
+    finally:
+        vec_env.close()
+    evaluation_env = make_eval_env(
+        sample, connectivity_features=goal.connectivity_features
+    )
+
+    assert training_space == evaluation_env.observation_space
+
+
 @pytest.mark.parametrize(
     ("current_k", "expected"),
     [(3, 6), (6, 9), (12, 15), (13, None), (15, None)],
@@ -164,6 +199,7 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
         vec = "subproc"
         dataset = "main_n1700_456"
         shaping_lambda = 0.5
+        connectivity_features = True
 
     resolved = resolve_goal(Args())
 
@@ -172,11 +208,13 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
     assert resolved.resources.vec_env == Args.vec
     assert resolved.dataset == Args.dataset
     assert resolved.shaping_lambda == Args.shaping_lambda
+    assert resolved.connectivity_features == Args.connectivity_features
     registered = GOALS["goal1_4x4"]
     assert registered.timesteps != Args.timesteps
     assert registered.ppo.n_envs != Args.n_envs
     assert registered.resources.vec_env == "dummy"
     assert registered.shaping_lambda != Args.shaping_lambda
+    assert registered.connectivity_features != Args.connectivity_features
 
 
 def test_shaping_lambda_zero_is_an_override_not_an_omission() -> None:
@@ -189,11 +227,32 @@ def test_shaping_lambda_zero_is_an_override_not_an_omission() -> None:
         vec = None
         dataset = None
         shaping_lambda = 0.0
+        connectivity_features = None
 
     resolved = resolve_goal(Args())
 
     assert resolved.shaping_lambda == 0.0
     assert GOALS["goal1_4x4"].shaping_lambda > 0.0
+
+
+def test_connectivity_features_override_carries_both_directions() -> None:
+    """The two P0 arms differ only in this flag, so it has to reach the goal either way."""
+
+    class Args:
+        goal = "goal1_4x4"
+        timesteps = None
+        n_envs = None
+        vec = None
+        dataset = None
+        shaping_lambda = None
+        connectivity_features = True
+
+    assert resolve_goal(Args()).connectivity_features is True
+
+    Args.connectivity_features = False
+    assert resolve_goal(Args()).connectivity_features is False
+
+    assert GOALS["goal1_4x4"].connectivity_features is False
 
 
 def test_worker_count_leaves_cores_free() -> None:

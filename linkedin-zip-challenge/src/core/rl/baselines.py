@@ -65,6 +65,26 @@ POLICIES: dict[str, PolicyFn] = {
 }
 
 
+def make_eval_env(
+    sample: PuzzleSample,
+    reverse_curriculum_k: int | None = None,
+    connectivity_features: bool = False,
+) -> PuzzleEnvV2:
+    """The single place evaluation builds an env.
+
+    Training builds its own in `train_maskable_ppo.make_vec_env`, and the two have to
+    agree on the observation space. An env option wired into only one of them hands the
+    policy an observation it never trained on, and that surfaces as an SB3 error deep
+    inside `predict` -- after a run that looked healthy all the way to its last step.
+    """
+    return PuzzleEnvV2(
+        [sample],
+        reverse_curriculum_k=reverse_curriculum_k,
+        shaping_lambda=0.0,
+        connectivity_features=connectivity_features,
+    )
+
+
 def run_episode(
     env: PuzzleEnvV2, policy: PolicyFn, rng: np.random.Generator
 ) -> dict[str, Any]:
@@ -97,11 +117,16 @@ def evaluate(
     episodes_per_puzzle: int = 1,
     reverse_curriculum_k: int | None = None,
     label: str | None = None,
+    connectivity_features: bool = False,
 ) -> dict[str, Any]:
     """Runs one policy over every sample and aggregates overall and per-size.
 
     `policy` is a name from `POLICIES` or any `PolicyFn`, so a trained model can be
     scored through exactly this accounting rather than a parallel copy of it.
+
+    `connectivity_features` has to match what the model was trained with; the baselines
+    read the env directly and are indifferent to it, which makes them a useful check that
+    the option really is observation-only.
     """
     policy_name = label or (policy if isinstance(policy, str) else "policy")
     policy = POLICIES[policy] if isinstance(policy, str) else policy
@@ -109,8 +134,10 @@ def evaluate(
     by_size: dict[int, list[dict[str, Any]]] = defaultdict(list)
 
     for sample in samples:
-        env = PuzzleEnvV2(
-            [sample], reverse_curriculum_k=reverse_curriculum_k, shaping_lambda=0.0
+        env = make_eval_env(
+            sample,
+            reverse_curriculum_k=reverse_curriculum_k,
+            connectivity_features=connectivity_features,
         )
         size = sample.puzzle["grid_size"][0]
         for _ in range(episodes_per_puzzle):
@@ -132,6 +159,7 @@ def evaluate(
         "policy": policy_name,
         "seed": seed,
         "reverse_curriculum_k": reverse_curriculum_k,
+        "connectivity_features": connectivity_features,
         "overall": summarise(all_episodes),
         "per_size": {
             size: summarise(episodes) for size, episodes in sorted(by_size.items())

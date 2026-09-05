@@ -111,6 +111,10 @@ class Goal:
     walls: str = "all"
     dataset: str = DEFAULT_DATASET
     shaping_lambda: float = 0.2
+    # Adds the unvisited-region component count to the observation. Off by default
+    # because it changes the scalar vector's shape, so a checkpoint trained without it
+    # cannot be resumed with it on -- including the 8M-step `goal2_6x6_bigdata` model.
+    connectivity_features: bool = False
     # Checkpoints are never pruned (the VLM track lost an experiment to
     # `save_total_limit=2`), so the interval -- not a retention limit -- is what keeps the
     # run off the disk: one checkpoint is 14 MB, so aim for 25-50 per run.

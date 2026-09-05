@@ -12,9 +12,10 @@
 ## 0. 一句話現況
 
 **A0／A1／A2 都跑完了，兩個瓶頸假說也依序被實驗證實：「在背答案」加資料解掉了，「預算不夠」加預算也真的推得動。**
-**兩個 goal 仍未達門檻**，而現在卡的是第三個問題——**推到全長的成本是小時級，值不值得投**。
+**第三個假說（連通性特徵）在 2026-09-05 被自己的實驗推翻了。**
+**兩個 goal 仍未達門檻**，而現在缺的不是預算也不是資料，是一個能改變量級的想法。
 
-> ★ **接手前一定要知道的七件事：**
+> ★ **接手前一定要知道的九件事：**
 >
 > **① 三輪訓練都做完了**，這是完整成績（held-out test、`deterministic=True`）：
 >
@@ -81,6 +82,16 @@
 > 而評估端跨 6 個 run 只差 0.002 ⇒ **雜訊幾乎全在訓練 seed**。
 > **任何改動的效果要大於 ±0.04 才算數**；小於它就不要報告成進步，也不要為了那種量級設計實驗。
 > **§6 的優先序就是照這條規則重排的。**
+
+> **⑨ ★★ P0「連通性特徵」已做完（2026-09-05），結果是 null 且方向為負——但它的產出是機制，不是數字。**
+> 3 seed × 2 臂、4×4、1M 步、held-out test：**0.8537 → 0.8275（−0.0263）**，未達 ±0.04 ⇒ 判為 null。
+> 但**逐 seed 配對差三個全負、死路率三個全升**，不是 λ 那種會變號的乾淨 null。
+> **關鍵在機制診斷**：探針顯示「失敗中終止前就亮燈」的比例 **62.1% → 64.6%，幾乎不變**
+> ⇒ **策略根本沒在用這個訊號**。原因是它**在時序上晚一步**——決策當下的狀態還沒分裂，
+> 分裂只出現在**下一個**觀測裡，所以避開它仍然要做跟以前一樣的一步前瞻。
+> ⇒ **不要再把「當前狀態的拓撲性質」塞進觀測**（包括 GNN，它算的是同一種東西）；
+> 唯一還沒被推翻的版本是**動作條件版**（四個方向各算一次「這一步會不會造成分裂」，決策前就有）。
+> 詳見 [`reports/2026-09-05_rl-connectivity-feature.md`](reports/2026-09-05_rl-connectivity-feature.md)。
 
 A0 的結論仍然是整條 track 的前提：**2025-10 的舊環境不是「難學」，是「餵標準答案也不會過關」**，
 而且它的獎勵與 Zip 規則反相關。所以 env v2 是重寫，不是修補。
@@ -243,6 +254,24 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
     寫成 `if args.shaping_lambda:` 會讓對照**靜默失效**（曲線全部正常、結果毫無差別）。
     `test_shaping_lambda_zero_is_an_override_not_an_omission` 在守這件事。
 
+**2026-09-05 P0 新增**
+
+17. **★★ 把「未訪區域的連通分量數」放進觀測，量不到好處，點估計是負的。**
+    3 seed × 2 臂、4×4、1M 步、held-out test（n=1,928）：off **0.8537**（0.8771／0.8392／0.8449）
+    vs on **0.8275**（0.8242／0.8247／0.8335），差 **−0.0263**（< ±0.04 ⇒ null）；
+    逐 seed 配對差 −0.0529／−0.0145／−0.0114 **三個同號**，死路率 0.1463 → **0.1725** 三個全升。
+    **兩個哨兵乾淨**：對照臂三個 seed 逐位元重現舊數字（差 +0.000000）；
+    同 seed 的 greedy／masked_random 在兩臂**完全相同** ⇒ 這個特徵只動觀測、**沒動 env 動態**。
+    訓練成本實測 **+7.0%**（261.7s vs 244.7s；對照臂自己就差 5.3%，與 §3.14 的 +4.6% 量級一致）。
+18. **★★ 策略沒有在用那個訊號——這才是 P0 真正的產出。**
+    同 500 題探針：訊號本身是好的（**從不誤報**，442 個成功局 0 次亮燈；62% 的失敗有預警，中位提前 2 步），
+    但換成看得到訊號的模型後，**「失敗中終止前就亮燈」的比例 62.1% → 64.6%，幾乎不變**
+    （亮燈失敗佔全體 7.2% → 12.4%，變多是因為策略整體變差）。
+    ⇒ **null 的原因不是編碼太弱，是「把答案放進觀測不會讓策略避開那一步」**：
+    訊號在時序上晚一步，決策當下還沒分裂。**這個結論直接套用到 GNN**（它算的也是當前狀態的圖性質）。
+    ⚠ **一個未排除的替代解釋**：實驗臂 curriculum 三個 seed 全部較慢（推到全長 +14.2%），
+    在全長上少練 7.4%；補等量步數再比（約 4 分鐘）可判別，**沒做**。
+
 ---
 
 ## 4. 已定案的設計決策（不要重開）
@@ -267,7 +296,7 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/rl/rl_env_v2.py` | **主角**。`PuzzleEnvV2`：一筆畫 env、`action_masks()`、反向 curriculum、死路終止 |
 | `src/core/rl/action_space.py` | 共用動作編碼（0:Up 1:Down 2:Left 3:Right）與 `path_to_actions()` |
 | `src/core/rl/generate_dataset_v2.py` | 決定性資料集產生器，**保留 solution path**（舊的 `generate_rl_dataset.py:59` 會丟掉） |
-| `src/core/rl/baselines.py` | masked random ／ greedy 兩個對照組與評估器 |
+| `src/core/rl/baselines.py` | masked random ／ greedy 兩個對照組與評估器。**評估的 env 只能從 `make_eval_env()` 建**（陷阱 #24） |
 | `src/core/rl/diagnose_env_v1.py` | A0 的六個 probe，可重跑產生證據 JSON |
 | `src/core/rl/train_config.py` | **A2 新增。改設定只改這裡**：`GOALS` 定義每個訓練目標（盤面、牆策略、步數預算、done 門檻），以及 `PPOSettings`／`NetworkSettings`／`CurriculumSettings`／`ResourceSettings` |
 | `src/core/rl/train_maskable_ppo.py` | **A2 新增**。只負責執行一個 goal：`GridScalarExtractor`、curriculum callback、checkpoint ＋ `train_state.json`、評估。CLI 是 `--goal <key>` |
@@ -276,6 +305,7 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/tests/rl/test_rl_env_v1_diagnosis.py` | 釘住 v1 缺陷（8 個 strict xfail ＋ 對照測試） |
 | `ai-collab/reports/2026-08-15_a0-env-v1-findings.md` | A0 完整報告 |
 | `ai-collab/reports/2026-09-05_rl-budget-and-design-notes.md` | **2026-09-05 新增**。續訓結果 ＋ curriculum 成本曲線 ＋ GPU 實測 ＋ **§5 設計筆記**（做中學的落盤處）|
+| `ai-collab/reports/2026-09-05_rl-connectivity-feature.md` | **2026-09-05 新增**。P0 的完整記錄：機制、編碼決策、事前登記的判讀規則、結果、**§7.3 機制診斷**（為什麼是 null）、§7.6 評估事故 |
 
 **沒有動到**：`src/core/rl/` 的舊檔案、`src/core/vl_models/`（VLM track 的地盤）、
 `src/core/utils.py`、`src/core/puzzle_generation/`、`src/app/`、`src/ui/`。
@@ -285,7 +315,8 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 ```python
 from src.core.rl.rl_env_v2 import PuzzleEnvV2, PuzzleSample
 
-env = PuzzleEnvV2(samples, reverse_curriculum_k=None, shaping_lambda=0.2, gamma=0.99)
+env = PuzzleEnvV2(samples, reverse_curriculum_k=None, shaping_lambda=0.2, gamma=0.99,
+                  connectivity_features=False)   # True -> scalars 8 -> 10（舊 checkpoint 會載不動）
 obs, info = env.reset()          # obs = {"grid": (8,8,8) float32, "scalars": (8,) float32}
 mask = env.action_masks()        # (4,) bool —— MaskablePPO 直接吃這個方法名
 obs, reward, terminated, truncated, info = env.step(action)
@@ -369,17 +400,29 @@ greedy baseline 跨 6 個 run 只差 0.002 ⇒ **波動幾乎全來自訓練 see
 > **現況**：4×4 **0.854 ± 0.038**（3 seed）、6×6 **0.409**（1 seed）。
 > **最大缺口是 6×6，而它缺的不是預算也不是資料，是一個能改變量級的想法。**
 
-### P0 —— 只做這一件：連通性特徵
+### ✅ P0 連通性特徵已完成（2026-09-05）：**null，方向為負，不進 6×6**
 
-在觀測的純量向量加上**未訪區域的連通分量數**（可選：割點）。
+做法與完整數據見 [`reports/2026-09-05_rl-connectivity-feature.md`](reports/2026-09-05_rl-connectivity-feature.md)，
+摘要在 §0 ⑨ 與 §3.17／§3.18。三句話：
 
-- **機制**（唯一有機制的候選）：held-out 失敗 **59.1% 是死路**，而 env 只在「四方向全被擋」時才終止
-  ——那是**局部**死路，**太晚了**。未訪區域一分裂成兩塊，這題在圖論上就已無解，但策略完全不知道。
-- **量級**：這不是調參，是把一個佔六成失敗的盲點補掉 ⇒ **有機會大於雜訊**。
-- **成本已量**：**+4.6% 訓練時間**（§3.14 的 A/B），約 5.5–18 µs／step。
-- **Done**：3 個 seed × 兩臂（有／無此特徵），4×4 效果**大於 ±0.04** 才算有效；有效再上 6×6。
+1. **量到的**：0.8537 → 0.8275（−0.0263，未達 ±0.04 ⇒ null），但配對差三個全負、死路率三個全升。
+2. **為什麼**：訊號本身是對的（從不誤報、62% 的失敗有預警、中位提前 2 步），
+   但**策略沒有在用它**——「失敗中亮過燈」的比例 62.1% → 64.6%，幾乎不變。
+   **它在時序上晚一步**：決策當下的狀態還沒分裂，分裂只出現在下一個觀測裡。
+3. **所以**：**不要再把「當前狀態的拓撲性質」餵進觀測**。這條結論同時關掉了 GNN 那條路的主要論據。
 
-### P1 —— P0 有結果之後才排
+### 下一個候選（★ 有機制，但**尚未授權，開跑前先問本人**）
+
+**動作條件版的連通性**：對四個方向各算一次「**這一步會不會**造成分裂」，4 個純量，
+與 mask 同時可得、同一次 flood fill 的預算內做得完。
+
+- **它修掉的正是 P0 失敗的原因**：訊號變成在**做決定之前**就存在，策略不必再做那一步前瞻。
+- **這是這條線上唯一還沒被推翻的版本**；它若也是 null，「拓撲特徵」整條線就可以結案，GNN 一併結案。
+- **Done 條件照舊**：3 seed × 2 臂、4×4、效果大於 ±0.04 才算有效。
+- ⚠ **對照臂可以直接用 P0 這次的三個 off run**（`goal1_4x4_ctrl_s*`，已驗證逐位元重現舊數字），
+  只要沒有再改動 env 的預設路徑——**先跑一個 off run 驗重現性再省**，不要直接假設。
+
+### P1 —— 下一個候選有結果之後才排
 
 | 想做的事 | 條件 |
 |---|---|
@@ -394,7 +437,7 @@ greedy baseline 跨 6 個 run 只差 0.002 ⇒ **波動幾乎全來自訓練 see
 | 不做什麼 | 為什麼 |
 |---|---|
 | **單純把 6×6 推到全長**（1–2 小時） | 只會把 0.409 推高一點，**不會靠近 0.85**；同樣時間夠跑十幾個 P0 實驗 |
-| **換成 GNN 表徵** | P0 就是它的證偽測試，便宜兩個數量級（報告 §5.6）。而且 curriculum 停在 k=30/36，現在比架構會被 confound |
+| **換成 GNN 表徵** | **P0 已經跑完，而且結果對它不利**：把拓撲答案直接餵進去（從不誤報）策略仍然不用它，因為**當前狀態的連通性本來就不是該條件化的量**——**GNN 算的是同一種東西，繼承同一個限制**（2026-09-05 報告 §7.5）。而且 curriculum 停在 k=30/36，現在比架構會被 confound。⚠ 唯一沒被這個實驗涵蓋的是 GNN 真正的優勢：**跨盤面尺寸的泛化** |
 | **調 PPO 超參**（`ent_coef`／`lr`／`n_steps`） | 它們能買到的量級大機率就在雜訊裡；先找能改變量級的東西 |
 | **`shaping_lambda` 敏感度掃描** | λ=0 vs 0.2 已經是 null（本節上方），沒有理由相信 0.1／0.3 會不同 |
 | **繼續加資料** | 落差只剩 +0.009，沒東西可再 overfit（結案於 2026-08-29） |
@@ -521,6 +564,26 @@ greedy baseline 跨 6 個 run 只差 0.002 ⇒ **波動幾乎全來自訓練 see
     `reset_num_timesteps=False` 時 `total_timesteps += self.num_timesteps`）。
     把它當總數會得到一個比預期長得多的 run。
 
+**2026-09-05 P0（連通性特徵）新增**
+
+24. **★★ 加一個 env 參數，要找遍每一個建構 env 的地方——訓練與評估是兩條路。**
+    `--connectivity-features` 讓觀測從 8 個純量變 10 個。我把它從 CLI 一路接到 `make_vec_env()`，
+    還特地驗過「CLI → goal → observation space」三段都對，**卻漏了 `baselines.evaluate()`**
+    ——它自己建 `PuzzleEnvV2`（`baselines.py:112`），不知道有這個 flag。
+    **症狀出現得極晚，而且極不像是自己的錯**：訓練 100% 正常跑完
+    （1M 步、curriculum 推到全長、25 個 checkpoint 全存好），**只有最後的評估炸**，
+    traceback 還停在 SB3 深處（`policies.py:258 obs_to_tensor` → `utils.py:489 is_vectorized_observation`），
+    看不出來是「你的 flag 沒接完」。
+    **代價**：訓練沒白費（`model_final.zip` 在 `score()` **之前**就存了），但三個實驗臂都得另外重評。
+    - **這和陷阱 #13 同型**（資源上限漏了 `generate_dataset_v2` 的 `Pool`）：
+      **設定接到「你當下想到的那個地方」不算接好，要找遍所有建構點。**
+      env 在這個專案有兩個建構點：`train_maskable_ppo.make_vec_env()` 與 `baselines.make_eval_env()`。
+    - **附帶教訓（和 #9 同型）**：我驗過訓練那條熱路徑，就以為「已經驗過效果」了。
+      **驗了熱路徑的一部分不等於驗完。** 該驗的不變量是一句話——
+      **「訓練 env 與評估 env 的觀測空間必須相同」**，它同時涵蓋兩條路，而我當時驗的三段涵蓋不了。
+    - **防線**：`test_training_and_evaluation_envs_agree_on_the_observation_space`，
+      加上把評估的 env 建構收斂成唯一的 `baselines.make_eval_env()`。
+
 ---
 
 ## 8. 與 VLM track 的協作約定
@@ -552,9 +615,12 @@ greedy baseline 跨 6 個 run 只差 0.002 ⇒ **波動幾乎全來自訓練 see
   （加預算真的推動了一級），但**尚未證明能推到底**：每級成本約 ×2 成長，而「成本發散」這個替代解釋還沒排除。
   判別方式見 §0 ③。`--resume` 可續，備份要先做（§3.12）。
 - **⚠ 一輪訓練約 12 分鐘、推到全長估 1–2 小時**，後者是**小時級 ⇒ 開跑前要本人授權**（守則 4）。
-- **★ 拓撲特徵（連通分量數／割點）尚未試，成本已量、效果未量。** 成本 **+4.6% 訓練時間**（§3.14），
-  動機是 held-out 失敗有 **59.1% 是死路**，而 env 目前只在「四方向全被擋」時終止（**局部**死路）——
-  未訪區域分裂成兩塊時這題其實早就無解了。**這也是 GNN 那條路的證偽測試**（見 §6 表與報告 §5.6）：
-  把拓撲答案直接當 scalar 餵進去若無效，GNN 幾乎不可能有效。
-  ⚠ 但它**測不到 GNN 唯一真正的優勢——跨盤面尺寸的泛化**（現在的 `Linear(4104→256)` 綁死 8×8 padding）。
+- ~~**★ 拓撲特徵（連通分量數／割點）尚未試**~~ → **已完成並結案（2026-09-05）**：
+  **null 且方向為負**，而且機制診斷顯示**策略沒有在用那個訊號**（§3.18）。
+  ⇒ 「當前狀態的拓撲性質」這條線關掉，**GNN 的主要論據一併關掉**。
+  **還開著的只剩動作條件版**（§6.5「下一個候選」）與 **GNN 的跨尺寸泛化**——後者這個實驗測不到，
+  現在的 `Linear(4104→256)` 綁死 8×8 padding。
+- **★ 割點（articulation points）沒做。** P0 量到**剩下 37.9% 的失敗完全沒有預警**
+  （未訪區仍連通、但 agent 自己走進死巷），那一類要靠割點或度數約束才抓得到。
+  ⚠ 但它與連通分量數是同一族「當前狀態的拓撲性質」，**在動作條件版證明有效之前不值得做**。
 - **出題器的 parity 根治**（奇數盤只從多數色挑起點）要動共用模組，**已提報但未做**，由本人決定。

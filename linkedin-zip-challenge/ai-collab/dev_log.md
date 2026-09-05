@@ -6,6 +6,101 @@
 
 ## 2026-09-05
 
+### RL Track P0 — the connectivity feature is a null, and the interesting part is why (branch `feat/rl-a2-training`, worktree `zip-rl`)
+
+Baseline first: **243 passed, 8 xfailed in 12.99s**, `ruff` clean. That is one more than the
+242 recorded earlier the same day, and the extra test is
+`test_shaping_lambda_zero_is_an_override_not_an_omission` from the previous entry — the count
+is branch-dependent and only means something as a within-session comparison.
+
+**What was added.** `PuzzleEnvV2` can now append two scalars derived from one flood fill over
+the unwalked region: a flag for "the region is split" and the component count saturated at 4.
+Two rather than one, because the mechanism is binary — a split already loses the puzzle — and
+handing the network a pre-thresholded bit removes the risk that a null result is really a
+too-weak encoding, which matters when the whole point of the experiment is to be a falsification
+test for the GNN route. The count is kept because it is what handover §6.5 literally asks for
+and it is free once the flood fill has run.
+
+**It is opt-in and off by default.** Turning it on takes the scalar vector from 8 to 10, and the
+policy's first layer is `Linear(4104→256)`, so any checkpoint trained without it can no longer
+be resumed with it on — including the 8M-step `goal2_6x6_bigdata` model. `Goal.connectivity_features`
+defaults to `False` and the CLI uses `argparse.BooleanOptionalAction` with `default=None`, so
+`resolve_goal` can keep the `is not None` test: `False` is falsy in exactly the way `0.0` was for
+`--shaping-lambda`, and the control arm's setting has to be expressible.
+
+**The headroom was measured before spending the forty minutes.** Running the existing control
+model over 500 held-out 4×4 puzzles while computing the component count each step: all 58
+failures are dead ends, **36 of them (62.1%) had the region split before termination**, median
+2 steps of warning, and the flag never once fired on a solved episode. So warned failures are
+7.2% of all puzzles, the ceiling is 0.884 → 0.956, and **clearing ±0.04 requires converting more
+than 55% of them** — which was written into the report before any arm was run.
+
+**Result: 3 seeds × 2 arms, 4×4, 1M steps, held-out test (n=1,928).**
+
+| arm | seeds | mean | within-arm spread | dead ends |
+|---|---|---|---|---|
+| off | 0.8771 / 0.8392 / 0.8449 | **0.8537** | 0.0379 | 0.1463 |
+| on | 0.8242 / 0.8247 / 0.8335 | **0.8275** | 0.0093 | **0.1725** |
+
+The difference of means is **−0.0263**, inside the ±0.04 noise floor, so by the pre-registered
+rule this is a **null**. It is not the clean null `shaping_lambda` gave, though: there the paired
+per-seed differences changed sign, here all three are negative (−0.0529, −0.0145, −0.0114), the
+dead-end rate rises in all three and mean coverage falls in all three. The honest statement is
+"no evidence it helps, and the point estimate is negative", not "no difference".
+
+**Both sentinels came back clean.** The control arm reproduced the historical numbers
+bit-identically across all three seeds (+0.000000, whole result dicts equal), so the change did
+not leak into the off arm; and per seed the greedy and masked-random baselines are identical
+between arms, which is direct evidence that the option is observation-only and changes no
+environment dynamics.
+
+**The mechanism diagnosis is the real output.** Re-running the same 500-puzzle probe with the
+trained *treated* model: the share of failures preceded by a visible split is **62.1% → 64.6%,
+essentially unchanged**, while warned failures rise from 7.2% to 12.4% of all puzzles because the
+policy is simply worse. A policy that can see the signal walks into splits at the same relative
+rate as one that cannot. **So the null is not "the encoding was too weak to detect"; it is "putting
+the answer in the observation does not make the policy avoid the move."** The explanation — an
+explanation, not a measurement — is that the signal is one step late: at decision time the current
+state is not yet split, the split only appears in the *next* observation, so avoiding it still
+requires the same one-step lookahead the policy needed without the feature. The feature can sharpen
+the value function; it hands the policy nothing actionable. The version that would be actionable is
+action-conditioned — for each of the four moves, would *this* move split the region — and it fits
+in the same flood-fill budget. That is the one direction on this line that has not been falsified.
+
+**One alternative explanation is not excluded.** The treated arm's curriculum reaches full length
+later in all three seeds (340,288 → 388,619 steps on average, +14.2%), so it trains about 7.4%
+less at full length. "The feature makes the final policy worse" and "the feature slows the
+curriculum, so full length gets less training" cannot be separated from these runs. Topping the
+treated arm up by the missing ~50k steps would separate them in about four minutes; not done.
+
+**Defect: the flag reached training but not evaluation (handover trap #24).** All three treated
+runs trained perfectly — 1M steps, curriculum to full length, every checkpoint written — and then
+**crashed during scoring**, with a traceback that ends deep inside SB3 (`policies.py:258
+obs_to_tensor` → `utils.py:489 is_vectorized_observation`) and looks nothing like "your flag is
+half-wired". `baselines.evaluate()` builds its own env and knew nothing about the option, so a
+policy trained on 10 scalars was scored against an 8-scalar env. Nothing was lost — `model_final.zip`
+is saved *before* `score()` — so the scoring was replayed from the checkpoints. Two things were
+wrong in kind, not just in detail: the environment has **two** construction sites and only one was
+wired, which is the same shape as the resource-budget defect that missed `generate_dataset_v2`'s
+pool; and the verification done that morning covered CLI → goal → training env and felt like
+"verified by effect", when the invariant that actually needed pinning is one sentence —
+**the training env and the evaluation env must agree on the observation space** — which covers both
+paths at once. Evaluation now builds envs only through `baselines.make_eval_env()`, and
+`test_training_and_evaluation_envs_agree_on_the_observation_space` asserts the invariant for both
+arms. The fix was then verified by effect: re-scoring the control run under the patched code
+returns a result dict identical to the one the original run wrote.
+
+**Cost.** Treated runs took 261.7s against the control's 244.7s, **+7.0%**, against the +4.6%
+measured for an equivalent extra flood fill on 2026-09-05. The control arm's own three runs span
+12.9s (5.3%), so the two numbers agree on magnitude rather than contradicting each other.
+
+**Where this leaves the priority list.** P0 is closed and does not go to 6×6. The GNN stays
+deferred, and its reason is now stronger than "not yet falsified": a GNN computes graph properties
+of the *current* state too, so it inherits the same limitation this experiment exposed. What it
+still cannot speak to is the one advantage a GNN would really have, generalisation across board
+sizes, which the current `Linear(4104→256)` forecloses. Report:
+`reports/2026-09-05_rl-connectivity-feature.md`.
+
 ### RL Track — the budget hypothesis holds, and what a run this small does to a 16 GB card (branch `feat/rl-a2-training`, worktree `zip-rl`)
 
 Baseline re-measured before touching anything: **242 passed, 8 xfailed in 20.44s**, `ruff`
