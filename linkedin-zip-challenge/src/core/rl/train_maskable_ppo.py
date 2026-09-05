@@ -571,6 +571,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Overrides the goal's dataset; use it to reproduce an older run.",
     )
+    parser.add_argument(
+        "--shaping-lambda",
+        type=float,
+        default=None,
+        help="Overrides the goal's shaping weight; 0 leaves only the terminal +1 and gamma.",
+    )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
         "--vec",
@@ -598,6 +604,10 @@ def resolve_goal(args: argparse.Namespace) -> Goal:
         goal = replace(goal, resources=replace(goal.resources, vec_env=args.vec))
     if args.dataset is not None:
         goal = replace(goal, dataset=args.dataset)
+    # `is not None` rather than a truth test: 0.0 is the setting the restart plan
+    # specifies for the one-stroke phase, and it is the whole point of the override.
+    if args.shaping_lambda is not None:
+        goal = replace(goal, shaping_lambda=args.shaping_lambda)
     return goal
 
 

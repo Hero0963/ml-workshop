@@ -163,6 +163,7 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
         n_envs = 2
         vec = "subproc"
         dataset = "main_n1700_456"
+        shaping_lambda = 0.5
 
     resolved = resolve_goal(Args())
 
@@ -170,10 +171,29 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
     assert resolved.ppo.n_envs == Args.n_envs
     assert resolved.resources.vec_env == Args.vec
     assert resolved.dataset == Args.dataset
+    assert resolved.shaping_lambda == Args.shaping_lambda
     registered = GOALS["goal1_4x4"]
     assert registered.timesteps != Args.timesteps
     assert registered.ppo.n_envs != Args.n_envs
     assert registered.resources.vec_env == "dummy"
+    assert registered.shaping_lambda != Args.shaping_lambda
+
+
+def test_shaping_lambda_zero_is_an_override_not_an_omission() -> None:
+    """0.0 is falsy, and it is the exact value the control run needs to set."""
+
+    class Args:
+        goal = "goal1_4x4"
+        timesteps = None
+        n_envs = None
+        vec = None
+        dataset = None
+        shaping_lambda = 0.0
+
+    resolved = resolve_goal(Args())
+
+    assert resolved.shaping_lambda == 0.0
+    assert GOALS["goal1_4x4"].shaping_lambda > 0.0
 
 
 def test_worker_count_leaves_cores_free() -> None:

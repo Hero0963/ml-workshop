@@ -115,6 +115,48 @@ the copy in a *different* worktree is whatever that branch last committed — th
 still describes A2 as unstarted. Read the handover from the worktree whose branch owns the
 track, or read a nine-month-old plan by mistake.
 
+### RL Track — the shaping control returns nothing, and hands over a noise floor instead
+
+The handover's next step was to run the environment with `shaping_lambda=0`, because the restart
+plan specifies zero for the one-stroke phase while the implementation has always run 0.2 — 14% of
+an episode's return, never once tested. Doing it needed a `--shaping-lambda` override, added
+alongside `--timesteps` and `--dataset` rather than by editing the goal, so the default is not
+silently changed for every later run. `resolve_goal` tests `is not None`: 0.0 is falsy and is
+exactly the value the control needs, so a truth test would have made the experiment a no-op with
+perfectly healthy curves. `test_shaping_lambda_zero_is_an_override_not_an_omission` pins that.
+
+One seed said shaping was worth 0.038 of held-out solve rate. Three seeds per arm said otherwise.
+
+| arm | 20260815 | 31415926 | 27182818 | mean | spread |
+|---|---|---|---|---|---|
+| λ=0.2 | 0.877 | 0.839 | 0.845 | 0.8537 | **0.0380** |
+| λ=0 | 0.839 | 0.833 | 0.863 | 0.8450 | 0.0300 |
+
+The arms differ by 0.0087 in the mean while λ=0.2 spans 0.0380 within itself, and the paired
+per-seed differences change sign (+0.038, +0.006, −0.018). Lambda is not measurable here. The
+spec deviation closes with 0.2 kept and nothing needing to be redone.
+
+**The by-product is worth more than the experiment.** This is the first measurement of what a
+single seed is worth on this track: **±0.02–0.04 at 4×4**. The greedy baseline across all six
+runs spans 0.002, so essentially none of that is evaluation noise — it is training seed, which is
+consistent with trap #19 finding deterministic replay bit-identical. That reaches backwards. The
+0.877 in the handover table is the luckiest of three seeds and the honest figure is 0.854 ±
+0.038, which puts 4×4 further from its 0.90 bar than the table implied; the 6×6 resume's +0.065
+sits close to the noise and should be read as moved-but-unconfirmed; the +0.089 from enlarging
+the dataset is comfortably above it and still stands.
+
+**Priorities were re-ordered against the original goal on the owner's instruction.** The track
+exists to train a policy that solves unseen puzzles — 0.90 at 4×4, 0.85 at 6×6, eventually a
+tenth solver behind the API — and a session spent on measurement had drifted from that. Handover
+§6.5 now states one P0 and an explicit do-not-do list. P0 is the connectivity feature: 59.1% of
+held-out failures are dead ends while the environment only terminates once all four directions
+are blocked, which is the local dead end and far too late, since the puzzle is already lost the
+moment the unvisited region splits. It costs the 4.6% already measured, it is the only candidate
+with a mechanism rather than a knob, and it doubles as the falsification test for the GNN.
+Pushing 6×6 to full length, the GNN, PPO hyperparameters and a shaping sweep are all listed as
+deliberately deferred, with reasons, so they are not reopened. The rule that decides all of it:
+an effect smaller than ±0.04 is not an improvement.
+
 ## 2026-08-29
 
 ### RL Track A2 — the first training run, and three defects that never raise an error (branch `feat/rl-a2-training`, worktree `zip-rl`)
