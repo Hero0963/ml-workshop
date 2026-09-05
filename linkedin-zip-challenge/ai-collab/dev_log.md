@@ -6,6 +6,76 @@
 
 ## 2026-09-05
 
+### RL Track — what the learned prior is worth, measured on a budget axis; and half my own recommendation falsified (branch `feat/rl-a2-training`, worktree `zip-rl`)
+
+The previous entry ended by naming policy-ordered DFS as the next candidate, on the strength
+of best-of-16 buying +0.240 with the dumbest possible search. Did it the same day, and it
+produced one strong positive result and one refutation of the recommendation itself.
+
+**Why a different axis.** Every number this track has recorded is a solve rate, and a solve
+rate blends "how hard the puzzle is" with "how good the policy is". best-of-16's +0.240 also
+spent 7.5× the inference budget. So this ran everything on one axis — **node expansions** —
+and compared five arms at matched budgets. `dfs_random` is the control that matters: if
+random branch ordering matches the policy's, the search is doing the work and the network is
+decoration. And the point was never to beat `dfs.py`: these puzzles are solvable by
+construction and DFS is complete, so at a large enough budget even random ordering reaches
+100%. The question is how much search the prior saves.
+
+**The prior is worth a great deal — the first direct measurement of it on this track.**
+
+| board | budget = one path, no backtracking | to reach a target |
+|---|---|---|
+| 4×4 (n=1,928) | policy **0.8771** vs random **0.0902** | 0.90: policy 36 nodes, random 175 → **4.9× cheaper** |
+| 6×6 (n=2,000) | policy **0.4205** vs random **0.0005** | 0.40: policy 36 nodes; **random never gets there inside 500** |
+
+Median nodes to a solution is **15.0 on 4×4 and 35 on 6×6 — exactly the path length**, so more
+than half the puzzles are walked straight through with no backtracking at all. Random ordering
+needs 51.0 and 251.5.
+
+**But "structured search beats resampling" is false, and it is board-dependent.** On 4×4
+`dfs_policy` wins at every budget and reaches 1.0000 by 500 nodes; on 6×6 the crossover sits
+between 50 and 100 nodes and `best_of_n` leads from there (0.6260 vs 0.5760 at 175, 0.7005 vs
+0.6745 at 500). The mechanism is the one the oracle probe measured earlier the same day: **the
+fatal mistake happens early**. Backtracking re-decides the *last* moves; resampling re-rolls
+the whole path, early decisions included. 4×4's tree is 10^2.0, so 500 nodes is a real
+fraction of it and backtracking recovers; 6×6's is 10^6.2, where 500 nodes is nothing.
+
+**The obvious confound was measured, not argued away.** `dfs_policy` is deterministic and
+`best_of_n` samples, so comparing them conflates "backtrack vs restart" with "argmax vs
+sample". Added `dfs_policy_sampled`, which keeps the DFS structure and draws the branch order
+from the policy's probabilities instead of sorting it. On both boards the sampled arm is
+slightly *worse* (−0.014 on 4×4, −0.030 on 6×6), not better, so the resampling arm's advantage
+is not its stochasticity.
+
+**And the 1.0000 does not mean what it looks like.** `dfs_random` reaches 0.9990 at the same
+budget. The honest sentence is "the prior makes the same search about 5× cheaper", not "the
+policy solves every puzzle" — using that 1.0000 as a score would be this track's recurring
+mistake in a new costume.
+
+**Recording that the recommendation was half wrong.** The previous entry reasoned "independent
+resampling is dumb, so something structured will be better". On 6×6 — the goal with the actual
+gap — that was wrong: policy-DFS loses to the dumb thing it was meant to replace. The error was
+proposing a method without first asking *which failure mode it assumes*, and checking that
+against the failure mode already measured. The evidence that would have predicted this was
+collected earlier the same day: 59% of prunable 6×6 decisions are positions where all four
+moves already lose. **The refutation was sitting in hand and went unused.**
+
+**Practical read for A5**, if these ever ship as a solver: the inference strategy should differ
+by board — policy-DFS at ~100 nodes for 4×4 (0.9907), best-of-N at ~175 nodes for 6×6 (0.6260).
+Neither is shippable yet, and the out-of-distribution wall problem is untouched.
+
+**Next candidate, not authorised**: policy-DFS *with restarts* — keep the prior ordering but
+restart from the top every K nodes with a resampled order. It is low-budget policy-DFS and
+high-budget resampling in one, and both halves are already measured rather than assumed.
+About ten minutes.
+
+**Cost and resources.** 6×6 four arms 1,235s, its sampled control 687s, 4×4 five arms 364s.
+System CPU **sampled at 18% of 24 cores** while two of these ran concurrently, against the 75%
+ceiling — measured, not computed. One operational note: Python buffers stdout when it is
+redirected to a file, so the logs stay empty mid-run; **liveness has to be read off accumulated
+CPU time, not output** — the same test as trap #16's deadlock, used in the opposite direction
+(that one was every worker idle, this one is sustained load).
+
 ### RL Track — the one-step lookahead has no headroom, and search is the only order-of-magnitude lever (branch `feat/rl-a2-training`, worktree `zip-rl`)
 
 Baseline first: **251 passed, 8 xfailed in 14.42s**, `ruff` clean. Nine more than the entry
