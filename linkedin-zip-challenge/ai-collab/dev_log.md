@@ -4,6 +4,83 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-09-05
+
+### RL Track — the budget hypothesis holds, and what a run this small does to a 16 GB card (branch `feat/rl-a2-training`, worktree `zip-rl`)
+
+Baseline re-measured before touching anything: **242 passed, 8 xfailed in 20.44s**, `ruff`
+clean. The number is larger than the 214 the handover records for `main` because this branch
+carries the A2 tests on top of it; the handover already warns that the count is branch-dependent
+and only useful as a within-session comparison.
+
+**Only one thing was changed.** The handover's next-step list puts "add budget" first and
+`shaping_lambda=0` second, explicitly not together, so this run resumed `goal2_6x6_bigdata`
+from 5,005,312 steps / k=27 for 3,000,000 more and left every other knob alone.
+
+`--resume` overwrites `model_final.zip`, `train_state.json` and `eval_test.json` under the same
+run id, so the previous round's evidence was copied to `*_at5005312.*` first. `progress.jsonl`
+appends, so the k=27 curve survived on its own. The resume itself was verified from the log
+rather than from the code, because defect #10 of the last round is precisely a resume that
+silently restarts the curriculum: `Resuming goal2_6x6_bigdata from model_final.zip at 5005312
+steps, k=27`.
+
+**Result: `Trained 3,000,000 steps in 749.5s (4002 fps), k=30, promotions=9`.**
+
+| | previous (5M) | this run (8M) |
+|---|---|---|
+| held-out test solve | 0.344 | **0.409** |
+| dead end | 0.656 | 0.591 |
+| coverage | 0.626 | 0.678 |
+| curriculum k | 27/36 | **30/36** |
+
+Both controls are unmoved (greedy 0.004, masked random 0.000), the same values as 2026-08-15 and
+2026-08-29, so the evaluation protocol is aligned across three rounds and the numbers compare
+directly. The 0.85 target is still far away, but the question this run had to answer was whether
+more budget buys anything, and it does.
+
+**The promotion that had stalled took 2,867,776 steps.** The cost per curriculum level is now
+416 → 3,744 → 47,376 → 76,624 → 168,976 → 289,696 → 812,944 → 1,307,280 → **2,867,776**, i.e.
+roughly ×2 per level over the last three. k=30 has already consumed 2,436,944 steps without
+promoting, which is consistent with that shape rather than evidence against it: its rollout
+success rate is still climbing monotonically (0.679 → 0.712 → 0.731 → 0.745 → **0.764** across
+five equal slices of its 298 progress rows, threshold 0.90) — the same shape k=27 had before it
+promoted. Extrapolating puts full length at roughly 15–30M more steps, one to two hours, **but
+that extrapolation is explicitly untrustworthy**: the same reasoning was off by three times last
+round, and it is recorded here as an order of magnitude to argue about, not a prediction. The
+alternative explanation — a capacity ceiling that makes the cost diverge rather than double —
+has not been ruled out, and the cheapest test is simply what 30→33 ends up costing.
+
+**A 16 GB card is asleep during this.** Sampled during training the GPU sits at 36–40%
+utilisation; sampled again after it exits, **0–5%**, so the ~38 points really are the run and not
+the desktop that shares the card. But utilisation counts *time with a kernel resident*, not
+occupancy: a 1.17M-parameter policy launching small kernels at high frequency looks busy and
+computes almost nothing, and both rounds landed at the same throughput (3,968 vs 4,002 fps),
+which is what a CPU-bound loop looks like. Rebuilding the extractor and measuring directly:
+weights 4.31 MiB, 30.21 MiB allocated after a forward/backward/Adam step, **115.58 MiB peak** at
+batch 512 — against 13.0 GiB for a 7B model's fp16 weights alone. Nearly all of the parameters
+sit in the single `Linear(4104→256)` (~1.05M of 1.17M); the three convolutions hold ~77k. The
+rollout buffer never reaches the card at all — SB3 keeps it as `np.zeros` on the host
+(`buffers.py:392`) and moves one minibatch at a time. The 12,281 MiB cap in `ResourceSettings`
+is therefore a guard rail, not a constraint anything currently approaches.
+
+**Design notes were written down, on purpose.** The owner restated on this date that the point of
+this side project is learning by doing, not the metric, so the session's design questions — why
+the memory footprint is that small, what the 8 channels are, why `MaskablePPO` was chosen, how
+all of it maps onto Go engines — went into
+`reports/2026-09-05_rl-budget-and-design-notes.md` §5 instead of evaporating with the
+conversation. The short version: the 8 planes *are* AlphaGo-style feature planes (AlphaGo used
+48, AlphaGo Zero 17, this uses 8, and ours are closer to Zero's in character since none of them
+encode heuristics); `MaskablePPO` was picked for masking and toolchain availability, not for any
+Go lineage, though restart plan §9 already schedules an `AlphaZero-lite` comparison as A6; and
+the measured best-of-N result (deterministic 0.870 → best-of-16 0.967) is the same
+"policy prunes the search" idea that AlphaGo rests on, reachable here far more cheaply by
+ordering the existing DFS with the policy than by writing an MCTS.
+
+**One documentation trap worth naming.** `handover-rl-solver.md` exists in every worktree, and
+the copy in a *different* worktree is whatever that branch last committed — the `zip-vlm` copy
+still describes A2 as unstarted. Read the handover from the worktree whose branch owns the
+track, or read a nine-month-old plan by mistake.
+
 ## 2026-08-29
 
 ### RL Track A2 — the first training run, and three defects that never raise an error (branch `feat/rl-a2-training`, worktree `zip-rl`)

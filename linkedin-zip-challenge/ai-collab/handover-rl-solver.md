@@ -1,7 +1,9 @@
 # 交接文件 — RL Track（一筆畫 solver）
 
 > **接手這條 track 的 agent／developer 從這一份開始讀，讀完就能動手。**
-> 最後更新：2026-08-29（Asia/Taipei）｜分支 `feat/rl-a2-training`｜worktree `zip-rl`｜對應 roadmap 第 3 項
+> 最後更新：2026-09-05（Asia/Taipei）｜分支 `feat/rl-a2-training`｜worktree `zip-rl`｜對應 roadmap 第 3 項
+> ⚠ **要讀就讀 `zip-rl` 這份**：本檔在每個 worktree 都有一份，別的 worktree 拿到的是那條分支上次 commit 的版本
+> （`zip-vlm` 的副本停在 2026-08-15，還在說「A2 尚未開始」）。
 > 其他文件是延伸閱讀，本檔會標明什麼時候該去翻哪一份。
 > 姊妹 track 的交接文件：[`handover-vlm-parser.md`](handover-vlm-parser.md)
 
@@ -9,13 +11,12 @@
 
 ## 0. 一句話現況
 
-**A0／A1／A2 都跑完了，而且「模型在背答案」這個診斷已經被實驗證實並解掉。** 資料集加大 11 倍後，
-訓練／held-out 落差從 +0.162／+0.250 收斂到 **+0.050／+0.009**，held-out 成績同步上升。
-**兩個 goal 仍未達門檻**，但瓶頸換人了：**6×6 現在缺的是訓練預算，不是資料。**
+**A0／A1／A2 都跑完了，兩個瓶頸假說也依序被實驗證實：「在背答案」加資料解掉了，「預算不夠」加預算也真的推得動。**
+**兩個 goal 仍未達門檻**，而現在卡的是第三個問題——**推到全長的成本是小時級，值不值得投**。
 
-> ★ **接手前一定要知道的六件事：**
+> ★ **接手前一定要知道的七件事：**
 >
-> **① 兩輪訓練都做完了（2026-08-29）**，這是完整成績（held-out test、`deterministic=True`）：
+> **① 三輪訓練都做完了**，這是完整成績（held-out test、`deterministic=True`）：
 >
 > | goal | 資料集 | 步數 | curriculum | train | test | 落差 | 門檻 |
 > |---|---|---|---|---|---|---|---|
@@ -23,23 +24,32 @@
 > | 4×4 | **新（15,419）** | 1M | 全長 | 0.927 | **0.877** | **+0.050** | 0.90 ❌ |
 > | 6×6 | A2（1,360） | 5M | k=33/36 | 0.502 | 0.253 | +0.250 | 0.85 ❌ |
 > | 6×6 | **新（16,000）** | 5M | k=27/36 | 0.352 | **0.344** | **+0.009** | 0.85 ❌ |
+> | 6×6 | 新（16,000） | **8M**（續訓） | **k=30/36** | — | **0.409** | — | 0.85 ❌ |
 >
-> 對照組 4×4 greedy 0.117／random 0.089、6×6 greedy 0.004／random 0.000，**重現 2026-08-15 的舊表**
+> 對照組 4×4 greedy 0.117／random 0.089、6×6 greedy 0.004／random 0.000，**跨三輪完全相同**
 > ⇒ 評估協定是對齊的，這些數字可以跨輪比較。
+> 2026-09-05 那一輪的完整分析在
+> [`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md)。
 >
 > **② 落差收斂的形狀是對的**：held-out 上升、**訓練集反而下降**（4×4 0.950→0.927、6×6 0.502→0.352），
 > 那是「停止背答案」的特徵，不是運氣。難度對照也做過（兩個沒學過任何一邊的 baseline 打同一組
 > train／test，四項全顯示 held-out 一樣難或略易），所以「test 比較難」已排除。
 >
-> **③ ★ 下一步不是加資料，是加預算。** 6×6 的落差只剩 +0.009，**沒有東西可以再 overfit**。
-> 卡住的是 curriculum 只推到 **k=27/36**（比 A2 的 33 更淺，因為同樣預算要涵蓋 11 倍變化），
-> 而它在 k=27 的成功率到截斷時**還在單調爬**（最後 2.3M 步 0.704 → **0.820**，晉級門檻 0.90）。
-> `--resume` 會帶著 k 與步數續訓，不必重跑。
+> **③ ✅ 「加預算有效」已驗證（2026-09-05），但代價在指數上升。** 續訓 3M 步（5M → 8,011,776，749.5s）：
+> curriculum **k=27 → 30**、held-out **0.344 → 0.409**、死路率 0.656 → 0.591。
+> 上一輪在 k=27 卡了 2.3M 步沒過門檻，續訓後**56.9 萬步就晉級** ⇒ 當時的判讀是對的。
+>
+> **但每級晉級成本約以 ×2 成長**：812,944 → 1,307,280 → **2,867,776**。
+> k=30 已花 2,436,944 步未晉級，而其 rollout 成功率**仍單調爬升**（0.679 → **0.764**，門檻 0.90），
+> 形狀與 k=27 晉級前完全相同 ⇒ **不是停滯，是還沒到**。
+> 外推推到全長還要 **15–30M 步 ≈ 1–2 小時**——⚠ **這個外推不可信**（§3.8：上一輪同樣推法差了三倍），
+> 只當量級參考。**還沒排除的替代解釋**：k 越大越接近整盤，可能存在學不動的天花板 ⇒ 成本發散而非 ×2。
+> **最便宜的判別證據是下一級 30→33 實際花多少**（落在 4–8M 內則 ×2 模型成立）。
 >
 > ⚠ **不要把 curriculum 的 rollout 成功率當能力指標**——它疊了三層有利條件：起點是
-> **k=27（前 10 格已預先走好，只走 35 步裡的 26 步）**、題目是**訓練集**、策略是**隨機取樣**。
-> 同一個模型從真正起點、在 held-out、deterministic 只有 **0.344**。
-> 那個 0.820 唯一的用途是**決定 curriculum 要不要晉級**與**判斷加預算有沒有用**。
+> **k（前面已預先走好）**、題目是**訓練集**、策略是**隨機取樣**。
+> 同一個模型從真正起點、在 held-out、deterministic 只有 **0.409**。
+> 那個 0.764 唯一的用途是**決定 curriculum 要不要晉級**與**判斷加預算有沒有用**。
 > **拿它當成績就是 2025 年那次「被訓練期高分騙過」的翻版。**
 >
 > **④ ⚠ 有一個沒人記錄的設計偏離**：restart 報告的階段表指定 shaping λ 在**一筆畫階段是 0**
@@ -52,6 +62,15 @@
 > **⑥ 改設定只改 `src/core/rl/train_config.py`。** goal（盤面／牆策略／步數預算／done 門檻）、PPO 超參、
 > 網路、curriculum、資源上限全在那一個檔。訓練腳本只負責執行一個 goal。
 > **資料集現在預設是 `seed20300000_n20000_4-6`；要重現 A2 的數字加 `--dataset main_n1700_456`。**
+>
+> **⑦ ★★ 這條 track 的產出是「做中學」，不是指標。** 2026-09-05 本人明確定案
+> （restart plan §8 早就寫過：「不是為了比 CP-SAT 快或準（不會贏），是為了學 masking／PPO／curriculum／MCTS／RLVR」）。
+> **這會改變「什麼叫做完」**：沒達標不等於失敗，**「知道為什麼沒達標」本身就是產出**；
+> 反過來，為了衝分數而犧牲可解釋性（同時改多個變數、只留贏的那次、拿訓練期高分當成績）**與目標相反**。
+> ⇒ **設計理由與機制解釋要落盤進 `reports/`，不能只留在對話裡**——它和數字同等是交付物。
+> 已落盤的一份：[`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md) §5
+> （8 個 channel 就是 AlphaGo 式的 feature planes、為什麼選 MaskablePPO、best-of-N 為何就是「policy 引導搜尋」的雛形、
+> 以及圍棋與 Zip 的兩個本質差異）。
 
 A0 的結論仍然是整條 track 的前提：**2025-10 的舊環境不是「難學」，是「餵標準答案也不會過關」**，
 而且它的獎勵與 Zip 規則反相關。所以 env v2 是重寫，不是修補。
@@ -68,9 +87,10 @@ A0 的結論仍然是整條 track 的前提：**2025-10 的舊環境不是「難
 | 4 | [`reports/2026-08-15_rl-restart-plan.html`](reports/2026-08-15_rl-restart-plan.html)（瀏覽器開） | 要調超參、改觀測或考慮路線 B 才讀。§4.8 有 PPO 起手超參，§7 是 GRPO 路線 |
 | 5 | [`roadmap.md`](roadmap.md) 的「已定案不要再重開的決策」表 | 一定，快速掃過 |
 | 6 | [`../AGENTS.md`](../AGENTS.md) | 一定。子專案規範正本（venv、驗證、紅線、回報格式） |
-| 7 | `dev_log.md` 的 `## 2026-08-15` → RL Track A0／A1 兩則 | 想看做了什麼、量到什麼時翻 |
+| 7 | `dev_log.md` 的 RL 區塊：`## 2026-08-15`（A0／A1）、`## 2026-08-29`（A2）、`## 2026-09-05`（續訓） | 想看做了什麼、量到什麼時翻 |
+| 8 | [`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md) | 最新一輪的數字在 §1–3；**§5 是設計筆記**（8 channel 與 AlphaGo feature planes、為何選 MaskablePPO、best-of-N 與搜尋），想搞懂「為什麼這樣設計」就讀它 |
 
-> ⚠ **不要整份讀 `dev_log.md`**（1,700+ 行），用日期或關鍵字搜。
+> ⚠ **不要整份讀 `dev_log.md`**（**1,977 行**，2026-09-05 實測），用日期或關鍵字搜。
 
 ### 這條 track 的工作守則（都是實際犯錯後定下來的，照做）
 
@@ -87,6 +107,10 @@ A0 的結論仍然是整條 track 的前提：**2025-10 的舊環境不是「難
    **不要只留在對話裡。** commit 需要本人當次授權，單獨說 commit **不含** push。
 6. **資料集用 digest 認，不用指令認**（§7 與 `generate_dataset_v2` 的 docstring）。新資料集的
    `--base-seed` 要離既有的夠遠，否則只是同一亂數流位移。
+7. **★ 解釋要跟數字一起交付**（2026-09-05 定案，見 §0 ⑦）。被問到「為什麼這樣設計」時，
+   答案要**去讀原始決策文件**（restart plan／計畫書／程式碼），不是憑印象重新編一套理由；
+   查完就**寫進 `reports/`**。判準很簡單：**下一個 session 會不會需要再問一次同樣的問題**——
+   會的話就該落盤。
 
 ---
 
@@ -96,7 +120,7 @@ worktree `D:\it_project\github_sync\zip-rl` 已存在且已 `uv sync`。若要�
 
 ```powershell
 cd D:\it_project\github_sync\ml-workshop
-git worktree add ..\zip-rl feat/rl-masked-ppo
+git worktree add ..\zip-rl feat/rl-a2-training
 Copy-Item .\linkedin-zip-challenge\.env ..\zip-rl\linkedin-zip-challenge\.env   # .env 不進版控，缺它 app 啟動會出錯
 cd ..\zip-rl\linkedin-zip-challenge
 uv sync
@@ -112,7 +136,8 @@ uv run ruff check .  # 期待 All checks passed!
 
 - ⚠ **通過數取決於這條 branch 帶了哪些 commit，不要當固定值**：
   `feat/rl-masked-ppo` 在 A1 當時是 **76 passed**；`main` 於 2026-08-29 併入 VLM track 後是
-  **214 passed**（多出來的都是 `src/core/vl_models/`、`src/app/` 與 `src/ui/` 的測試，與 RL 無關）。
+  **214 passed**（多出來的都是 `src/core/vl_models/`、`src/app/` 與 `src/ui/` 的測試，與 RL 無關）；
+  **本分支 `feat/rl-a2-training` 在 2026-09-05 實測是 242 passed, 8 xfailed in 20.44s**（多的是 A2 的測試）。
   **拉了 main 之後數字變大是正常的**，不是壞掉。真正的基線用法是：開工先跑一次記下來，之後拿它比較。
 - **8 個 xfailed 是刻意的**，不是壞掉：它們釘住 env v1 的缺陷（`xfail(strict=True)`），**若哪天變成 XPASS 會失敗**，代表有人改了 `rl_env.py`，那時要回頭更新 A0 報告。
 - **venv 陷阱**：一律 `cd linkedin-zip-challenge` 再 `uv run`。repo 根的 `.venv` 是 py3.9 devtools，跑不動這個子專案。
@@ -167,6 +192,23 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
     GPU 峰值只有 **83.8 MiB**，整個訓練程序約吃 1 個核心 ⇒ **瓶頸是單執行緒的 Python env step**，
     不是 GPU、不是網路。
 
+**2026-09-05 新增**（完整分析見 [`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md)）
+
+11. **`--resume` 續訓確實帶回 curriculum**（實測 log：`Resuming ... at 5005312 steps, k=27`）。
+    ⚠ 但**要看 log 確認，不要相信程式碼**——陷阱 #10 的失敗模式就是靜默從 `k_start` 重來且每條曲線都正常。
+    另外 `--timesteps N --resume` 是**再加 N 步**不是總數：SB3 在 `reset_num_timesteps=False` 時做
+    `total_timesteps += self.num_timesteps`（`base_class.py:416`）。
+12. **`--resume` 會覆寫同 run-id 的 `model_final.zip`／`train_state.json`／`eval_test.json`。**
+    續訓前先把上一輪的複製一份（本次留下 `*_at5005312.*`），否則上一輪的成績就只剩文件裡的數字、
+    沒有可重跑的權重。`progress.jsonl` 是 append，曲線歷史會自動保留。
+13. **GPU utilization 高不代表 GPU 是瓶頸。** 實測訓練中 36–40%、**訓練結束後 0–5%**（同一張卡上還有桌面程式，
+    所以**一定要跑結束後的對照**才能歸因）。但 `utilization.gpu` 量的是「有 kernel 在執行的時間比例」，
+    不是算力佔用：117 萬參數的網路高頻發射小 kernel 就長這樣。
+    佐證：兩輪 fps 幾乎相同（3,968 vs 4,002）。**顯存**才是真的沒用到——實測權重 4.31 MiB、
+    batch 512 的 fwd+bwd+Adam 峰值 115.58 MiB（對照：7B 模型光 fp16 權重就 13.0 GiB）；
+    參數約 90% 集中在 `Linear(4104→256)`，三層 conv 只有約 7.7 萬；
+    **rollout buffer 根本不上顯卡**（SB3 用 `np.zeros`，`buffers.py:392`，每個 minibatch 才搬）。
+
 ---
 
 ## 4. 已定案的設計決策（不要重開）
@@ -199,6 +241,7 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/tests/rl/test_rl_env_v2.py` | 21 個測試：mask 四規則、死路邊界、reward 邊界、ground-truth 重播 |
 | `src/core/tests/rl/test_rl_env_v1_diagnosis.py` | 釘住 v1 缺陷（8 個 strict xfail ＋ 對照測試） |
 | `ai-collab/reports/2026-08-15_a0-env-v1-findings.md` | A0 完整報告 |
+| `ai-collab/reports/2026-09-05_rl-budget-and-design-notes.md` | **2026-09-05 新增**。續訓結果 ＋ curriculum 成本曲線 ＋ GPU 實測 ＋ **§5 設計筆記**（做中學的落盤處）|
 
 **沒有動到**：`src/core/rl/` 的舊檔案、`src/core/vl_models/`（VLM track 的地盤）、
 `src/core/utils.py`、`src/core/puzzle_generation/`、`src/app/`、`src/ui/`。
@@ -239,35 +282,47 @@ env.set_reverse_curriculum_k(6)  # 訓練中調整起點距離；k >= 2
 **落差從 +0.162／+0.250 收斂到 +0.050／+0.009 ⇒「資料太少在背答案」成立且已解掉。**
 **不要再加資料**——6×6 的落差只剩 +0.009，沒有東西可以再 overfit。
 
-### ★ 先做這兩件（依序）
+### ✅ ① 加預算已完成（2026-09-05），結論是「有效，但貴」
 
-**① 6×6 加訓練預算，用 `--resume` 續訓**
+續訓 3M 步（5M → 8,011,776，749.5s / 4,002 fps）：curriculum **k=27 → 30**、held-out **0.344 → 0.409**。
+詳見 §0 ③ 與 [`reports/2026-09-05_rl-budget-and-design-notes.md`](reports/2026-09-05_rl-budget-and-design-notes.md)。
+**這一項的 done 條件只達成一半**：held-out 有跟著動（✅），但 curriculum 沒推到全長（❌，停在 k=30/36）。
+
+重跑或再續訓的指令（`--timesteps` 是**再加**多少步，不是總數）：
 
 ```powershell
 uv run python -m src.core.rl.train_maskable_ppo --goal goal2_6x6 --run-id goal2_6x6_bigdata `
   --resume --timesteps 3000000 --eval-split test --eval-episodes 20
 ```
 
-它會從 `train_state.json` 讀回 **k=27 與 5,000,000 步**繼續（約 12 分鐘）。
-理由：k=27 的成功率到截斷時還在單調爬（0.704 → 0.820，晉級門檻 0.90）。
-**Done**：curriculum 推到全長（k=None），並記錄 held-out 成績有沒有跟著動。
+⚠ 續訓前**先備份** `model_final.zip`／`train_state.json`／`eval_test.json`（§3.12）。
 
-**② `shaping_lambda=0` 的對照**
+### ★ 接下來做這兩件（依序）
+
+**① `shaping_lambda=0` 的對照 —— 先做這個，它最便宜**
 
 restart 報告的階段表指定一筆畫階段的 shaping λ **是 0**（「只剩 +1 與 γ」），
 而 `PuzzleEnvV2` 一直用 0.2（佔一局總分 14%），**從沒關掉跑過**。
-改 `train_config.py` 的 `Goal.shaping_lambda=0.0` 開一個新 run-id 跑 4×4（約 4 分鐘，最便宜的對照）。
-**Done**：知道 shaping 是在幫忙還是扯後腿——兩個答案都有價值，因為現在等於在跑一個沒人驗證過的設定。
+⇒ **目前所有數字都是在一個與規格不符、且沒人驗證過的設定下量到的。**
+改 `train_config.py` 的 `Goal.shaping_lambda=0.0`，開一個**新 run-id** 跑 4×4（約 4 分鐘）。
+**Done**：知道 shaping 是在幫忙還是扯後腿——兩個答案都有價值。
 
-⚠ **兩件事不要同時改**（預算 ＋ shaping 一起動就分不出誰造成什麼）。
+**② 依 ① 的結果，決定要不要把 6×6 推到全長**
+
+外推還需要 **15–30M 步 ≈ 1–2 小時**（⚠ 外推不可信，見 §0 ③）。**這是小時級，開跑前要本人授權。**
+真正要回答的問題是「×2 成長」還是「成本發散」：
+**最便宜的判別證據是下一級 30→33 實際花多少**——落在 4–8M 內則 ×2 模型成立，
+顯著超出就該改路（調超參／加網路容量／改推論策略），而不是繼續砸預算。
+
+⚠ **兩件事不要同時改**（shaping ＋ 預算一起動就分不出誰造成什麼）。
 
 ### 之後才輪到這些
 
 | 想做的事 | 為什麼要等 |
 |---|---|
-| 調 PPO 超參（`ent_coef`、`lr`、`n_steps`） | 超參是**未調校**的起手值沒錯，但現在的瓶頸是資料，調了也量不準 |
-| `shaping_lambda` 敏感度（現在 0.2，未調校） | 同上 |
-| A3（5×5、加牆、權重接續） | 6×6 都還沒到全長 |
+| 調 PPO 超參（`ent_coef`、`lr`、`n_steps`） | 超參確實是**未調校**的起手值，但 `shaping_lambda` 的對照更便宜也更該先做（現在等於在一個沒人驗證過的 reward 設定上調超參）|
+| `shaping_lambda` **敏感度掃描**（0.1／0.3…） | 先跑 §6 的 λ=0 對照，確認它到底有沒有用，再談掃描 |
+| A3（5×5、加牆、權重接續） | 6×6 還在 k=30/36，沒到全長 |
 | A4（7×7、held-out 1,000 題） | 7×7 資料集也還沒生（`--sizes 7`，100 題 35 秒，已不是瓶頸） |
 | A5（掛成 API 第 10 種 solver） | ⚠ 會動 `src/app/routers/solver.py`，動之前先確認 VLM track 沒在改。
   另外**牆的分布不同**：RL 訓練資料的牆是 0 或 2–5 道，VLM 讀出來的真實題目可到 10+ 道 ⇒ 分布外 |
@@ -369,6 +424,17 @@ restart 報告的階段表指定一筆畫階段的 shaping λ **是 0**（「只
     ⚠ **4×4 不受這個影響**：它的 curriculum 已推到全長，所以最終 rollout 與評估量的是同一件事
     （只差訓練集／held-out 與取樣／argmax）。**「沒看過的 4×4 一次走完」的正確數字是 0.877。**
 
+**2026-09-05 新增**
+
+22. **★ 交接文件在每個 worktree 都有一份，別的 worktree 那份是舊的。** 本檔進版控，
+    所以 `zip-vlm`／`ml-workshop` 看到的是**那條分支上次 commit 的版本**——2026-09-05 當天
+    `zip-vlm` 的副本停在 2026-08-15，還在寫「下一步是 A2 第一次訓練」，而 A2 早就跑完兩輪。
+    **從哪個 worktree 開 session，讀到的 `CLAUDE.md`／`AGENTS.md`／handover 就是哪一份。**
+    要動 RL 就從 `zip-rl` 開，或至少確認你讀的是 `zip-rl` 那份。
+23. **★ `--timesteps N --resume` 是「再加 N 步」不是「總數」**（SB3 `base_class.py:416`：
+    `reset_num_timesteps=False` 時 `total_timesteps += self.num_timesteps`）。
+    把它當總數會得到一個比預期長得多的 run。
+
 ---
 
 ## 8. 與 VLM track 的協作約定
@@ -395,5 +461,8 @@ restart 報告的階段表指定一筆畫階段的 shaping λ **是 0**（「只
 - **只訓過一個 seed**。所有結論都建立在單一 seed 上，跨 seed 重複還沒做。
 - **網路架構已實作**：`GridScalarExtractor`（3 層 3×3 conv、padding=1、不 pooling、policy 共 1,170,949 參數）。
   ⚠ **SB3 預設不會用 CNN**，原因見 §7.8。
-- **6×6 還沒推到全長**（停在 k=33/36），但那是預算問題不是能力問題，`--resume` 可續。
+- **6×6 還沒推到全長**（目前 **k=30/36**，2026-09-05 續訓後）。「是預算問題不是能力問題」**已有一次實驗支持**
+  （加預算真的推動了一級），但**尚未證明能推到底**：每級成本約 ×2 成長，而「成本發散」這個替代解釋還沒排除。
+  判別方式見 §0 ③。`--resume` 可續，備份要先做（§3.12）。
+- **⚠ 一輪訓練約 12 分鐘、推到全長估 1–2 小時**，後者是**小時級 ⇒ 開跑前要本人授權**（守則 4）。
 - **出題器的 parity 根治**（奇數盤只從多數色挑起點）要動共用模組，**已提報但未做**，由本人決定。
