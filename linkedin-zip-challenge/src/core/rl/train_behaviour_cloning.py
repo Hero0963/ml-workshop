@@ -46,7 +46,7 @@ from loguru import logger
 
 from src.core.rl.action_space import path_to_actions
 from src.core.rl.baselines import make_eval_env
-from src.core.rl.rl_env_v2 import PuzzleSample
+from src.core.rl.rl_env_v2 import DEFAULT_GAMMA, PuzzleSample
 from src.core.rl.train_config import GOALS, Goal
 from src.core.rl.train_maskable_ppo import (
     CHECKPOINT_DIRNAME,
@@ -70,49 +70,90 @@ VAL_PUZZLES_PER_EPOCH = 300
 # Below this the mask leaves no decision to make, so the state says nothing about the policy.
 MIN_LEGAL_ACTIONS_FOR_A_CHOICE = 2
 PROGRESS_FILENAME = "bc_progress.jsonl"
+# Matches PPO's own `vf_coef`, so the critic is weighted the same way here as in the
+# fine-tune that consumes these weights.
+DEFAULT_VALUE_COEF = 0.5
 
 
 class SupervisedPair:
-    """One labelled decision: what the agent saw, what was legal, what the solution did."""
+    """One labelled decision, plus the return the expert collected from here on.
 
-    __slots__ = ("observation", "action_mask", "action")
+    `value_target` exists so the value head is not left random. PPO estimates advantages
+    from V(s); starting a fine-tune with an untrained value head means the first updates
+    are driven by noise, which is how a good cloned policy gets destroyed before the
+    critic catches up.
+    """
+
+    __slots__ = ("observation", "action_mask", "action", "value_target")
 
     def __init__(
-        self, observation: dict[str, np.ndarray], action_mask: np.ndarray, action: int
+        self,
+        observation: dict[str, np.ndarray],
+        action_mask: np.ndarray,
+        action: int,
+        value_target: float = 0.0,
     ) -> None:
         self.observation = observation
         self.action_mask = action_mask
         self.action = action
+        self.value_target = value_target
 
 
 def iter_supervised_pairs(
-    samples: Sequence[PuzzleSample], connectivity_features: bool
+    samples: Sequence[PuzzleSample],
+    connectivity_features: bool,
+    shaping_lambda: float = 0.0,
+    gamma: float = DEFAULT_GAMMA,
 ) -> Iterator[SupervisedPair]:
     """Replays each solution through the env, yielding every decision along the way.
 
     The env is built through `baselines.make_eval_env`, which is the project's single
     evaluation construction point, so the observations here cannot drift from the ones the
     policy is scored on -- the failure that cost three experiment arms in the P0 run.
+
+    `value_target` is the *observed* discounted return of the replay, accumulated backwards
+    once the episode is done, rather than an analytic `gamma ** remaining`: the shaping term
+    is part of the reward the fine-tuning env pays out, and re-deriving it here would be a
+    second copy of the env's reward rule.
+
+    ⚠ This is V under the *expert*, not under our policy. The expert always succeeds, so
+    the target is optimistic -- but its ordering across states is right, which is what
+    advantage estimation mostly needs, and PPO regresses the bias away quickly.
     """
     for sample in samples:
-        env = make_eval_env(sample, connectivity_features=connectivity_features)
+        env = make_eval_env(
+            sample,
+            connectivity_features=connectivity_features,
+            shaping_lambda=shaping_lambda,
+            gamma=gamma,
+        )
         env.reset(seed=DEFAULT_SEED)
+        trajectory: list[SupervisedPair] = []
+        rewards: list[float] = []
         for action in path_to_actions(sample.solution_path):
             mask = env.action_masks()
-            yield SupervisedPair(env.observation(), mask.copy(), action)
-            env.step(action)
+            trajectory.append(SupervisedPair(env.observation(), mask.copy(), action))
+            _, reward, _, _, _ = env.step(action)
+            rewards.append(float(reward))
+
+        discounted = 0.0
+        for pair, reward in zip(reversed(trajectory), reversed(rewards)):
+            discounted = reward + gamma * discounted
+            pair.value_target = discounted
+        yield from trajectory
 
 
 def _stack(
     pairs: Sequence[SupervisedPair],
-) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray, np.ndarray]:
     observation = {
         key: np.stack([pair.observation[key] for pair in pairs])
         for key in pairs[0].observation
     }
     masks = np.stack([pair.action_mask for pair in pairs])
     actions = np.array([pair.action for pair in pairs], dtype=np.int64)
-    return observation, masks, actions
+    returns = np.array([pair.value_target for pair in pairs], dtype=np.float32)
+    return observation, masks, actions, returns
 
 
 def _batches(
@@ -147,7 +188,7 @@ def evaluate_action_accuracy(
     choice_correct = choice_total = 0
     pairs = iter_supervised_pairs(samples, goal.connectivity_features)
     for batch in _batches(pairs, batch_size):
-        observation, masks, actions = _stack(batch)
+        observation, masks, actions, _ = _stack(batch)
         with th.no_grad():
             obs_tensor, _ = model.policy.obs_to_tensor(observation)
             distribution = model.policy.get_distribution(obs_tensor, action_masks=masks)
@@ -166,29 +207,43 @@ def evaluate_action_accuracy(
 
 
 def train_epoch(
-    model, pairs: Iterator[SupervisedPair], batch_size: int
-) -> tuple[float, int]:
-    """One pass of masked cross-entropy over the replayed solutions."""
-    total_loss = 0.0
+    model, pairs: Iterator[SupervisedPair], batch_size: int, value_coef: float
+) -> tuple[dict[str, float], int]:
+    """One pass of masked cross-entropy over the replay, plus value regression.
+
+    The value term is what makes this a *warm start* rather than just a good policy: PPO
+    derives its advantages from V(s), so handing the fine-tune an untrained critic means
+    the first updates are noise -- and the cloned policy is what that noise destroys.
+    """
+    totals = {"loss": 0.0, "policy_loss": 0.0, "value_loss": 0.0}
     steps = 0
     for batch in _batches(pairs, batch_size):
-        observation, masks, actions = _stack(batch)
+        observation, masks, actions, returns = _stack(batch)
         obs_tensor, _ = model.policy.obs_to_tensor(observation)
+        device = obs_tensor["grid"].device
         distribution = model.policy.get_distribution(obs_tensor, action_masks=masks)
         # The masked log-prob is exactly what inference computes, so the loss optimises the
         # quantity that is actually used rather than an unmasked proxy.
-        loss = -distribution.log_prob(
-            th.as_tensor(actions, device=obs_tensor["grid"].device)
+        policy_loss = -distribution.log_prob(
+            th.as_tensor(actions, device=device)
         ).mean()
+        values = model.policy.predict_values(obs_tensor).flatten()
+        value_loss = th.nn.functional.mse_loss(
+            values, th.as_tensor(returns, device=device)
+        )
+        loss = policy_loss + value_coef * value_loss
 
         model.policy.optimizer.zero_grad()
         loss.backward()
         th.nn.utils.clip_grad_norm_(model.policy.parameters(), model.max_grad_norm)
         model.policy.optimizer.step()
 
-        total_loss += float(loss.item())
+        totals["loss"] += float(loss.item())
+        totals["policy_loss"] += float(policy_loss.item())
+        totals["value_loss"] += float(value_loss.item())
         steps += 1
-    return (total_loss / steps if steps else 0.0), steps
+    divisor = steps or 1
+    return {key: value / divisor for key, value in totals.items()}, steps
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -200,6 +255,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--eval-split", default="test")
     parser.add_argument("--eval-episodes", type=int, default=20)
+    parser.add_argument(
+        "--value-coef",
+        type=float,
+        default=DEFAULT_VALUE_COEF,
+        help="Weight on the value regression; 0 leaves the critic untrained.",
+    )
     parser.add_argument(
         "--train-puzzles",
         type=int,
@@ -243,17 +304,23 @@ def main() -> None:
         order = list(train_samples)
         random.shuffle(order)
         epoch_started = time.perf_counter()
-        loss, steps = train_epoch(
+        losses, steps = train_epoch(
             model,
-            iter_supervised_pairs(order, goal.connectivity_features),
+            iter_supervised_pairs(
+                order,
+                goal.connectivity_features,
+                shaping_lambda=goal.shaping_lambda,
+                gamma=goal.ppo.gamma,
+            ),
             goal.ppo.batch_size,
+            args.value_coef,
         )
         accuracy = evaluate_action_accuracy(
             model, val_samples, goal, goal.ppo.batch_size
         )
         row = {
             "epoch": epoch,
-            "loss": round(loss, 6),
+            **{key: round(value, 6) for key, value in losses.items()},
             "gradient_steps": steps,
             **{f"val_{key}": round(value, 6) for key, value in accuracy.items()},
             "seconds": round(time.perf_counter() - epoch_started, 1),
@@ -262,7 +329,8 @@ def main() -> None:
         with progress_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(row) + "\n")
         logger.info(
-            f"epoch {epoch}/{args.epochs} loss={loss:.4f} "
+            f"epoch {epoch}/{args.epochs} policy_loss={losses['policy_loss']:.4f} "
+            f"value_loss={losses['value_loss']:.4f} "
             f"val_choice_accuracy={accuracy['choice_accuracy']:.4f} "
             f"(all decisions {accuracy['action_accuracy']:.4f}) ({row['seconds']}s)"
         )
@@ -292,6 +360,7 @@ def main() -> None:
                 "connectivity_features": goal.connectivity_features,
             },
             "epochs": args.epochs,
+            "value_coef": args.value_coef,
             "batch_size": goal.ppo.batch_size,
             "learning_rate": goal.ppo.learning_rate,
             "train_puzzles": len(train_samples),

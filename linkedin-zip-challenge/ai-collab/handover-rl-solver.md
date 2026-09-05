@@ -95,7 +95,17 @@ GNN 的跨尺寸泛化（現在的 `Linear(4104→256)` 綁死 8×8 padding，�
   6×6 的差距**隨 N 放大**：deterministic +0.053 → **best-of-16 +0.151（0.649 → 0.800）**。
   ⚠ **站得住的宣稱是「成本」**；4×4 的 +0.018 **在 ±0.04 雜訊內**，
   6×6 的 +0.053 是**單 seed 且該盤面雜訊沒量過** ⇒ 標「有動但未確證」。
-- **下一步（未做，依優先序）**：① **BC 權重接 PPO 微調**（暖啟動的原始目的，分鐘級）；
+- **✅ value head 已實作（2026-09-05 傍晚）**：BC 現在同時回歸 critic，目標是重播時**實際觀測到的折扣報酬**。
+  **為什麼非做不可**：PPO 用 V(s) 算 advantage，留一個沒訓練的 critic ⇒ 微調第一批梯度是雜訊，
+  而被摧毀的正是剛學好的策略。
+  ⚠⚠ **但 value 回歸對策略品質的影響完全沒量**——小規模煙霧測試裡它**看起來偏低**
+  （合理擔憂：value 與 policy 共用 feature extractor）。**§3 的數字是 value-free 路徑量的，
+  用 `--value-coef 0` 可逐位元重現。**
+- **下一步（未做，依優先序）**：
+  **⓪ 先量 `--value-coef 0.5` vs `0`**（分鐘級）——做微調之前必須先知道 value 回歸有沒有傷到策略；
+  ① **BC 接 PPO 微調**（**`--init-from` 尚未實作**；微調要跑**全長、不用 curriculum**，
+  也就是 `CurriculumState(current_k=None)`，`_maybe_promote` 對 `None` 是 no-op）
+  ——它同時是**唯一能推翻「這題不該用 RL」這個結論的實驗**；
   ② 6×6 的 **best-of-32／64**（約 15 分，直接回答 0.85 過不過得了）；
   ③ 量 6×6 的 seed 雜訊（約 1 小時）；④ PPO 推到全長（1–2 小時，**要授權**）。
 - ⚠ **BC 的兩個已知限制**：
@@ -145,7 +155,7 @@ uv sync
 
 ```powershell
 cd D:\it_project\github_sync\zip-rl\linkedin-zip-challenge
-uv run pytest        # 2026-09-05 實測 259 passed, 8 xfailed
+uv run pytest        # 2026-09-05 實測 261 passed, 8 xfailed
 uv run ruff check .  # 期待 All checks passed!
 ```
 
@@ -180,7 +190,7 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/rl/generate_dataset_v2.py` | 決定性資料集產生器，**保留 solution path** |
 | `src/core/rl/action_space.py` | 共用動作編碼（0:Up 1:Down 2:Left 3:Right）與 `path_to_actions()` |
 | `src/core/rl/diagnose_env_v1.py` | A0 的六個 probe，可重跑產生證據 JSON |
-| `src/core/tests/rl/` | env 21 個、PPO 訓練 18＋個、**BC 8 個**、v1 診斷 8 個 strict xfail |
+| `src/core/tests/rl/` | env 21 個、PPO 訓練 18＋個、**BC 10 個**、v1 診斷 8 個 strict xfail |
 
 **env v2 介面速覽**
 

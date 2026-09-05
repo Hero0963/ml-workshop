@@ -26,7 +26,7 @@ import numpy as np
 from loguru import logger
 
 from src.core.rl.action_space import ACTION_DELTAS
-from src.core.rl.rl_env_v2 import PuzzleEnvV2, PuzzleSample
+from src.core.rl.rl_env_v2 import DEFAULT_GAMMA, PuzzleEnvV2, PuzzleSample
 
 DATASET_ROOT = Path(__file__).resolve().parents[3] / "datasets" / "rl_datasets_v2"
 ARTIFACT_DIR = Path(__file__).resolve().parents[3] / "logs" / "rl_baselines"
@@ -69,6 +69,8 @@ def make_eval_env(
     sample: PuzzleSample,
     reverse_curriculum_k: int | None = None,
     connectivity_features: bool = False,
+    shaping_lambda: float = 0.0,
+    gamma: float = DEFAULT_GAMMA,
 ) -> PuzzleEnvV2:
     """The single place evaluation builds an env.
 
@@ -76,11 +78,17 @@ def make_eval_env(
     agree on the observation space. An env option wired into only one of them hands the
     policy an observation it never trained on, and that surfaces as an SB3 error deep
     inside `predict` -- after a run that looked healthy all the way to its last step.
+
+    Scoring ignores reward, so `shaping_lambda` defaults to 0. Behaviour cloning passes the
+    goal's real values because it regresses the value head onto the expert's discounted
+    return, and that target is only meaningful if it is the return the *fine-tuning* env
+    will hand out.
     """
     return PuzzleEnvV2(
         [sample],
         reverse_curriculum_k=reverse_curriculum_k,
-        shaping_lambda=0.0,
+        shaping_lambda=shaping_lambda,
+        gamma=gamma,
         connectivity_features=connectivity_features,
     )
 

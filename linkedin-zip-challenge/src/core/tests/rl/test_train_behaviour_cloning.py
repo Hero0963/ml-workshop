@@ -25,7 +25,7 @@ import pytest
 
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.baselines import make_eval_env
-from src.core.rl.rl_env_v2 import PuzzleSample
+from src.core.rl.rl_env_v2 import SUCCESS_REWARD, PuzzleSample
 from src.core.rl.train_behaviour_cloning import (
     MIN_LEGAL_ACTIONS_FOR_A_CHOICE,
     _batches,
@@ -124,10 +124,51 @@ def test_batches_cover_every_pair_exactly_once(sample: PuzzleSample) -> None:
 
 def test_stack_keeps_the_batch_aligned(sample: PuzzleSample) -> None:
     pairs = list(iter_supervised_pairs([sample], connectivity_features=False))[:3]
-    observation, masks, actions = _stack(pairs)
+    observation, masks, actions, returns = _stack(pairs)
 
     assert actions.tolist() == [pair.action for pair in pairs]
+    # float32 on purpose: the batch feeds torch, so exact equality with the Python float
+    # the replay accumulated would be testing the dtype rather than the alignment.
+    assert returns.dtype == np.float32
+    assert returns.tolist() == pytest.approx([pair.value_target for pair in pairs])
     assert masks.shape == (len(pairs), len(pairs[0].action_mask))
     for key in observation:
         assert observation[key].shape[0] == len(pairs)
         assert np.array_equal(observation[key][1], pairs[1].observation[key])
+
+
+def test_value_targets_are_the_discounted_return_of_the_replay(
+    sample: PuzzleSample,
+) -> None:
+    """The critic's target has to be the return the fine-tuning env actually pays out.
+
+    Success is worth `SUCCESS_REWARD` on the last step, so with no shaping the target is
+    exactly `gamma ** steps_remaining` -- which also pins the discounting direction: a
+    backwards accumulation that ran forwards would put the largest value at the start.
+    """
+    gamma = 0.9
+    pairs = list(
+        iter_supervised_pairs(
+            [sample], connectivity_features=False, shaping_lambda=0.0, gamma=gamma
+        )
+    )
+
+    for index, pair in enumerate(pairs):
+        remaining = len(pairs) - 1 - index
+        assert pair.value_target == pytest.approx(
+            SUCCESS_REWARD * gamma**remaining, rel=1e-6
+        )
+    assert pairs[-1].value_target > pairs[0].value_target
+
+
+def test_shaping_shows_up_in_the_value_target(sample: PuzzleSample) -> None:
+    """Shaping is part of the reward the fine-tune pays, so it must be in the target."""
+    plain = list(
+        iter_supervised_pairs([sample], connectivity_features=False, shaping_lambda=0.0)
+    )
+    shaped = list(
+        iter_supervised_pairs([sample], connectivity_features=False, shaping_lambda=0.2)
+    )
+
+    assert [p.action for p in plain] == [p.action for p in shaped]
+    assert shaped[0].value_target > plain[0].value_target

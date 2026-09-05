@@ -48,9 +48,10 @@
   存出來的 `model_final.zip` 是既有 `score()`、baselines 與所有探針的 **drop-in**。
 - **超參**沿用 `train_config` 的 `goal.ppo`（batch 512、lr 3e-4、Adam），不另立一套。
 
-**測試**：`src/core/tests/rl/test_train_behaviour_cloning.py`，8 個，釘三件會**靜默**出錯的事——
+**測試**：`src/core/tests/rl/test_train_behaviour_cloning.py`，**10 個**，釘四件會**靜默**出錯的事——
 replay 差一步（標籤配到前一個狀態）、`choice_accuracy` 把強迫步算進去、
-BC 是**第三個** env 建構點。
+BC 是**第三個** env 建構點、以及 **value 目標的折扣方向**（往前累積會把最大值放在起點，
+而正確答案是「越接近終點越高」）。
 
 ---
 
@@ -237,11 +238,36 @@ PPO 的 **best-of-4 = 0.9238 ≥ 0.90**。⚠ deterministic 的 0.854 ± 0.038 �
    **這正是接 PPO 微調的理由**——PPO 會在策略自己造成的狀態上收集資料。
 2. **標籤雜訊**：題目有多解、資料集只記一條（§3.2）。
 
+### 7.1 ★ value head 已實作（2026-09-05 傍晚），但**效果未測**
+
+微調的前置已經落地：BC 現在**同時回歸 value head**，目標是重播時**實際觀測到的折扣報酬**
+（不是解析的 `gamma ** 剩餘步數`——shaping 是 env 真的會付的獎勵，重新推導等於複製一份 reward 規則）。
+`make_eval_env` 因此多了 `shaping_lambda`／`gamma` 兩個選用參數，
+讓 value 目標對齊**微調時**那個 env 會付的報酬，而不是評估用的無 shaping 版本。
+
+**為什麼非做不可**：PPO 用 V(s) 算 advantage。BC 若留下一個沒訓練過的 critic，
+**微調的第一批梯度就是雜訊，而被那個雜訊摧毀的正是剛學好的策略。**
+
+⚠ **這是 V^expert 不是 V^π**：專家永遠成功，所以目標偏樂觀。
+但它的**跨狀態排序是對的**（advantage 估計主要吃這個），而 PPO 會很快把偏差回歸掉。
+
+⚠⚠ **兩件必須先講清楚的事**：
+
+1. **§3 的所有數字是 value-free 那條路徑量的**，可用 **`--value-coef 0`** 逐位元重現
+   （value 項乘 0 ⇒ 梯度貢獻為 0，參數更新完全相同）。
+2. **value 回歸對策略品質的影響完全沒量。** 一個 300 題／2 epoch 的煙霧測試裡，
+   加了 value 之後 choice accuracy 比 value-free 那次低——**但那個規模不足以當證據**
+   （樣本太小、epoch 太少）。機制上合理的擔憂是：**value 與 policy 共用同一個 feature extractor**，
+   初期 value loss 很大（0.67）會把共用主幹拉向預測價值。
+   **⇒ 下一輪的第一件事就是量它**：同資料、同 epoch，`--value-coef 0.5` vs `0`，
+   看 choice accuracy 與 solve rate。控制組是現成的。
+
 **下一步（依優先序，都未授權）**：
 
 | # | 做什麼 | 成本 | 它回答什麼 |
 |---|---|---|---|
-| 1 | **BC 權重接 PPO 微調** | 分鐘級 | 暖啟動的原始目的；同時測 BC 的 compounding error 能不能被 RL 補掉 |
+| 0 | **量 `--value-coef 0.5` vs `0`** | 分鐘級 | value 回歸有沒有傷到策略（§7.1，**做微調之前必須先知道**）|
+| 1 | **BC 權重接 PPO 微調**（`--init-from` 尚未實作） | 分鐘級 | 暖啟動的原始目的；**也是唯一能推翻 §4.4「這題不該用 RL」的實驗**——若 RL 連一個好策略都改不動，那個結論就從「疑似」變「有力」|
 | 2 | 6×6 的 **best-of-32／64** | 約 15 分 | 6×6 到底過不過得了 0.85（現在 0.800，差 0.05）|
 | 3 | 6×6 的 **seed 雜訊**（3 seed） | 約 1 小時 | 所有 6×6 的 0.0x 結論的前提 |
 | 4 | PPO 推到全長 | 1–2 小時 | §6 唯一沒做的 PPO 實驗 |
@@ -253,8 +279,10 @@ PPO 的 **best-of-4 = 0.9238 ≥ 0.90**。⚠ deterministic 的 0.854 ± 0.038 �
 
 ## 8. 產物
 
-- 程式：`src/core/rl/train_behaviour_cloning.py`、`src/core/tests/rl/test_train_behaviour_cloning.py`（8 個測試）
+- 程式：`src/core/rl/train_behaviour_cloning.py`（含 value 回歸）、
+  `src/core/tests/rl/test_train_behaviour_cloning.py`（**10 個測試**，含「value 目標必須是重播的折扣報酬」
+  與「shaping 要出現在目標裡」）、`baselines.make_eval_env` 多了 `shaping_lambda`／`gamma`（選用，預設不變）
 - 權重與評估：`models/rl_a2/bc_4x4/`、`models/rl_a2/bc_6x6/`、
   `logs/rl_a2/bc_4x4/eval_test.json`、`logs/rl_a2/bc_6x6/eval_test.json`（含逐 epoch 的 `bc_progress.jsonl`）
 - best-of-N：`logs/rl_probes/best_of_n_bc_4x4_test.json`、`logs/rl_probes/best_of_n_bc_6x6_test.json`
-- 測試基線：**259 passed, 8 xfailed**（原 251，多的 8 個是本次新增），`ruff` 全綠
+- 測試基線：**261 passed, 8 xfailed**（原 251，多的 10 個是本次新增），`ruff check` 全綠
