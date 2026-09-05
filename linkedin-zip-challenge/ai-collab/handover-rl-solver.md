@@ -218,7 +218,8 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
     ⚠ **只證明了「不是 env.step()」**；剩下 95% 落在 torch 還是 SB3 的 Python plumbing **沒有 profile 過**。
     **實務影響**：想加速該把 kernel 變大變少（加大 `n_envs`／`n_steps`／`batch_size`），
     **不是**去優化 env——與這份文件原本指的方向相反。
-    腳本：`../hi-collab/scratch/bench_graph_features.py`、`bench_graph_feature_training.py`。
+    腳本：`../hi-collab/scratch/bench_graph_features.py`、`bench_graph_feature_training.py`
+    ——⚠ **`hi-collab/` 不進版控，新 clone 沒有這兩個檔**，方法與數字都在報告 §4.4，不用去找。
 
 ---
 

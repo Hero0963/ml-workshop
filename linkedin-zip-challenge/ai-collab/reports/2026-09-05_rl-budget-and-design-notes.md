@@ -192,6 +192,8 @@ handover §3.10 記著「**瓶頸是單執行緒的 Python env step**，不是 G
 
 原始腳本：`../hi-collab/scratch/bench_graph_features.py`、
 `../hi-collab/scratch/bench_graph_feature_training.py`（seed 20260905 寫死，可重跑）。
+⚠ **`hi-collab/` 不進版控**（`.gitignore:201`），新 clone 不會有這兩個檔——
+它們是實驗探針不是產品程式碼，需要時照本節的數字與方法重寫即可，**不要去找**。
 
 ### 4.3 顯存為什麼只有 83.8 MiB
 
