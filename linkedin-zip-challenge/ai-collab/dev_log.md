@@ -6,6 +6,84 @@
 
 ## 2026-09-05
 
+### RL Track — the one-step lookahead has no headroom, and search is the only order-of-magnitude lever (branch `feat/rl-a2-training`, worktree `zip-rl`)
+
+Baseline first: **251 passed, 8 xfailed in 14.42s**, `ruff` clean. Nine more than the entry
+below, which is the tests the connectivity commit added; the count is branch-dependent and
+only means something within a session.
+
+**Why an oracle instead of the experiment.** Handover §6.5 named the action-conditioned
+connectivity feature as the one direction on the topological line not yet falsified, and P0
+had just spent forty minutes of training to learn that a feature the policy never uses is
+worth nothing. So this measured the ceiling first, with the weights that already exist: run
+inference but delete, before the argmax, every move a one-step lookahead can already prove
+is a loss. The oracle *enforces* what the feature would merely *disclose*, so it bounds the
+mechanism the feature was proposed for. **The decision rule was written into the report
+before any arm ran** (`reports/2026-09-05_rl-lookahead-oracle.md` §3).
+
+Two prunes, because split is not the only loss visible one step out: the unvisited region
+splitting, and the agent having no legal move left with cells still unvisited. Those are the
+*only* two, so `oracle_split_trap` is the ceiling for the whole family — articulation points
+and every other one-step topological feature included, not just the connectivity version.
+
+**Result: R1 fires.** Held-out test, `deterministic=True`, both sentinels reproducing the
+recorded numbers bit-identically (4×4 0.877075, 6×6 0.409500).
+
+| arm | 4×4 (n=1,928) | 6×6 (n=2,000) |
+|---|---|---|
+| baseline | 0.877075 | 0.409500 |
+| oracle_split | 0.890560 (+0.0135) | 0.427500 (+0.0180) |
+| oracle_split_trap | 0.892635 (**+0.0156**) | 0.438000 (+0.0285) |
+
++0.0156 against a ±0.04 noise floor, so by the pre-registered rule the action-conditioned
+feature is not worth building and **the topological-feature line is closed**, GNN's main
+argument with it.
+
+**Why the ceiling is that low — the counter that explains it.** Of the 6,467 6×6 decisions
+where pruning changed the mask, **3,828 were positions where all four moves lose**. The
+oracle can delete losing options; it cannot help when every option is losing. That is P0's
+diagnosis seen from the other side: P0 found the policy does not avoid the fatal move when
+told about it, and this run finds that forcing it to avoid the move rescues almost nothing,
+because the mistake was made several steps earlier. **The failure is long-range planning,
+not one-step perception.**
+
+**best-of-N, filling the half of §7.20 that 6×6 never had.** A Zip solution is verifiable,
+so this is budget, not guessing; attempts stop at the first solve, so the episode count is
+the deployment cost.
+
+| | deterministic | best-of-2 | best-of-4 | best-of-16 |
+|---|---|---|---|---|
+| 4×4 | 0.877075 | 0.897303 | **0.923755** (1.33 ep) | 0.954876 (2.02 ep) |
+| 6×6 | 0.409500 | 0.459000 | 0.533000 | **0.649000** (7.50 ep) |
+
+**4×4 clears its 0.90 bar at best-of-4 for 1.33 episodes a puzzle.** 6×6 gains **+0.240**,
+which is larger than every training-side change this track has measured put together, and it
+lands on the goal with the biggest gap. The 4×4 column also re-measures trap #19's 300-puzzle
+numbers on the full 1,928 and they hold, slightly optimistic.
+
+**One more control, because the obvious objection deserved an answer.** Does the same
+lookahead become valuable when handed to *search* rather than to the observation? Measured on
+the full 6×6 split: the oracle adds +0.02 to +0.03 at every N, the same size as its
+deterministic gain, with no amplification. **The information is cheap either way** — take it
+as a free correctness prune, but it changes nothing.
+
+**Asked mid-session whether the network is big enough, compared against AlphaGo.** Written up
+in the report §7 with sources; the short version is that model size is not the binding
+constraint and there is direct evidence rather than an argument. The policy is 1,170,949
+parameters, but **89.7% of them are one `Linear(4104→256)` that flattens the board** — the
+convolutional trunk doing the spatial reasoning is 78,528, against roughly 22.4 M for AlphaGo
+Zero's. Yet: P0 handed the network the topological answer for free and it did not help; this
+run enforced perfect one-step lookahead and bought +0.016; and the task itself measures far
+smaller than the parameter gap suggests — replaying ground-truth solutions, **59.4% of 6×6
+decisions have exactly one legal move**, leaving **14.2 real choices per puzzle** and a search
+tree of about 10^6.2 against Go's 10^170. Reading the solve rate as a per-choice accuracy,
+6×6 is already **93.9% correct per decision** and loses by needing 14 of them in a row;
+reaching 0.85 means cutting that error 5.4×. Capacity is not what is missing.
+
+**Next.** The topological line is closed. The open one is inference-time search, which
+design notes §5.4 already pointed at: use the policy to order the branches of the existing
+`dfs.py` rather than resampling independently. Not authorised yet.
+
 ### RL Track P0 — the connectivity feature is a null, and the interesting part is why (branch `feat/rl-a2-training`, worktree `zip-rl`)
 
 Baseline first: **243 passed, 8 xfailed in 12.99s**, `ruff` clean. That is one more than the
