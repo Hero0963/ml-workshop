@@ -1,7 +1,8 @@
 # 專案指南 (Project Guide) — linkedin-zip-challenge
 
 > 架構、模組職責、資料流、啟動方式。**現況與下一步看 [roadmap.md](roadmap.md)**，規範看 [../AGENTS.md](../AGENTS.md)。
-> Last Updated: 2026-08-08
+> Last Updated: 2026-09-05
+> ⚠ **兩條 track 的現況不在本檔**：RL 看 [handover-rl-solver.md](handover-rl-solver.md)、VL 看 [handover-vlm-parser.md](handover-vlm-parser.md)。本檔只描述架構。
 
 ## 這個專案在解什麼
 
@@ -36,6 +37,10 @@ linkedin-zip-challenge/
 │   ├── project_guide.md         # 本檔：架構與啟動方式
 │   ├── dev_log.md               # 開發日誌（逆時序，最新在上）
 │   ├── commands.txt             # 常用咒語
+│   ├── handover-rl-solver.md    # ★ RL track 接手第一站（自足）
+│   ├── handover-vlm-parser.md   # ★ VL track 接手第一站（自足）
+│   ├── vlm-operating-guide.md   # 讀圖功能的使用者操作手冊
+│   ├── plans/                   # 任務計畫書 YYYY-MM-DD_track-<名稱>.md
 │   └── reports/                 # 任務報告 YYYY-MM-DD_<主題>.md
 ├── src/
 │   ├── app/                     # FastAPI 後端
@@ -47,8 +52,8 @@ linkedin-zip-challenge/
 │   │   ├── utils.py             # ★ 共用中樞：Puzzle 型別、parser、fitness、視覺化
 │   │   ├── solvers/             # 9 種解題演算法
 │   │   ├── puzzle_generation/   # 程序化出題與資料集腳本
-│   │   ├── rl/                  # ⏸ RL 實驗（暫停，見 roadmap 決策表）
-│   │   ├── vl_models/           # 🧪 圖片解析實驗（scratchpad）
+│   │   ├── rl/                  # 🚧 RL solver（訓練中，見 handover-rl-solver.md）
+│   │   ├── vl_models/           # ✅ 圖片解析（已上線，接 /api/vision/solve）
 │   │   └── tests/               # conftest.py（6 題 ground truth）＋ solvers/ 測試
 │   ├── custom_components/
 │   │   └── puzzle_editor/frontend/   # Svelte + Vite（Canvas WYSIWYG 編輯器）
@@ -97,6 +102,21 @@ linkedin-zip-challenge/
 | 啟發式 | `ant_colony_optimization.py` | 蟻群 |
 
 > ⚠ **API 目前只暴露 3 種**（`src/app/routers/solver.py` 的 `SOLVERS`：DFS／A\*(heapq)／CP-SAT）。補齊是 roadmap 下一步 #2。
+
+### `src/core/rl/` — RL solver（🚧 訓練中，**細節看 [handover-rl-solver.md](handover-rl-solver.md)**）
+
+**還沒掛上 API**，是獨立的訓練／評估流程。只列進入點，不重複交接文件的內容：
+
+| 檔案 | 職責 |
+|---|---|
+| `rl_env_v2.py` | ★ 主角。`PuzzleEnvV2`：一筆畫 env、`action_masks()`、反向 curriculum、死路終止 |
+| `train_config.py` | ★ **改設定只改這裡**：`GOALS`（盤面／牆策略／步數預算／done 門檻）＋ PPO／網路／curriculum／資源上限 |
+| `train_maskable_ppo.py` | 執行一個 goal：`uv run python -m src.core.rl.train_maskable_ppo --goal goal2_6x6` |
+| `generate_dataset_v2.py` | 決定性資料集產生器（**保留 solution path**，反向 curriculum 需要） |
+| `baselines.py` | masked random ／ greedy 兩個對照組與共用評估器 |
+| `rl_env.py`、`dqn_agent.py`、`train*.py` | ⚠ **2025-10 的 v1，已知有缺陷、刻意保留當對照**。不要續訓、不要拿它的數字 |
+
+產物都不進版控：模型 `models/rl_a2/`、資料 `datasets/rl_datasets_v2/`、log `logs/rl_a2/`。
 
 ### `src/app/` — API 契約
 
