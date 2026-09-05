@@ -6,6 +6,118 @@
 
 ## 2026-09-05
 
+### RL Track — the labels were on disk all along: behaviour cloning beats PPO at a ninth of the cost, and it is not RL (branch `feat/rl-a2-training`, worktree `zip-rl`)
+
+Full write-up in [`reports/2026-09-05_rl-behaviour-cloning.md`](reports/2026-09-05_rl-behaviour-cloning.md);
+the part worth reading is §4, the conceptual one, not the numbers.
+
+**The gap that was sitting there.** Every puzzle in the dataset ships with its
+`solution_path`, and a grep confirms it has been used for exactly two things: choosing the
+reverse curriculum's start cell, and replaying legal walks in the A0 diagnosis. **It has
+never been a training target.** PPO has been rediscovering, from a reward that only fires
+after 35 correct steps, answers already on disk — about 560,000 labelled (state, action)
+pairs on 6×6 against a 1.17M-parameter network. Checked the plan, the restart report and
+its A0–A6 route table first: supervised warm start is not a decided-against option, it was
+never considered.
+
+**It also matches the measured bottleneck's shape.** The oracle report reads the solve rate
+as a per-decision accuracy: 6×6 is right 93.9% of the time and needs 98.9%. That is a
+classification problem. And BC has two properties PPO's setup does not — it sees full-length
+states from the first step (the curriculum needed 5.5M steps to reach k=30/36, so states
+near the true start are the least trained), and its signal is one label per step rather than
+one reward per episode.
+
+**Result, single seed, same evaluation path, `greedy` reproducing bit-identically on both
+boards (0.1170 / 0.0041).**
+
+| | deterministic | best-of-4 | best-of-16 | training |
+|---|---|---|---|---|
+| 4×4 PPO (1M steps) | 0.8771 | **0.9238** | 0.9549 | 245s |
+| 4×4 **BC** (10 epochs) | **0.8947** | **0.9533** | **0.9850** | **95s** |
+| 6×6 PPO (8M steps) | 0.4095 | 0.5330 | 0.6490 | ~2,000s |
+| 6×6 **BC** (10 epochs) | **0.4620** | **0.6425** | **0.8000** | **232s** |
+
+BC is at least as good at every inference setting on both boards, for a third and a ninth
+of the training cost, and on 6×6 the gap *widens* with N (+0.053 deterministic → **+0.151**
+at best-of-16). **6×6 best-of-16 is 0.800 against a 0.85 bar — the closest this track has
+been.** What holds up is the *cost* claim; 4×4's +0.018 is inside the ±0.04 noise floor, and
+6×6's +0.053 is a single seed on a board whose seed noise has never been measured, so it is
+"moved, not confirmed". Whether best-of-32/64 clears 0.85 is extrapolation, and this track
+has been wrong by 3× extrapolating twice.
+
+**An accident worth keeping: `choice_accuracy` understates the policy, because the puzzles
+have multiple solutions.** BC agrees with the recorded solution on 88.11% of real choices
+but solves 89.47% of held-out boards — an effective per-choice accuracy of 97.65%. The
+missing 9 points are not errors; they are *other legal solutions*. The generator draws a
+Hamiltonian path and then carves the puzzle, so most boards admit more than one, and the
+dataset records one. **BC won while training against label noise**, and the accuracy metric
+is a lower bound that must not be exponentiated into a predicted solve rate.
+
+**Asked directly whether this is still RL. It is not, and that matters.** BC is one member
+of the imitation-learning family — the simplest, the one that never touches the environment
+(DAgger, IRL and GAIL are the others). Algorithmically it is plain supervised learning:
+cross-entropy on a fixed `(X, y)`, no reward, no exploration, no credit assignment. The one
+property ordinary classification lacks is that its test distribution is *self-inflicted* —
+leave the expert's path and there is no training signal, which is exactly what DAgger exists
+to fix. So: the pipeline stays RL (env, masking, evaluation protocol, and the intended next
+step is PPO fine-tuning from these weights), and "supervised first, RL second" is what the
+original AlphaGo did before Zero dropped the supervised half. **But the honest reading is
+that this problem may simply not be one RL should be used on**: the reward is extremely
+sparse, perfect demonstrations are free, solutions are verifiable, and after masking the
+mean branching factor is 1.5 — so exploration, RL's main advantage over supervision, is
+barely needed here. PPO spent 8M steps and ~2,000 seconds to lose to 232 seconds of
+`model.fit`. **Knowing when not to reach for RL is the most solid thing this track has
+learned**, and it is a "learning by doing" result, not a failure.
+
+**Dataset integrity, re-verified rather than cited.** Asked how many puzzles train and test
+hold and whether they can have mixed. Identity here is *derived, not stored*:
+`sample_fingerprint()` canonicalises board, walls, blocked cells, number positions and the
+solution path into sorted JSON — deliberately not a hash of the pickle, which would hash the
+encoding rather than the content. `PuzzleSample` itself has no id field. `--verify` recomputed
+all three split digests: ok.
+
+| dataset | train | val | test | internal dups | train∩val | train∩test | val∩test |
+|---|---|---|---|---|---|---|---|
+| `seed20300000_n20000_4-6` (current) | 31,419 | 3,927 | 3,928 | **0/0/0** | **0** | **0** | **0** |
+| `main_n1700_456` (A2's) | 4,080 | 510 | 510 | **4**/0/0 | **1** | **0** | 0 |
+
+Per size, which is what the runs actually use: 4×4 train 15,419 / val 1,927 / test 1,928 and
+6×6 16,000 / 2,000 / 2,000, **train∩test = 0 in both**. So the current pack is clean and no
+reported test number is affected. **The old pack has two defects nobody had recorded**: four
+duplicates inside train, and one puzzle in both train and val. The handover verified and
+claimed only `train∩test = 0`, which today's recomputation confirms — but **"verified
+train∩test" is not "verified all three pairs are disjoint"**, and that distinction is now
+written down.
+
+**Can PPO succeed at all?** On 4×4 it already has, under the inference rule settled today:
+best-of-4 is 0.9238 against a 0.90 bar, though deterministic 0.854 ± 0.038 does not clear it.
+On 6×6 there is no evidence it can reach 0.85 and several signs the route is expensive: the
+curriculum is stuck at k=30/36 having burned 2.4M steps at that level, promotion cost roughly
+doubles each rung (812,944 → 1,307,280 → 2,867,776), and the extrapolation to full length
+(15–30M steps, 1–2 hours) is explicitly untrustworthy. Reaching full length would also only
+mean it can *train* there, not that it scores 0.85 — at 8M steps it is 0.4095 deterministic.
+The one PPO experiment nobody has run is exactly that, and it is hour-scale, so it needs
+authorisation.
+
+**Also landed: the handover was restructured** after the developer asked whether the session
+had diverged. It had — the restart-DFS arm was run to completion after a pilot had already
+rejected it. The goal was written at line 520 behind a wall of thirteen bullet points, so the
+document now opens with the goal, the judging rule, current standing and the map of closed
+lines, and drops from **864 to 215 lines**; the accumulated 28 verified facts, 30 traps,
+settled design decisions and experiment chronicle moved verbatim to
+[`rl-traps-and-facts.md`](rl-traps-and-facts.md). A self-administered "ask yourself three
+questions before running anything" checklist was drafted and then **cut**: the agent that
+diverged had read and quoted the goal, so a reflective prompt was never going to bind — the
+load-bearing artifact is the factual dead-end map, and the two repeatable analytical errors
+went into the traps list where such things already live.
+
+**Verification.** `259 passed, 8 xfailed` (was 251; the eight are the new BC tests), `ruff`
+clean, `ruff format --check` clean. The new tests pin three things that would fail silently:
+a one-step drift between observation and label, `choice_accuracy` counting forced moves (69%
+of 4×4 decisions have one legal move, so an untrained net already scores ~0.69), and BC being
+a *third* env construction point after training and evaluation — trap #24 cost three
+experiment arms when a flag reached only one of two.
+
 ### RL Track — what the learned prior is worth, measured on a budget axis; and half my own recommendation falsified (branch `feat/rl-a2-training`, worktree `zip-rl`)
 
 The previous entry ended by naming policy-ordered DFS as the next candidate, on the strength
