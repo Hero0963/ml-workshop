@@ -284,7 +284,7 @@ def test_goal_rejects_an_unknown_wall_policy() -> None:
     with pytest.raises(ValueError, match="walls must be one of"):
         Goal(
             key="broken",
-            size=6,
+            sizes=(6,),
             description="",
             target_solve_rate=0.85,
             timesteps=1,
@@ -309,3 +309,89 @@ def test_episode_outcome_defaults_to_zero_when_info_is_empty() -> None:
     assert classify_episode({}) == EpisodeOutcome(
         solved=False, dead_end=False, truncated=True, steps=0, coverage=0.0
     )
+
+
+# --- Multi-size goals -------------------------------------------------------------
+# A goal names a *tuple* of boards, because the observation is size agnostic and one
+# model can therefore train on a mix. These pin the three things that would let a
+# multi-size goal fail silently rather than loudly: a goal that names no board, a
+# board too large for the padding, and a size filter that quietly keeps only one size.
+
+
+def test_goal_rejects_naming_no_board() -> None:
+    with pytest.raises(ValueError, match="at least one board size"):
+        Goal(
+            key="broken",
+            sizes=(),
+            description="",
+            target_solve_rate=0.85,
+            timesteps=1,
+        )
+
+
+def test_goal_rejects_a_board_larger_than_the_observation_padding() -> None:
+    with pytest.raises(ValueError, match="board sizes must be between"):
+        Goal(
+            key="broken",
+            sizes=(4, 9),
+            description="",
+            target_solve_rate=0.85,
+            timesteps=1,
+        )
+
+
+def test_board_label_names_every_board() -> None:
+    assert GOALS["goal2_6x6"].board_label == "6x6"
+    assert GOALS["goal3_multi"].board_label == "4x4+5x5+6x6"
+
+
+def test_select_samples_keeps_every_size_the_goal_names(monkeypatch) -> None:
+    """The filter is `in goal.sizes`, not `== goal.size`.
+
+    Worth pinning because the failure is silent: an equality test against a tuple is
+    always false, so a multi-size run would train on an empty split and the first
+    visible symptom would be `No training puzzles for ...` -- or, worse, a run that
+    trains on one size and reports itself as multi-size.
+    """
+    from src.core.rl import train_maskable_ppo
+
+    def fake_split(dataset_dir, split):
+        return [_sized_sample(size) for size in (4, 5, 6)]
+
+    monkeypatch.setattr(train_maskable_ppo, "load_split", fake_split)
+    kept = train_maskable_ppo.select_samples(GOALS["goal3_multi"], "train")
+    assert sorted(s.puzzle["grid_size"][0] for s in kept) == [4, 5, 6]
+
+    kept_single = train_maskable_ppo.select_samples(GOALS["goal2_6x6"], "train")
+    assert [s.puzzle["grid_size"][0] for s in kept_single] == [6]
+
+
+def _sized_sample(size: int) -> PuzzleSample:
+    random.seed(GENERATOR_SEED + size)
+    result = generate_puzzle(m=size, n=size, has_walls=False, timeout_per_attempt=5.0)
+    assert result is not None, f"generator returned None for {size}x{size}"
+    puzzle, solution_path = result
+    return PuzzleSample(puzzle=puzzle, solution_path=solution_path)
+
+
+def test_one_env_serves_a_mixed_size_sample_list() -> None:
+    """A single env instance must re-read the board every episode, not cache the first.
+
+    This is what makes a multi-size goal possible without touching the env: the
+    observation is padded to a fixed 8x8 and the true dimensions travel as scalars.
+    """
+    samples = [_sized_sample(size) for size in (4, 6)]
+    env = PuzzleEnvV2(samples)
+
+    seen: set[int] = set()
+    for seed in range(30):
+        obs, _ = env.reset(seed=seed)
+        assert obs["grid"].shape == (8, 8, 8)
+        # The scalars carry height/8 and width/8, so they must follow the puzzle that
+        # was actually loaded rather than the one the env was constructed with.
+        assert obs["scalars"][6] == pytest.approx(env.height / 8)
+        assert obs["scalars"][7] == pytest.approx(env.width / 8)
+        assert env.height == env.puzzle["grid_size"][0]
+        seen.add(env.height)
+
+    assert seen == {4, 6}, f"only saw {seen}; the env is not resampling across sizes"

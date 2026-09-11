@@ -407,7 +407,7 @@ def select_samples(goal: Goal, split: str) -> list[PuzzleSample]:
     return [
         sample
         for sample in load_split(DATASET_ROOT / goal.dataset, split)
-        if sample.puzzle["grid_size"][0] == goal.size and keep(sample)
+        if sample.puzzle["grid_size"][0] in goal.sizes and keep(sample)
     ]
 
 
@@ -423,7 +423,7 @@ def describe_splits(goal: Goal) -> dict[str, int]:
         walled = sum(1 for sample in samples if sample.puzzle["walls"])
         counts[split] = len(samples)
         logger.info(
-            f"{split:5s} size={goal.size} walls={goal.walls}: {len(samples):5d} puzzles "
+            f"{split:5s} boards={goal.board_label} walls={goal.walls}: {len(samples):5d} puzzles "
             f"({walled} walled / {len(samples) - walled} wall-free)"
         )
     return counts
@@ -639,7 +639,7 @@ def main() -> None:
     logger.add(run_dir / "train.log", level="INFO")
     logger.info(f"Goal {goal.key}: {goal.description}")
     logger.info(
-        f"Target solve rate {goal.target_solve_rate:.0%} on {goal.size}x{goal.size}, "
+        f"Target solve rate {goal.target_solve_rate:.0%} on {goal.board_label}, "
         f"budget {goal.timesteps:,} steps"
     )
 

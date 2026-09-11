@@ -354,7 +354,7 @@ def main() -> None:
         "config": {
             "goal": {
                 "key": goal.key,
-                "size": goal.size,
+                "sizes": list(goal.sizes),
                 "dataset": goal.dataset,
                 "target_solve_rate": goal.target_solve_rate,
                 "connectivity_features": goal.connectivity_features,

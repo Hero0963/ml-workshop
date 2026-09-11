@@ -14,6 +14,15 @@ section 4.8. No sensitivity study has been run, so treat any result as "this set
 import os
 from dataclasses import dataclass, field
 
+from src.core.rl.rl_env_v2 import GRID_PAD
+
+# A board has to be big enough to have a choice on it and small enough to fit the padded
+# observation. The upper bound is `GRID_PAD` itself rather than a copy of it: the env
+# raises on anything larger, and a goal that only fails at the first `reset()` wastes
+# whatever the run had already spent.
+MIN_BOARD_SIZE = 2
+MAX_BOARD_SIZE = GRID_PAD
+
 # A2 (2026-08-29) was measured on `main_n1700_456`, 1,360 training puzzles per size, and
 # showed both goals memorising it. This pack is ~11x larger and deduplicated, which is the
 # experiment handover section 6 asks for. To reproduce an A2 number, pass
@@ -101,10 +110,18 @@ class ResourceSettings:
 
 @dataclass(frozen=True)
 class Goal:
-    """One training target: the board it learns on and the bar it has to clear."""
+    """One training target: the boards it learns on and the bar it has to clear.
+
+    `sizes` is a tuple rather than a single board because the observation is size
+    agnostic: it is padded to 8x8 and carries `height / 8` and `width / 8` as scalars,
+    and `PuzzleEnvV2._load_sample` re-reads the dimensions every episode. So one model
+    can train on a mix of board sizes with no change to the environment, and whether
+    that is better than one model per size is a question the config has to be able to
+    express before it can be measured.
+    """
 
     key: str
-    size: int
+    sizes: tuple[int, ...]
     description: str
     target_solve_rate: float
     timesteps: int
@@ -124,7 +141,19 @@ class Goal:
     curriculum: CurriculumSettings = field(default_factory=CurriculumSettings)
     resources: ResourceSettings = field(default_factory=ResourceSettings)
 
+    @property
+    def board_label(self) -> str:
+        """How the goal names its boards in logs and run metadata."""
+        return "+".join(f"{size}x{size}" for size in self.sizes)
+
     def __post_init__(self) -> None:
+        if not self.sizes:
+            raise ValueError("a goal must name at least one board size")
+        if any(size < MIN_BOARD_SIZE or size > MAX_BOARD_SIZE for size in self.sizes):
+            raise ValueError(
+                f"board sizes must be between {MIN_BOARD_SIZE} and {MAX_BOARD_SIZE} "
+                f"(the observation's padding), got {self.sizes}"
+            )
         if self.walls not in WALL_POLICIES:
             raise ValueError(
                 f"walls must be one of {WALL_POLICIES}, got {self.walls!r}"
@@ -141,20 +170,66 @@ class Goal:
 #   6x6  masked random 0.0%   greedy  0.8%
 # The targets below come from the track plan: 90% for stage A2, 85% once walls and the
 # larger board are in play.
+
+# The 4/5/6 pack behind `goal3_*`. Generated 2026-09-11 for the multi-size experiment,
+# because `DEFAULT_DATASET` holds sizes 4 and 6 only -- the `4-6` in its name is a range
+# label, not a list. Seeds repeat the older pack's, but the generator's 0.5s per-attempt
+# timeout makes it only deterministic-modulo-load, so the two packs are *not* the same
+# puzzles: every comparison has to be re-measured on this one rather than carried over.
+MULTI_SIZE_DATASET = "seed20300000_n20000_456"
+
 GOALS: dict[str, Goal] = {
     "goal1_4x4": Goal(
         key="goal1_4x4",
-        size=4,
+        sizes=(4,),
         description="Known-good anchor: if this fails, the machinery is wrong, not the task.",
         target_solve_rate=0.90,
         timesteps=1_000_000,
     ),
     "goal2_6x6": Goal(
         key="goal2_6x6",
-        size=6,
+        sizes=(6,),
         description="The product-relevant board; LinkedIn Zip puzzles are 6x6.",
         target_solve_rate=0.85,
         timesteps=5_000_000,
+        checkpoint_every=100_000,
+    ),
+    # One model for every board, and the three controls it has to be compared against.
+    # Cross-size transfer is already measured and real but one-directional (2026-09-11:
+    # the 6x6 model scores 0.5456 on 4x4 having never seen one, the 4x4 model 0.0105 on
+    # 6x6), which says nothing about whether *training* on a mix works -- hence the arms.
+    "goal3_multi": Goal(
+        key="goal3_multi",
+        sizes=(4, 5, 6),
+        description="One model for 4x4+5x5+6x6; judged against the per-size controls.",
+        target_solve_rate=0.85,
+        timesteps=5_000_000,
+        dataset=MULTI_SIZE_DATASET,
+        checkpoint_every=100_000,
+    ),
+    "goal3_ctrl_4x4": Goal(
+        key="goal3_ctrl_4x4",
+        sizes=(4,),
+        description="Single-size control for goal3_multi, same pack.",
+        target_solve_rate=0.90,
+        timesteps=1_000_000,
+        dataset=MULTI_SIZE_DATASET,
+    ),
+    "goal3_ctrl_5x5": Goal(
+        key="goal3_ctrl_5x5",
+        sizes=(5,),
+        description="Single-size control for goal3_multi, same pack.",
+        target_solve_rate=0.85,
+        timesteps=2_000_000,
+        dataset=MULTI_SIZE_DATASET,
+    ),
+    "goal3_ctrl_6x6": Goal(
+        key="goal3_ctrl_6x6",
+        sizes=(6,),
+        description="Single-size control for goal3_multi, same pack.",
+        target_solve_rate=0.85,
+        timesteps=5_000_000,
+        dataset=MULTI_SIZE_DATASET,
         checkpoint_every=100_000,
     ),
 }
