@@ -6,6 +6,39 @@
 
 ## 2026-09-12
 
+### Track B — app image 22.9 GB → 5.86 GB ＋ 兩份 compose 實跑驗收（branch `feat/infra-slim-image`, worktree `zip-infra`）
+
+細節與原始輸出在 [`deployment-guide.md`](deployment-guide.md) §5／§7。
+
+**大在哪先量再改。** `docker history` 顯示舊基底 `pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel` 裡的
+conda（附 torch 2.3.0）7.59 GB、CUDA toolkit／cuDNN／CUDA 函式庫 4.79＋2.45＋2.01 GB——
+**app 容器不用 GPU，這些全是死重**；`uv sync` 5.74 GB 才是真正要的。
+兩份 Dockerfile 的基底換成 `python:3.11-slim-trixie`（查證：docker-library/official-images 的 `library/python`，
+`3.11-slim` 現在指向 `3.11.16-slim-trixie`；標籤寫死 Debian 代號，OS 升級要改檔才會發生）。
+**第一次建置就成功**（110 秒），`22.9GB → 5.86GB`；prod／dev 兩個 image 共用 5.858 GB，並存不多佔空間。
+
+**計畫書標「未驗證」的系統函式庫：一個都不用補。** `src/` 沒有 `import cv2`；`matplotlib` 是間接相依，
+wheel 自帶函式庫。驗法不是看 health 200（那回答不了這題），而是**在新 image 裡跑完整測試**：
+`276 passed, 8 xfailed`，和 host 一模一樣。
+
+**驗收時發現「200 ≠ 解出來」。** RL 對 `puzzle_01`（6×6）回 HTTP 200，body 卻是
+`could not find a solution`。連打 20 次：6×6 解出 10/20、4×4 20/20；舊 image 在同一題也是 2 次中 1 次
+⇒ 這是題目對 RL 的難度，不是瘦身造成的。驗收腳本因此改成**另外判斷是否解出**，並加一題 4×4 當 RL 的正向證據。
+
+**順手修掉兩個「看起來有起來」的缺陷**（都在 Track B 擁有的檔案內）：
+① 兩份 compose 建出**同名 image**（`linkedin-zip-challenge-zip-challenge-app`），建 dev 就蓋掉 prod
+⇒ 各加 `image: zip-challenge-app:prod`／`:dev`，並實測 `--no-build` 會用本機 image、不去 registry 拉；
+② `start.py --dev` 叫你開 `7440/svelte-ui/`，但 dev 模式下那是 **404**（`./src` 蓋掉 image、host 沒有 `dist/`），
+vite 的網址又少了 `/svelte-ui/` ⇒ dev 模式改印 `5173/svelte-ui/`（實測 302 → 200）。
+
+**⚠ 一個會影響平行開發的事實**：compose 專案名＝目錄名，每個 worktree 都叫 `linkedin-zip-challenge`，
+加上固定的容器名與埠號 ⇒ **整台機器只有一組 stack，從哪個 worktree `up` 就被誰接管**。
+本次就把 `zip-rl` 起的 stack 換成了 `zip-infra` 的（目前在跑的是瘦身版正式 stack）。已寫進 deployment-guide §3；
+這可能也值得進 `AGENTS.md §10`（共用地板，沒動，留給本人決定）。
+
+**沒做的**：換 CPU 版 torch（剩下 5.66 GB 的大宗是 12 個 `nvidia-*` wheel，但那要動 `pyproject.toml`／`uv.lock`，
+不屬於 Docker 層）；hot reload 實際觸發（要改 `src/` 才測得到，只驗到 reloader 起來、盯的是 `/app/src`）。
+
 ### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
 
 完整報告在 [`reports/2026-09-12_rl-wrap-up.md`](reports/2026-09-12_rl-wrap-up.md)；

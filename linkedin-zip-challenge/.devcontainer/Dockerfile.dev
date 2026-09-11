@@ -2,7 +2,9 @@
 # This Dockerfile is for the DEVELOPMENT environment.
 # It sets up the Python environment but does not build the frontend.
 
-FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+# Same base as the production image, for the same reason: no GPU is used in this
+# container. See .devcontainer/Dockerfile.
+FROM python:3.11-slim-trixie
 
 RUN pip install --no-cache-dir uv
 

@@ -155,13 +155,16 @@ def print_urls(env: dict[str, str], dev: bool) -> None:
     app_port = env.get("APP_PORT", DEFAULT_APP_PORT)
     say("")
     say("  Gradio console   http://127.0.0.1:%s/ui" % app_port)
-    say("  Svelte editor    http://127.0.0.1:%s/svelte-ui/" % app_port)
-    say("  API docs         http://127.0.0.1:%s/docs" % app_port)
+    # The dev stack mounts ./src over the image, and the host has no built `dist/`, so
+    # the app's /svelte-ui is a 404 there; the editor is served by vite instead.
     if dev:
         say(
-            "  Svelte dev server  http://127.0.0.1:%s  (hot reload)"
+            "  Svelte editor    http://127.0.0.1:%s/svelte-ui/  (vite, hot reload)"
             % env.get("SVELTE_PORT", DEFAULT_SVELTE_PORT)
         )
+    else:
+        say("  Svelte editor    http://127.0.0.1:%s/svelte-ui/" % app_port)
+    say("  API docs         http://127.0.0.1:%s/docs" % app_port)
     say("")
     say("  Stop with:  python start.py --down%s" % (" --dev" if dev else ""))
 

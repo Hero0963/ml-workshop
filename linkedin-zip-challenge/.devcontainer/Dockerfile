@@ -19,7 +19,12 @@ COPY src/custom_components/puzzle_editor/frontend/ ./
 RUN npm run build
 
 # --- Stage 2: Final Python Application ---
-FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+# Plain Python, not a CUDA image: this container never uses the GPU (the vision model runs
+# in the ollama container and RL inference is device="cpu"). The previous base,
+# pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel, carried ~17GB of conda and CUDA toolkit that
+# nothing here read, on top of the torch `uv sync` installs anyway. The Debian release is
+# in the tag so that an OS upgrade is an edit, not a side effect of rebuilding.
+FROM python:3.11-slim-trixie
 
 # Install uv
 RUN pip install --no-cache-dir uv

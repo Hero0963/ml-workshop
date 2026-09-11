@@ -45,6 +45,9 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile.dev  # <--- Points to the .dev Dockerfile
+    # Its own tag, so a dev build never overwrites the production image (see
+    # docker-compose.yml).
+    image: zip-challenge-app:dev
     container_name: zip_challenge_dev_app
     ports:
       - "${APP_PORT}:${APP_PORT}"

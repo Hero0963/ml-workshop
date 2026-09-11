@@ -50,6 +50,10 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
+    # Named per compose file. Without it both files tag their build as
+    # `linkedin-zip-challenge-zip-challenge-app`, so building one silently replaced the
+    # other and `start.py --no-build` could start the wrong image.
+    image: zip-challenge-app:prod
     container_name: zip_challenge_prod_app
     ports:
       - "${APP_PORT:-7440}:${APP_PORT:-7440}"
