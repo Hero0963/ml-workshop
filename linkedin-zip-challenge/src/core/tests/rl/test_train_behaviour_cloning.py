@@ -68,9 +68,9 @@ def test_every_label_is_legal_in_the_state_it_is_paired_with(
 ) -> None:
     """Catches a one-step drift between the observation and the action stored with it."""
     for pair in iter_supervised_pairs([sample], connectivity_features=False):
-        assert pair.action_mask[
-            pair.action
-        ], f"label {pair.action} is masked out in the state it is paired with"
+        assert pair.action_mask[pair.action], (
+            f"label {pair.action} is masked out in the state it is paired with"
+        )
 
 
 def test_masks_are_snapshots_not_live_views(sample: PuzzleSample) -> None:
@@ -79,9 +79,9 @@ def test_masks_are_snapshots_not_live_views(sample: PuzzleSample) -> None:
         pair.action_mask
         for pair in iter_supervised_pairs([sample], connectivity_features=False)
     ]
-    assert (
-        len({mask.tobytes() for mask in masks}) > 1
-    ), "every mask is identical; they are probably views onto the same array"
+    assert len({mask.tobytes() for mask in masks}) > 1, (
+        "every mask is identical; they are probably views onto the same array"
+    )
 
 
 @pytest.mark.parametrize("connectivity_features", [False, True])

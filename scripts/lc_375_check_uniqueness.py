@@ -37,7 +37,7 @@ def solve_check(arr: list[int]):
             optimals.sort()
             if len(optimals) > 1:
                 print(
-                    f"Range {arr[i:j+1]} (indices {i}-{j}) has multiple optimal roots: {optimals} (Cost: {local_min})"
+                    f"Range {arr[i : j + 1]} (indices {i}-{j}) has multiple optimal roots: {optimals} (Cost: {local_min})"
                 )
 
     return dp[0][n - 1]

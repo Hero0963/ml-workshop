@@ -1,7 +1,22 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.8
+    # Pinned to the same version `linkedin-zip-challenge/pyproject.toml` installs, so
+    # `uv run ruff format` locally and this hook cannot disagree. They did: the hook sat
+    # on v0.4.8 while the project pinned 0.14.1, and the newer formatter rewraps every
+    # `assert cond, "msg"` -- 18 files reported as unformatted that no branch had touched.
+    rev: v0.14.1
     hooks:
+      # Notebooks are excluded on purpose, which `types_or` is the only way to express
+      # here: since v0.6 ruff lints and formats `.ipynb` by default, and running it over
+      # this repo rewrote 29 teaching notebooks in `more_simple_reinforcement_learning/`
+      # and `notes/`. Those keep their executed output as the record of a run, and their
+      # ad-hoc cells are the teaching material -- the same reason
+      # `linkedin-zip-challenge/pyproject.toml` already excludes its own notebooks.
       - id: ruff-format
-      - id: ruff
-        args: [--fix]
+        types_or: [python, pyi]
+      # `ruff-check`, not the `ruff` alias: v0.14.1 still accepts the old id but announces
+      # it as legacy. `--exit-non-zero-on-fix` is what `rules.md` asks for -- without it a
+      # hook that fixes a file still exits 0, so CI passes on code nobody has seen.
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]

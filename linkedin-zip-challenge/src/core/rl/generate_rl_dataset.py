@@ -75,7 +75,7 @@ def save_human_readable_log(puzzles: List[Puzzle], output_dir: Path):
     logger.info(f"Saving human-readable puzzle details to {log_path}")
     with open(log_path, "w", encoding="utf-8") as f:
         for i, puzzle in enumerate(puzzles):
-            f.write(f"--- Puzzle {i+1} ---\\n")
+            f.write(f"--- Puzzle {i + 1} ---\\n")
             # Use pprint to format the dictionary nicely
             f.write(pprint.pformat(puzzle, indent=2, width=120))
             f.write("\\n\\n")

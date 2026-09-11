@@ -15,6 +15,6 @@ def test_solve_puzzle_pso_returns_valid_path():
     # Assert
     assert solution is not None, "Solver returned None"
     assert isinstance(solution, list), "Solution is not a list"
-    assert all(
-        isinstance(item, tuple) for item in solution
-    ), "Not all items in the solution are tuples"
+    assert all(isinstance(item, tuple) for item in solution), (
+        "Not all items in the solution are tuples"
+    )

@@ -341,8 +341,7 @@ def train_parallel(
         worker_args.append((i, eps, config_dict, cache, seed + i))
 
     print(
-        f"  Dispatching {num_workers} workers "
-        f"({episodes_per_worker}+ episodes each)..."
+        f"  Dispatching {num_workers} workers ({episodes_per_worker}+ episodes each)..."
     )
 
     start = time.perf_counter()
@@ -359,9 +358,7 @@ def train_parallel(
             total_d += d
             total_l += lo
             done_count = len(tables)
-            print(
-                f"    Worker {done_count}/{num_workers} done " f"(W:{w} D:{d} L:{lo})"
-            )
+            print(f"    Worker {done_count}/{num_workers} done (W:{w} D:{d} L:{lo})")
 
     merged = merge_q_tables(tables)
     elapsed = time.perf_counter() - start
@@ -608,7 +605,7 @@ xychart-beta
 
 ## Result: **{verdict}**
 
-{'The agent achieves **zero losses** against Alpha-Beta, Random, and itself from both sides. It has learned the complete optimal strategy for Tic-Tac-Toe through pure reinforcement learning.' if all_losses == 0 else 'The agent still has losses. Consider increasing training episodes or tuning hyperparameters.'}
+{"The agent achieves **zero losses** against Alpha-Beta, Random, and itself from both sides. It has learned the complete optimal strategy for Tic-Tac-Toe through pure reinforcement learning." if all_losses == 0 else "The agent still has losses. Consider increasing training episodes or tuning hyperparameters."}
 """
 
 
@@ -661,7 +658,7 @@ def main():
     single_table, single_cps, single_time = train_single(config, cache)
 
     last_cp = single_cps[-1] if single_cps else None
-    print(f"\n  Done in {single_time:.2f}s | " f"Q-Table: {len(single_table):,} states")
+    print(f"\n  Done in {single_time:.2f}s | Q-Table: {len(single_table):,} states")
     if last_cp:
         print(
             f"  Last window: W={last_cp.win_rate:.1f}% "

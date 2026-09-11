@@ -116,16 +116,16 @@ def test_observations_stay_inside_the_declared_space() -> None:
     env = _make_env(puzzle, solution)
     observation, _ = env.reset()
 
-    assert env.observation_space.contains(
-        observation
-    ), "reset() left the observation space."
+    assert env.observation_space.contains(observation), (
+        "reset() left the observation space."
+    )
     assert observation["grid"].shape == (8, GRID_PAD, GRID_PAD)
 
     for action in path_to_actions(solution)[:5]:
         observation, _, _, _, _ = env.step(action)
-        assert env.observation_space.contains(
-            observation
-        ), "step() left the observation space."
+        assert env.observation_space.contains(observation), (
+            "step() left the observation space."
+        )
 
 
 def test_visited_cells_and_the_start_waypoint_are_encoded() -> None:
@@ -136,9 +136,9 @@ def test_visited_cells_and_the_start_waypoint_are_encoded() -> None:
     start = solution[0]
     assert observation["grid"][CH_VISITED][start] == 1.0
     assert observation["grid"][CH_AGENT][start] == 1.0
-    assert (
-        observation["grid"][CH_WP_DONE][start] == 1.0
-    ), "Standing on number 1 collects it at reset (dfs.py:72-77); v1 got this wrong."
+    assert observation["grid"][CH_WP_DONE][start] == 1.0, (
+        "Standing on number 1 collects it at reset (dfs.py:72-77); v1 got this wrong."
+    )
 
 
 def test_visited_cells_are_masked_out() -> None:
@@ -151,9 +151,9 @@ def test_visited_cells_are_masked_out() -> None:
     env.step(forward)
     backward = path_to_actions(solution[1::-1])[0]
 
-    assert not env.action_masks()[
-        backward
-    ], "Stepping back onto a visited cell must be masked."
+    assert not env.action_masks()[backward], (
+        "Stepping back onto a visited cell must be masked."
+    )
 
 
 def _two_by_two_puzzle() -> Puzzle:
@@ -174,9 +174,9 @@ def test_out_of_order_waypoints_are_masked() -> None:
     assert masks[ACTION_DOWN], "The empty cell below must stay legal."
 
     total_reward, terminated, _, info = _replay(env, path_to_actions(solution))
-    assert (
-        terminated and info["solved"]
-    ), "The in-order path must still solve the puzzle."
+    assert terminated and info["solved"], (
+        "The in-order path must still solve the puzzle."
+    )
 
 
 def test_walls_and_blocked_cells_are_masked() -> None:
@@ -216,12 +216,12 @@ def test_dead_end_terminates_before_an_all_false_mask_is_sampled() -> None:
     assert terminated, "A dead end must terminate the episode."
     assert not truncated
     assert info["dead_end"] and not info["solved"]
-    assert total_reward == pytest.approx(
-        0.0
-    ), "A dead end must not pay the success bonus."
-    assert (
-        not env.action_masks().any()
-    ), "The episode ended exactly at the all-masked state."
+    assert total_reward == pytest.approx(0.0), (
+        "A dead end must not pay the success bonus."
+    )
+    assert not env.action_masks().any(), (
+        "The episode ended exactly at the all-masked state."
+    )
 
 
 def test_connectivity_features_are_appended_without_touching_the_base_scalars() -> None:
@@ -242,9 +242,9 @@ def test_connectivity_features_are_appended_without_touching_the_base_scalars() 
         enriched_observation["scalars"][:NUM_BASE_SCALARS],
         plain_observation["scalars"],
     ), "Turning the feature on must only append, never disturb the existing scalars."
-    assert (
-        enriched_observation["scalars"][SPLIT_SCALAR] == 0.0
-    ), "The tail of a solution path is connected, so a fresh board is never split."
+    assert enriched_observation["scalars"][SPLIT_SCALAR] == 0.0, (
+        "The tail of a solution path is connected, so a fresh board is never split."
+    )
 
 
 @pytest.mark.parametrize(
@@ -267,15 +267,15 @@ def test_a_winning_path_never_reports_a_split(
     observation, _ = env.reset()
 
     for step, action in enumerate(path_to_actions(solution_path)):
-        assert (
-            observation["scalars"][SPLIT_SCALAR] == 0.0
-        ), f"{rows}x{cols}: the solution path was reported as split at step {step}."
+        assert observation["scalars"][SPLIT_SCALAR] == 0.0, (
+            f"{rows}x{cols}: the solution path was reported as split at step {step}."
+        )
         observation, _, _, _, info = env.step(action)
 
     assert info["solved"]
-    assert (
-        observation["scalars"][COMPONENT_SCALAR] == 0.0
-    ), "A solved board has no unvisited cells, so it has no components."
+    assert observation["scalars"][COMPONENT_SCALAR] == 0.0, (
+        "A solved board has no unvisited cells, so it has no components."
+    )
 
 
 def test_a_split_region_is_flagged_while_the_agent_still_has_moves() -> None:
@@ -327,9 +327,9 @@ def test_reverse_curriculum_starts_k_cells_from_the_end() -> None:
     assert len(remaining) == REVERSE_CURRICULUM_K - 1
 
     total_reward, terminated, _, info = _replay(env, remaining)
-    assert (
-        terminated and info["solved"]
-    ), "The tail of the solution must finish the episode."
+    assert terminated and info["solved"], (
+        "The tail of the solution must finish the episode."
+    )
     assert total_reward == pytest.approx(SUCCESS_REWARD)
 
 
@@ -346,9 +346,9 @@ def test_invalid_action_ends_the_episode_without_reward() -> None:
 
     masks = env.action_masks()
     illegal_action = int(np.argmin(masks))
-    assert not masks[
-        illegal_action
-    ], "This board should offer at least one illegal move."
+    assert not masks[illegal_action], (
+        "This board should offer at least one illegal move."
+    )
 
     _, reward, terminated, truncated, info = env.step(illegal_action)
     assert terminated and not truncated
@@ -393,13 +393,13 @@ def test_masks_never_allow_an_illegal_move_during_a_random_rollout() -> None:
         if terminated or truncated:
             break
 
-    assert len(walked) == len(
-        set(walked)
-    ), "A masked rollout must never revisit a cell."
-    assert len(walked) <= len(
-        solution
-    ), "A one-stroke walk cannot exceed the cell count."
-    assert all(
-        cell not in puzzle["blocked_cells"] for cell in walked
-    ), "A masked rollout must never enter a blocked cell."
+    assert len(walked) == len(set(walked)), (
+        "A masked rollout must never revisit a cell."
+    )
+    assert len(walked) <= len(solution), (
+        "A one-stroke walk cannot exceed the cell count."
+    )
+    assert all(cell not in puzzle["blocked_cells"] for cell in walked), (
+        "A masked rollout must never enter a blocked cell."
+    )
     assert len(env.action_masks()) == NUM_ACTIONS

@@ -438,7 +438,7 @@ xychart-beta
 
 ## Result: **{verdict}**
 
-{'The DQN agent achieves **zero losses** against Alpha-Beta, Random, and itself from both sides.' if all_losses == 0 else f'The agent has {all_losses} total losses. Neural network approximation may require more training or hyperparameter tuning compared to tabular Q-Learning.'}
+{"The DQN agent achieves **zero losses** against Alpha-Beta, Random, and itself from both sides." if all_losses == 0 else f"The agent has {all_losses} total losses. Neural network approximation may require more training or hyperparameter tuning compared to tabular Q-Learning."}
 
 ## DQN vs Tabular Q-Learning
 

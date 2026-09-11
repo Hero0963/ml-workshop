@@ -78,7 +78,7 @@ def solve_puzzle_a_star(puzzle: Puzzle) -> list[tuple[int, int]] | None:
         closed_set.add(state_key)
 
         logger.trace(
-            f"A* exploring path of length {len(current_path)}, f={f}, g={g}, h={f-g}"
+            f"A* exploring path of length {len(current_path)}, f={f}, g={g}, h={f - g}"
         )
 
         if len(current_path) == visitable_cells:
@@ -189,7 +189,7 @@ def solve_puzzle_a_star_sortedlist(puzzle: Puzzle) -> list[tuple[int, int]] | No
         closed_set.add(state_key)
 
         logger.trace(
-            f"A* (SortedList) exploring path of length {len(current_path)}, f={f}, g={g}, h={f-g}"
+            f"A* (SortedList) exploring path of length {len(current_path)}, f={f}, g={g}, h={f - g}"
         )
 
         if len(current_path) == visitable_cells:

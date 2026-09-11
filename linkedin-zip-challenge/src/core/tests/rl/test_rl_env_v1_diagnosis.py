@@ -81,9 +81,9 @@ def _assert_ground_truth_solves(
         f"{puzzle_id}: the ground-truth path did not cover every visitable cell "
         f"({outcome['visited_cells']}/{outcome['visitable_cells']}) -- the replay itself is wrong."
     )
-    assert not outcome[
-        "truncated"
-    ], f"{puzzle_id}: episode was truncated before the path ended."
+    assert not outcome["truncated"], (
+        f"{puzzle_id}: episode was truncated before the path ended."
+    )
     assert outcome["terminated"], (
         f"{puzzle_id}: replaying the ground-truth solution did NOT terminate. "
         f"Waypoint progress stalled at index {outcome['next_waypoint_idx']} "
@@ -131,9 +131,9 @@ def test_first_waypoint_is_only_credited_by_re_entering_the_start_cell() -> None
     env = PuzzleEnv(REFERENCE_PUZZLE)
     env.reset()
 
-    assert (
-        env.start_pos == env.waypoints[env._next_waypoint_idx]
-    ), "reset() is expected to aim at the cell the agent already occupies."
+    assert env.start_pos == env.waypoints[env._next_waypoint_idx], (
+        "reset() is expected to aim at the cell the agent already occupies."
+    )
 
     leave_action = path_to_actions(REFERENCE_SOLUTION[:2])[0]
     env.step(leave_action)
@@ -177,9 +177,9 @@ def test_success_is_reserved_for_paths_that_revisit_the_start_cell(
         f"{puzzle_id}: even the start-cell detour failed to terminate; the diagnosis "
         "of the v1 defect is incomplete."
     )
-    assert (
-        outcome["final_reward"] >= SUCCESS_REWARD_THRESHOLD
-    ), f"{puzzle_id}: terminated without the success bonus ({outcome['final_reward']})."
+    assert outcome["final_reward"] >= SUCCESS_REWARD_THRESHOLD, (
+        f"{puzzle_id}: terminated without the success bonus ({outcome['final_reward']})."
+    )
 
 
 def _obs_hash(observation: np.ndarray) -> int:
@@ -209,12 +209,12 @@ def test_observation_forms_a_two_cycle_when_oscillating() -> None:
             observation, reward, terminated, truncated, _ = env.step(action)
             observations.append(_obs_hash(observation))
             rewards.append(reward)
-            assert (
-                not terminated
-            ), "Oscillating between visited cells must not terminate."
-            assert (
-                not truncated
-            ), "Oscillation exceeded the step budget; shorten the probe."
+            assert not terminated, (
+                "Oscillating between visited cells must not terminate."
+            )
+            assert not truncated, (
+                "Oscillation exceeded the step budget; shorten the probe."
+            )
 
     distinct = set(observations)
     logger.info(
@@ -254,9 +254,9 @@ def test_illegal_moves_freeze_the_observation_and_never_truncate() -> None:
         f"{len(set(observations))} distinct observation(s), "
         f"step counter {env._current_step}, truncation reported: {any(truncations)}"
     )
-    assert (
-        len(set(observations)) == 1
-    ), "Illegal moves should leave the observation unchanged."
+    assert len(set(observations)) == 1, (
+        "Illegal moves should leave the observation unchanged."
+    )
     assert env._agent_location == (
         row,
         col,

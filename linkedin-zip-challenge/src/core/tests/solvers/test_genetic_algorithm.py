@@ -27,6 +27,6 @@ def test_solve_puzzle_genetic_algorithm_returns_valid_path(
     # Assert
     assert solution is not None, f"Solver returned None for {puzzle_name}"
     assert isinstance(solution, list), f"Solution for {puzzle_name} is not a list"
-    assert all(
-        isinstance(item, tuple) for item in solution
-    ), f"Not all items in the solution for {puzzle_name} are tuples"
+    assert all(isinstance(item, tuple) for item in solution), (
+        f"Not all items in the solution for {puzzle_name} are tuples"
+    )

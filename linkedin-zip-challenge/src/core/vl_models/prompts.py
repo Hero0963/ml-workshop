@@ -155,10 +155,10 @@ def get_extraction_prompt() -> str:
     for example in few_shot_examples:
         # The image_path is a placeholder for the prompt, the actual image is sent separately.
         examples_str += f"""
-    Image: {example['image_path']}
+    Image: {example["image_path"]}
     Output:
     ```json
-    {json.dumps(example['output'], indent=4)}
+    {json.dumps(example["output"], indent=4)}
     ```
     """
 

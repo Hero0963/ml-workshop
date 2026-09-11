@@ -130,9 +130,9 @@ def test_generate_random_path_is_valid():
         r1, c1 = path[i]
         r2, c2 = path[i + 1]
         manhattan_distance = abs(r1 - r2) + abs(c1 - c2)
-        assert (
-            manhattan_distance == 1
-        ), f"Path jumps between non-adjacent nodes: {path[i]} to {path[i+1]}"
+        assert manhattan_distance == 1, (
+            f"Path jumps between non-adjacent nodes: {path[i]} to {path[i + 1]}"
+        )
 
 
 def test_generate_neighbor_path_is_valid():
@@ -167,6 +167,6 @@ def test_generate_neighbor_path_is_valid():
         r1, c1 = new_path[i]
         r2, c2 = new_path[i + 1]
         manhattan_distance = abs(r1 - r2) + abs(c1 - c2)
-        assert (
-            manhattan_distance == 1
-        ), f"New path jumps between non-adjacent nodes: {new_path[i]} to {new_path[i+1]}"
+        assert manhattan_distance == 1, (
+            f"New path jumps between non-adjacent nodes: {new_path[i]} to {new_path[i + 1]}"
+        )

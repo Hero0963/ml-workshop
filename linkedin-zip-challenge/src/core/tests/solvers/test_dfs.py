@@ -45,9 +45,9 @@ def test_image_puzzles(puzzle_data, expected_solution, puzzle_id):
     logger.info(f"Solution found for {puzzle_id}: {actual}")
 
     if expected_solution is not None:
-        assert (
-            actual == expected_solution
-        ), f"Solver returned the wrong solution for {puzzle_id}."
+        assert actual == expected_solution, (
+            f"Solver returned the wrong solution for {puzzle_id}."
+        )
     else:
         # For puzzles without a known solution, just check for completeness.
         assert actual is not None, f"Solver did not find a solution for {puzzle_id}."
@@ -55,9 +55,9 @@ def test_image_puzzles(puzzle_data, expected_solution, puzzle_id):
         grid = puzzle_data["grid"]
         blocked_cells = puzzle_data.get("blocked_cells", set())
         expected_len = len(grid) * len(grid[0]) - len(blocked_cells)
-        assert (
-            len(actual) == expected_len
-        ), f"Path length for {puzzle_id} should be {expected_len}, but was {len(actual)}."
+        assert len(actual) == expected_len, (
+            f"Path length for {puzzle_id} should be {expected_len}, but was {len(actual)}."
+        )
 
     logger.info(
         f"--- Finished test for: {puzzle_id} ---\

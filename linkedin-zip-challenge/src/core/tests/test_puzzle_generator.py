@@ -17,26 +17,26 @@ def test_generate_puzzle_smoke():
     num_blocked = len(puzzle["blocked_cells"])
     assert num_blocked <= 2
     assert len(solution_path) == (m * n) - num_blocked
-    assert len(set(solution_path)) == len(
-        solution_path
-    ), "Path should not have duplicates"
+    assert len(set(solution_path)) == len(solution_path), (
+        "Path should not have duplicates"
+    )
 
     # 2. Verify waypoints are on the path and in order
     sorted_waypoints = sorted(puzzle["num_map"].items())
     last_idx = -1
     for num, pos in sorted_waypoints:
-        assert (
-            pos in solution_path
-        ), f"Waypoint {num} at {pos} is not in the solution path"
+        assert pos in solution_path, (
+            f"Waypoint {num} at {pos} is not in the solution path"
+        )
         current_idx = solution_path.index(pos)
         assert current_idx > last_idx, f"Waypoint {num} is out of order"
         last_idx = current_idx
 
     # 3. Verify blocked cells are not in the path
     for blocked_cell in puzzle["blocked_cells"]:
-        assert (
-            blocked_cell not in solution_path
-        ), "Path should not go through blocked cells"
+        assert blocked_cell not in solution_path, (
+            "Path should not go through blocked cells"
+        )
         assert puzzle["puzzle_layout"][blocked_cell[0]][blocked_cell[1]] == "xx"
 
     # 4. Verify walls are not part of the path

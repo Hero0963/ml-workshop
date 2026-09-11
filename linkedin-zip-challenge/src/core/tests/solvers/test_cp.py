@@ -26,19 +26,19 @@ def test_cp_sat_solver(puzzle_data, expected_solution, puzzle_id):
     # For now, we will assert equality, but in the future, we might need a more
     # robust validation function that checks the path's validity instead of equality.
     if expected_solution is not None:
-        assert (
-            actual == expected_solution
-        ), f"[CP-SAT Solver] returned the wrong solution for {puzzle_id}."
+        assert actual == expected_solution, (
+            f"[CP-SAT Solver] returned the wrong solution for {puzzle_id}."
+        )
     else:
-        assert (
-            actual is not None
-        ), f"[CP-SAT Solver] did not find a solution for {puzzle_id}."
+        assert actual is not None, (
+            f"[CP-SAT Solver] did not find a solution for {puzzle_id}."
+        )
 
         grid = puzzle_data["grid"]
         blocked_cells = puzzle_data.get("blocked_cells", set())
         expected_len = len(grid) * len(grid[0]) - len(blocked_cells)
-        assert (
-            len(actual) == expected_len
-        ), f"[CP-SAT Solver] Path length for {puzzle_id} should be {expected_len}, but was {len(actual)}."
+        assert len(actual) == expected_len, (
+            f"[CP-SAT Solver] Path length for {puzzle_id} should be {expected_len}, but was {len(actual)}."
+        )
 
     logger.info(f"--- [CP-SAT Solver] Finished test for: {puzzle_id} ---")

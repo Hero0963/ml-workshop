@@ -31,9 +31,9 @@ def test_monte_carlo_solver_run():
     assert solution[0] == puzzle["num_map"][1], "Path must start at waypoint 1."
 
     # 4. The path must be simple (no loops)
-    assert len(solution) == len(
-        set(solution)
-    ), "Path should not contain duplicate cells."
+    assert len(solution) == len(set(solution)), (
+        "Path should not contain duplicate cells."
+    )
 
     # 5. The path should not cross any walls
     walls = puzzle.get("walls", set())

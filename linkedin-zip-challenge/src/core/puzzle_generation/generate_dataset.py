@@ -179,7 +179,7 @@ def main():
         f.write("puzzles_to_test = [\n")
         for res in results:
             f.write(
-                f"    ({res['puzzle_name']}_data, solution_{res['task_id']:02d}, \"{res['puzzle_name']}\"),\n"
+                f'    ({res["puzzle_name"]}_data, solution_{res["task_id"]:02d}, "{res["puzzle_name"]}"),\n'
             )
         f.write("]\n")
 
