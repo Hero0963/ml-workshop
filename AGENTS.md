@@ -158,90 +158,150 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 
 ## 10. 多 agent 平行開發 ★（2026-09-12 新增）
 
-### 10.1 用哪一種平行？——先選對工具
+> 這一節有兩個讀者：**接手的 agent**（§10.1–10.4、10.6）與**本人**（§10.5 的操作卡）。
+
+### 10.1 先選對工具——一句話決策表
+
+| 你要做的事 | 用什麼 | 為什麼 |
+|---|---|---|
+| **兩個以上的功能要同時開發（會改檔）** | **git worktree ＋ 每個 worktree 一個 session** | 唯一能做到檔案系統層級隔離的做法 |
+| 同一條 track 裡要查很多檔、做互不相依的**唯讀**調查 | **subagent** | 省你的 context，而且不會改到檔 |
+| 只是要看程式碼／問問題，不改東西 | 隨便哪個 session 都行 | 沒有衝突風險 |
+| **同一個 worktree 開兩個 session 一起改檔** | **❌ 不要做** | 見 §10.2 |
+
+**預設規則：一條 track ＝ 一個 worktree ＝ 一個 branch ＝ 一個 session。**
+
+### 10.2 三種方式的實際差別
 
 | 方式 | 隔離程度 | 適合 | **不適合** |
 |---|---|---|---|
-| **git worktree ＋ 每個 worktree 一個 session** | 檔案系統完全隔離：各自的工作樹、分支、`.venv` | **會改檔的平行開發**（預設選這個）| 需要各自 `uv sync` ＋ 複製 `.env`；吃磁碟 |
-| 同一個 worktree 開多個 session | 幾乎沒有 | 唯讀查詢 | **會改檔的工作**——兩個 agent 互相覆蓋、git index 打架、測試互相污染 |
-| subagent（同一個 session 內） | 共用同一個工作樹 | **唯讀的 fan-out**：多檔搜尋、跨模組查證、彼此不依賴的調查 | 平行改檔；也不要為了並行而並行 |
+| **worktree ＋ 各自 session** | 完全隔離：各自的工作目錄、分支、`.venv`、測試產物 | **會改檔的平行開發** | 要各自 `uv sync` ＋ 複製 `.env`；吃磁碟（每個 `.venv` 好幾 GB）|
+| 同 worktree 多 session | **幾乎沒有** | 唯讀查詢 | **會改檔的工作** |
+| subagent（同 session 內） | 共用同一個工作目錄 | **唯讀 fan-out**：多檔搜尋、跨模組查證 | 平行改檔；不要為了並行而並行 |
 
-**預設規則：一條 track ＝ 一個 worktree ＝ 一個 branch ＝ 一個 session。**
-subagent 只拿來做唯讀調查，不拿來平行改檔。
+**為什麼「同 worktree 多 session」會壞**，三件事同時發生：
 
-### 10.2 本機資源是互斥的（這是最容易踩到的坑）
+1. **互相覆蓋**：A 讀了檔、B 改了同一個檔、A 再寫回去 ⇒ B 的改動消失，而且沒有人會發現。
+2. **git index 打架**：兩邊同時 `git add`／`commit`，`.git/index.lock` 會噴錯，或把對方的檔一起 commit 進去。
+3. **測試互相污染**：`pytest` 產生的檔、訓練寫進 `logs/`／`models/` 的東西，兩邊分不清是誰的。
 
-一台機器只有一張 GPU 與 24 核，而**訓練／資料生成／批次評估都會吃滿預算**（見 §4 的 75% 上限）。
-兩個 agent 同時開跑會互相拖慢，而且**量出來的時間數字全部作廢**。
+**subagent 不是拿來平行開發的**：它和你共用同一個工作目錄，所以第 1、2 點一樣會發生。
+它的價值是「**替你讀東西、不佔你的 context**」。
 
-**用一個共用檔案當號誌**（worktree 們都是 `ml-workshop` 的兄弟目錄，所以路徑互通）：
+### 10.3 本機資源是互斥的（最容易被忽略的約束）
+
+一台機器一張 GPU、24 核，**訓練／資料生成／批次評估都會吃滿預算**（§4 的 75% 上限）。
+兩個 agent 同時開跑不只變慢，**量出來的時間數字會全部作廢**。
+
+**共用號誌檔**（worktree 們都是 `ml-workshop` 的兄弟目錄，路徑互通）：
 
 ```
-ml-workshop/.agent-heavy-job      # 內容只有一行
+ml-workshop/.agent-heavy-job     # 內容一行：free  或  busy <track> <YYYY-MM-DD HH:MM>
 ```
 
-- 開跑前先讀它。內容是 `free` 才可以開跑。
-- 開跑前把它覆寫成 `busy <track> <YYYY-MM-DD HH:MM>`，**跑完覆寫回 `free`**。
-- 被佔用時**不要等**——先做不吃資源的部分（寫程式、寫測試、寫文件），資源工作往後排。
-- ⚠ 這是**君子協定不是互斥鎖**，它的價值在於「跑完的數字可信」。Docker build、`pytest`、
-  `ruff` 不算重工作，不用搶號誌。
+| 動作 | 規則 |
+|---|---|
+| 開跑重工作前 | 先讀它。是 `free` 才能跑，然後覆寫成 `busy <track> <時間>` |
+| 跑完 | **覆寫回 `free`**（忘記的話別人會一直等） |
+| 被佔用時 | **不要等**——先做不吃資源的部分（寫程式、寫測試、寫文件），資源工作往後排 |
+| 不算重工作 | `pytest`、`ruff`、Docker build、讀檔寫檔——不用搶 |
 
-### 10.3 共用檔案的協定（避免 merge 衝突）
+⚠ 這是**君子協定不是互斥鎖**。它的價值在於「跑完的數字可信」，不在於防止競爭。
+
+### 10.4 共用檔案協定（不遵守就會 merge 衝突）
 
 | 檔案 | 規則 |
 |---|---|
 | `<子專案>/ai-collab/dev_log.md` | 每條 track **各加自己的 `###` 小節**，不要動別人的 |
 | `<子專案>/ai-collab/roadmap.md` | **只改自己那一項**；衝突時兩邊都保留 |
 | `pyproject.toml` / `uv.lock` | **序列化處理**：一次只有一條 track 動相依；新套件由本人手動 `uv add` |
-| `AGENTS.md` / `rules.md` | 動之前先說一聲——它們是所有 track 的共同地板 |
+| `AGENTS.md` / `rules.md` | 動之前先說一聲——所有 track 的共同地板 |
 | `src/core/utils.py`、`src/core/puzzle_generation/` | **只讀不改**，要改先提出 |
 | `src/core/solvers/registry.py` | 新增 solver 的唯一入口；兩條 track 同時加會衝突，先講好 |
 
-**分工要按「檔案所有權」切，不是按「功能聽起來像不像」切。**
-開新 track 前先問：**它會動到的檔案，和進行中的 track 有沒有交集？** 有就先談。
+**★ 分工要按「檔案所有權」切，不是按「功能聽起來像不像」切。**
+開新 track 前先問一句：**它會動到的檔案，和進行中的 track 有沒有交集？** 有就先談。
 
-### 10.4 開一條新 track 的完整步驟
+---
+
+### 10.5 【給本人】怎麼把任務分配下去——五步操作卡
+
+**Step 1｜先把 `main` 弄成最新**（所有 track 都從它長出來）
 
 ```powershell
-# 1. 從 main 長出新的 worktree 與分支（main 要先是最新的）
+cd D:\it_project\github_sync\ml-workshop
+git checkout main
+git pull
+```
+
+**Step 2｜把工作切成「檔案不重疊」的幾份**
+
+寫一份任務計畫書放 `<子專案>/ai-collab/plans/YYYY-MM-DD_<主題>.md`，每條 track 一節，
+每節都要有：**目標／擁有哪些檔／不准動哪些檔／done 條件／要不要 GPU／已知陷阱**。
+（範例：[`linkedin-zip-challenge/ai-collab/plans/2026-09-12_next-tracks.md`](linkedin-zip-challenge/ai-collab/plans/2026-09-12_next-tracks.md)）
+
+⚠ **檢查交集**：把每條 track 會動的資料夾列出來，**有重疊就不要平行**，改成序列做。
+
+**Step 3｜每條 track 開一個 worktree**
+
+```powershell
 cd D:\it_project\github_sync\ml-workshop
 git worktree add ..\zip-<track> -b feat/<track>
 
-# 2. .env 不進版控，要手動複製
+# .env 不進版控，一定要手動複製，否則服務起不來
 Copy-Item .\linkedin-zip-challenge\.env ..\zip-<track>\linkedin-zip-challenge\.env
 
-# 3. 建環境（每個 worktree 一份 .venv）
 cd ..\zip-<track>\linkedin-zip-challenge
 uv sync
-
-# 4. 建立基線，不要假設環境是好的
-uv run pytest
-uv run ruff check .
 ```
 
-然後在 `zip-<track>` 目錄開一個新的 Claude Code session。
+⚠ **一律從 `main` 長**，不要從別的 feature 分支長——會讓兩條 track 的歷史糾纏，合併時很痛。
+⚠ 已經存在的 worktree 就直接用（例如 `zip-vlm`、`zip-rl`），不用重開。
 
-⚠ **不要從別的 feature 分支長新 worktree**，除非你真的要繼承它未合併的改動——
-那會讓兩條 track 的歷史糾纏，合併時很痛。
+**Step 4｜在每個 worktree 目錄各開一個 Claude Code session，貼 §10.6 的起手式**
 
-### 10.5 新 session 的第一則訊息（貼這個就好）
+**Step 5｜收工：一次合併一條**
+
+```powershell
+cd D:\it_project\github_sync\ml-workshop
+git merge --ff-only feat/<track>      # 不能 ff 就代表 main 動過了，先 rebase 那條 track
+git push origin main
+```
+
+合完一條再合下一條。**同時合多條時 `uv.lock` 與 `dev_log.md` 最容易衝突。**
+
+**分配任務時的三個判準**
+
+1. **能不能獨立驗證**：這條 track 自己跑 `pytest` 就能確認做完了嗎？不行就切得不對。
+2. **要不要搶 GPU**：兩條都要 GPU ⇒ 不要同時開，或讓其中一條先做不吃資源的部分。
+3. **會不會動到共用地板**（`AGENTS.md`／`rules.md`／`utils.py`／`registry.py`）：會的話只給一條 track。
+
+---
+
+### 10.6 【給 agent】新 session 的第一則訊息（照貼）
 
 ```
 你負責 <track 名稱>，worktree 是 D:\it_project\github_sync\zip-<track>。
+所有指令都在這個目錄跑，不要 cd 回 ml-workshop。
 
-1. 讀 linkedin-zip-challenge/ai-collab/plans/<任務計畫書>.md 裡屬於你的那一節
-2. 讀 linkedin-zip-challenge/ai-collab/handover-<track>.md（若有）
-3. 跑 uv run pytest 與 uv run ruff check . 建立基線
-4. 回報：目標是什麼、你要動哪些檔、done 條件、風險
-5. 先不要動手，等我確認
+1. 讀 linkedin-zip-challenge/ai-collab/plans/<任務計畫書>.md 裡「<track 名稱>」那一節
+2. 讀該 track 的 handover（若有）：linkedin-zip-challenge/ai-collab/handover-<track>.md
+3. 讀 AGENTS.md §10（平行開發規則）
+4. 建立基線：cd linkedin-zip-challenge && uv run pytest && uv run ruff check .
+5. 回報：目標是什麼、你要動哪些檔、done 條件、風險
+6. 先不要動手，等我確認
 
-資源規則：重工作（訓練／資料生成／批次評估）開跑前先看
-../ml-workshop/.agent-heavy-job，是 free 才能跑，跑之前改成 busy，跑完改回 free。
+規則：
+- 只動計畫書說你擁有的檔案，其他 track 的檔案不要碰
+- 重工作（訓練／資料生成／批次評估）開跑前先看 ../ml-workshop/.agent-heavy-job，
+  是 free 才能跑，跑前改成 busy <track> <時間>，跑完改回 free
+- commit 需要我當次授權；單獨說 commit 不含 push
+- 告一段落就更新 dev_log.md（加自己的 ###）與 roadmap.md（只改自己那一項）
 ```
 
-### 10.6 收工與合併
+### 10.7 收工與合併
 
-- 每條 track **自己 commit 自己的分支**（commit 需當次授權，單獨說 commit 不含 push）。
-- **一次合併一條**進 `main`，合完再合下一條——同時合多條時 `uv.lock` 與 `dev_log.md` 最容易衝突。
-- 合併前該 track 要自己跑過 `uv run pytest` ＋ repo 根的 `uv run pre-commit run --all-files`。
+- 每條 track **自己 commit 自己的分支**（commit 需當次授權，單獨說 commit **不含** push）。
+- 合併前該 track 要自己跑過 `uv run pytest` ＋ repo 根 `uv run pre-commit run --all-files`。
 - track 結束時更新自己的 `handover-<track>.md`，**下一個接手的人只讀那一份就要能開工**。
+- **一次合併一條**進 `main`，合完再合下一條。
