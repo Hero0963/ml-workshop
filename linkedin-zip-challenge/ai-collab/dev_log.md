@@ -4,6 +4,95 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-09-12
+
+### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
+
+完整報告在 [`reports/2026-09-12_rl-wrap-up.md`](reports/2026-09-12_rl-wrap-up.md)；
+名詞與判讀規則抽到新的 [`notes/`](notes/)；服務怎麼起看
+[`deployment-guide.md`](deployment-guide.md)。
+
+**先回答擱著的那題：6×6 加預算過不過得了門檻。** `bc_6x6` × 2,000 題 held-out ×
+`--max-attempts 64`：best-of-16 **0.8105**、best-of-32 **0.8500**、best-of-64 **0.8835**
+（5.35／8.05／12.25 次嘗試）。**best-of-32 剛好等於門檻**。
+事前用 hazard rate 預測 N=32 ≈ 0.887 — **又外推錯了，這是第三次**，規則因此升級成
+「hazard 表只能用來排除，不能用來預測」。而且同一個模型同一份測試集，只因抽樣 rng 串流不同
+（上一輪跑到 16 就停、這輪跑到 64），**N=16 的分數就從 0.8000 變成 0.8105** ⇒
+**best-of-N 的評估雜訊約 ±0.01，0.8500 是踩線不是穩定達標**。本人定案判定用 best-of-32。
+
+**跨尺寸泛化第一次被量到，而且是單向的。** 觀測本來就 padding 到 8×8、純量帶 `height/8`、
+`width/8`，`_load_sample()` 每局重讀高寬 ⇒ **任何 checkpoint 直接就能吃任何 ≤8×8 的盤面**，
+不用改一行程式。deterministic 矩陣：`bc_6x6` 在**沒看過的 4×4** 拿 **0.5456**（greedy 0.1170），
+`bc_4x4` 在 6×6 只有 **0.0105**（greedy 0.0041）。**大盤面往下相容，小盤面往上完全不行。**
+⚠ 這同時**更正了 handover 寫反的一句話**：舊版說「`Linear(4104→256)` 綁死 8×8 padding
+所以跨尺寸測不到」——padding 正是**讓**它可測的原因。
+
+**於是做了多尺寸模型，而它推翻了我自己寫在計畫書裡的風險預測。** 新生一份 4／5／6 的資料集
+（`seed20300000_n20000_456`，60,000 題，11m16s；4×4 train 15,439／5×5 15,996／6×6 16,000），
+`Goal.size: int` 改成 `sizes: tuple[int, ...]`（全專案只有 3 個呼叫點，**env 完全不用改**），
+訓一個混合模型 ＋ 三個單尺寸對照，**同資料同測試集**：
+
+| 盤面 | 多尺寸 det | 對照 det | 差 | 多尺寸 bo32 | 對照 bo32 | 多尺寸嘗試數 | 對照嘗試數 |
+|---|---|---|---|---|---|---|---|
+| 4×4 | **0.9404** | 0.9042 | +0.0362 | 0.9917 | **0.9938** | **1.55** | 1.61 |
+| 5×5 | **0.7496** | 0.7131 | +0.0365 | **0.9495** | 0.9330 | **3.59** | 4.33 |
+| 6×6 | **0.5205** | 0.4890 | +0.0315 | **0.8535** | 0.8520 | **7.76** | 8.02 |
+
+計畫書裡我寫「混合尺寸**沒有機制理由**能改善 6×6」——**錯了**，6×6 從 0.4890 變 0.5205。
+**但 best-of-32 改變了結論的形狀**：加上推論預算後優勢幾乎被吃掉（4×4 **−0.0021**、6×6 **+0.0015**，
+都遠小於 ±0.01 的評估雜訊），只有 5×5 還留 +0.0165。**優勢沒消失，只是換成「比較便宜」**——
+同一個 N 下三個盤面都用更少嘗試次數。⇒ 實務結論仍是**一個模型取代三個**：deterministic 更好、
+best-of-32 相當、推論更便宜、訓練成本略低（465.3s vs 478.1s），而且 **5×5 從此有模型**
+（先前只能借 6×6 模型的 0.2941）。⚠ 6×6 的 seed 雜訊仍然沒量過。
+
+**⓪ 順手解掉擋在 PPO 微調前面的問題。** 同 goal 同 seed 同資料，只差 `--value-coef`：
+`0.5` 的 val_choice 0.8770／solve 0.9042，`0` 的 0.8777／**0.9125**，差 **−0.0083**
+⇒ **在雜訊內，沒有證據支持 value 回歸傷到策略**，2026-09-05 煙霧測試看到的下降沒有重現。
+**微調的前置封鎖解除。**
+
+**A5 完成：RL solver 上線。** 新增 `src/core/rl/solver_service.py`——`src/core/rl/` 裡唯一被實驗腳本
+以外的東西使用的檔案。它**重用評估用的同一條路徑**（同 env、同遮罩、同 rollout 迴圈），
+所以報告的數字就是端點交付的數字。**推論不需要解答**：`PuzzleSample.solution_path` 在
+`reverse_curriculum_k=None` 下只被讀第一個元素（起點），而起點就是編號 1 的位置——
+有測試釘住這個不變量。三種回應分清楚：**缺 checkpoint → 503、尺寸沒模型 → 400、找不到解 → 200 ＋ 說明**。
+
+**Refactor：三份 solver 清單收成一份。** `app/routers/solver.py`、`app/routers/vision.py`、
+`ui/gradio_app.py` **各自維護一份一樣的 `SOLVERS`**，加一種 solver 只會出現在改到的那一處。
+RL solver 是壓垮它的案例（第一個既不精確、也不保證可用的 solver）⇒ 新增
+`src/core/solvers/registry.py` 當唯一正本（含 `kind` 與說明欄），三處改成 import，
+並用測試釘住「三個入口指向同一個物件」。
+
+**Docker：四個「看起來有起來、其實沒有」的缺陷。**
+① 正式 image **沒有 `CMD`** ⇒ `docker compose up` 建好 image、容器 Up，**裡面沒有 server**；
+② 開發 image 停在 `tail -f /dev/null`，靠 `run_docker_dev.py` 把 server exec 進去，
+但那行**沒有 `-d`**、`subprocess.run` 會一直等 ⇒ 後面的 healthcheck 永遠跑不到；
+③ **`models/` 6.6 GB 被送進 build context**；④ 兩個服務都沒有 healthcheck。
+全部修掉，`models/` 改成唯讀 volume，並新增 **`start.py`** 取代 `run_docker_dev.py`
+（`--dev`／`--down`／`--status`，會等到 API 真的回應、並講明少了哪個選配）。
+**實測**：兩個容器 `Up (healthy)`、health／`/ui`／`/svelte-ui`／`/docs` 全 200、
+四種 solver 全 200、7×7 回 400、`/api/vision/solve` 200。
+
+**順帶抓到設定漂移。** 這個 worktree 的 `.env` 停在 2026-08-15 的
+`OLLAMA_MODEL_NAME=openbmb/minicpm-o2.6`，卻配著 `finetune` 的 prompt ⇒ 視覺端點回 200
+但吐出**全空的 10×10 盤面**。同步成 `.env.example` 的 `zip-qwen35-4b-p4c:f16` 後，
+同一張圖讀成 **7×7 並抓到編號**。`.env` 不進版控、每個 worktree 一份，**所以它會各自過期**。
+
+**文件按「交付品」重寫。** `README.md` 與 `README_zh-TW.md` 重寫：專案是什麼、
+**從 clone 到服務跑起來的一行指令**、提供哪些能力（出題／讀圖／解題）、**10 種 solver 清單**、
+**兩個模型的選型與訓練與結果**、專案結構、文件地圖。新增 `ai-collab/notes/`（做中學筆記：
+[`01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)、
+[`02-reading-the-numbers.md`](notes/02-reading-the-numbers.md)、
+[`03-inference-and-serving.md`](notes/03-inference-and-serving.md)、`sessions/`）與
+`deployment-guide.md`。過期的 `docker-compose.yml.vl_version` 與被取代的 `run_docker_dev.py`
+移入 `soft-delete/20260912-005132/`。
+
+**驗證**：`276 passed, 8 xfailed`（原 261；新增 5 個多尺寸、6 個 solver service、4 個 registry）、
+`ruff check` 綠、repo 級 `pre-commit run --all-files` 綠、28 份文件的相對連結全數存在。
+
+**⚠ 還沒做、記下來**：app image **22.9 GB**（基底是 CUDA devel 但 app 根本不用 GPU，
+GPU 在 ollama 那邊），換 slim 基底可大幅縮小但**未驗證系統相依**；
+`start.py --dev` 的完整啟動**沒有實跑過**（只驗了 `--status` 這條路徑）；6×6 的 seed 雜訊沒量過。
+
 ## 2026-09-05
 
 ### RL Track — the labels were on disk all along: behaviour cloning beats PPO at a ninth of the cost, and it is not RL (branch `feat/rl-a2-training`, worktree `zip-rl`)

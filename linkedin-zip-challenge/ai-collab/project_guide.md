@@ -40,7 +40,9 @@ linkedin-zip-challenge/
 │   ├── handover-rl-solver.md    # ★ RL track 接手第一站（自足）
 │   ├── handover-vlm-parser.md   # ★ VL track 接手第一站（自足）
 │   ├── vlm-operating-guide.md   # 讀圖功能的使用者操作手冊
-│   ├── plans/                   # 任務計畫書 YYYY-MM-DD_track-<名稱>.md
+│   ├── deployment-guide.md      # ★ Docker 起服務：容器職責、驗收指令、排查
+│   ├── notes/                   # ★ 做中學筆記（概念、判讀規則、推論）＋ sessions/
+│   ├── plans/                   # 任務計畫書 YYYY-MM-DD_<主題>.md
 │   └── reports/                 # 任務報告 YYYY-MM-DD_<主題>.md
 ├── src/
 │   ├── app/                     # FastAPI 後端
@@ -50,9 +52,9 @@ linkedin-zip-challenge/
 │   │   └── tests/               # test_solver_api.py（TestClient）
 │   ├── core/                    # 核心邏輯（不依賴 Web 框架）
 │   │   ├── utils.py             # ★ 共用中樞：Puzzle 型別、parser、fitness、視覺化
-│   │   ├── solvers/             # 9 種解題演算法
+│   │   ├── solvers/             # 9 種解題演算法 ＋ registry.py（唯一正本清單）
 │   │   ├── puzzle_generation/   # 程序化出題與資料集腳本
-│   │   ├── rl/                  # 🚧 RL solver（訓練中，見 handover-rl-solver.md）
+│   │   ├── rl/                  # ✅ RL solver（已上線；服務端只有 solver_service.py）
 │   │   ├── vl_models/           # ✅ 圖片解析（已上線，接 /api/vision/solve）
 │   │   └── tests/               # conftest.py（6 題 ground truth）＋ solvers/ 測試
 │   ├── custom_components/
@@ -66,7 +68,7 @@ linkedin-zip-challenge/
 │   └── Dockerfile.dev           # DEVELOPMENT
 ├── docker-compose.yml           # production（單一自足服務）
 ├── docker-compose.dev.yml       # development（後端 ＋ Svelte dev server 兩容器）
-├── run_docker_dev.py            # 一鍵啟動開發環境
+├── start.py                  # 一鍵啟動：clone 完就能起服務
 ├── .env / .env.example          # 環境變數（.env 絕不進版控）
 ├── .python-version              # 3.11
 ├── pyproject.toml / uv.lock     # 相依（獨立於 repo 根，不進 uv workspace）
@@ -157,7 +159,7 @@ npm run build
 ### 方式 2：Docker 開發環境（含 hot-reload）
 
 ```powershell
-python run_docker_dev.py
+python start.py --dev
 ```
 
 兩個容器（後端 ＋ Svelte dev server）＋ volume mount。

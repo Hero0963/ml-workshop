@@ -31,7 +31,7 @@
 > | 跑法 | 誰在容器裡 | 狀態 |
 > |---|---|---|
 > | **A. Ollama 在 Docker、app 在本機**（下面這三行） | 只有模型 | ✅ **2026-08-29 實測驗過，讀圖功能可用** |
-> | B. 整套 Docker（`python run_docker_dev.py`） | 模型＋app＋Svelte | ⚠ **設定已就緒但未實測**：這台機器**從沒 build 過 app 的 image**，第一次要拉 `pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel`（約 20 GB）再 `uv sync`。網路設定已驗過（compose 會把 app 的 `OLLAMA_PROVIDER_URL` 覆寫成 `http://ollama:11434/v1`），但整條路徑沒跑過 |
+> | B. 整套 Docker（`python start.py --dev`） | 模型＋app＋Svelte | ⚠ **設定已就緒但未實測**：這台機器**從沒 build 過 app 的 image**，第一次要拉 `pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel`（約 20 GB）再 `uv sync`。網路設定已驗過（compose 會把 app 的 `OLLAMA_PROVIDER_URL` 覆寫成 `http://ollama:11434/v1`），但整條路徑沒跑過 |
 >
 > **A 就是 `AGENTS.md` 記載的開發跑法，建議用它。**
 

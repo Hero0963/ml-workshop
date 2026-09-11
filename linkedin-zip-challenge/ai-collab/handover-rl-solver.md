@@ -3,7 +3,7 @@
 > **接手這條 track 從這一份開始讀。這裡只寫「開工前必須知道的」。**
 > 細節一律不重複——量過的數字與踩過的坑在 [`rl-traps-and-facts.md`](rl-traps-and-facts.md)，
 > 其餘去哪查看 **§6 總目錄**。
-> 最後更新：2026-09-05（Asia/Taipei）｜分支 `feat/rl-a2-training`｜worktree `zip-rl`｜roadmap 第 3 項
+> 最後更新：2026-09-12（Asia/Taipei）｜分支 `feat/rl-a2-training`｜worktree `zip-rl`｜roadmap 第 3 項
 >
 > ⚠ **要讀就讀 `zip-rl` 這份**：本檔在每個 worktree 都有一份，別的 worktree 拿到的是那條分支
 > 上次 commit 的版本（`zip-vlm` 的副本停在 2026-08-15，還在說「A2 尚未開始」）。
@@ -34,15 +34,26 @@
 - ⚠ **但 deterministic 仍是比較「訓練設定」的唯一公平尺**（它沒有預算這個變數）。
   **拿 best-of-N 比兩種訓練方法＝拿「多花計算」冒充「變聰明」。**
 
-### 現況（2026-09-05）
+### 現況（2026-09-12）
 
-| goal | 最好的 deterministic | 最好的 best-of-N | 門檻 | 狀態 |
+**判定基準是 best-of-32**（2026-09-11 本人定案：練習用專案，不在 N=32 vs 64 上著墨）。
+
+| goal | deterministic | best-of-32 | 門檻 | 狀態 |
 |---|---|---|---|---|
-| 4×4 | **0.8947**（BC）｜PPO 0.854 ± 0.038（3 seed）| **best-of-2 = 0.9248**（BC，1.14 次／題）| 0.90 | **✅ 達標** |
-| 6×6 | **0.4620**（BC，單 seed）｜PPO 0.4095 | **best-of-16 = 0.800**（BC，5.60 次／題）| 0.85 | ❌ **差 0.05** |
+| 4×4 | **0.9404**（`bc_multi_456`）| **0.9917**（1.55 次／題）| 0.90 | **✅ 達標** |
+| 6×6 | **0.5205**（`bc_multi_456`）｜舊 `bc_6x6` 0.4620 | `bc_6x6` = **0.8500**（8.05 次／題）| 0.85 | **✅ 踩線達標** |
 
-完整對照（兩個盤面 × 兩種訓練 × 每個 N）在
-[BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §3。
+⚠ **0.8500 剛好等於門檻**（1,700／2,000），而 best-of-N 的**評估雜訊約 ±0.01**
+（同模型同測試集，只因抽樣 rng 串流不同，N=16 就從 0.8000 變 0.8105）
+⇒ 講「達標」要連著這句話，best-of-64 = 0.8835 才是有餘裕的那個。
+
+**★ 現在服務的是一個吃三種尺寸的模型 `bc_multi_456`**：4×4／5×5／6×6 三個盤面**都**贏過
+同資料訓練的單尺寸專用模型（+0.0362／+0.0365／+0.0315，deterministic），訓練成本還略低。
+**5×5 從此有模型**。完整對照在 [收尾報告](reports/2026-09-12_rl-wrap-up.md) §2；
+兩種訓練 × 每個 N 的舊對照在 [BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §3。
+
+**A5 已完成**：`RL (behaviour cloning)` 是 `/api/solver/solve` 的第 4 種 solver，
+Docker 一鍵起得來（[部署指南](deployment-guide.md)）。
 
 **PPO 到底能不能成功？** 4×4 **已經成功**（best-of-4 = 0.9238）。
 6×6 **沒有證據支持它能到 0.85**：curriculum 卡在 k=30/36、每級成本約 ×2、8M 步只有 0.4095，
@@ -76,8 +87,14 @@
 | 單純把 6×6 推到全長 | 只會把 0.409 推高一點，**不會靠近 0.85** | 同上 §1–3 |
 | 調 reward 權重解迴圈 | 2025-10 試過；根因在 env，已重寫 | [A0 報告](reports/2026-08-15_a0-env-v1-findings.md) |
 
-**還開著、但目前沒有證據支持的**：加深 conv trunk（已證偽的是「加拓撲特徵」，**不是**「加深度」）、
-GNN 的跨尺寸泛化（現在的 `Linear(4104→256)` 綁死 8×8 padding，這個實驗測不到）。
+**還開著、但目前沒有證據支持的**：加深 conv trunk（已證偽的是「加拓撲特徵」，**不是**「加深度」）。
+
+**★ 2026-09-12 更正一條**：舊版這裡寫「GNN 的跨尺寸泛化測不到，因為 `Linear(4104→256)` 綁死 8×8 padding」
+——**寫反了**。padding 到 8×8 正是**讓**跨尺寸可測的原因（純量帶 `height/8`、`width/8`，
+`_load_sample()` 每局重讀高寬），所以現成 checkpoint 直接就能餵別的尺寸。已經量完：
+**泛化真的存在但單向**（6×6 模型在沒看過的 4×4 拿 0.5456，4×4 模型在 6×6 只有 0.0105），
+而且**混合尺寸訓練在三個盤面都贏單尺寸專用模型**。⇒ GNN 的「跨尺寸」論據現在不是「沒測過」，
+而是「**不用 GNN 也做得到**」。
 
 **★ 已經量到的唯一瓶頸**：**6×6 單步正確率 93.9%，達標需要 98.9%**——要把單步錯誤率**砍 5.4 倍**。
 這是「換等級」不是「改良」，任何新想法先對照這個數字。
@@ -87,31 +104,33 @@ GNN 的跨尺寸泛化（現在的 `Linear(4104→256)` 綁死 8×8 padding，�
 
 ## 3. 現在該做什麼
 
-**現行主線：行為克隆（BC）暖啟動，之後接 PPO 微調。** 2026-09-05 新增 `train_behaviour_cloning.py`。
+**★ 2026-09-11 本人定案：「我知道有別種 solver，但這個專案就是要用 RL 做。」**
+⇒ 收尾已完成（多尺寸模型、A5 掛 API、Docker），**主線變成「真的用 RL」**。
 
-- **為什麼**：資料集一直帶著 `solution_path`，但它**從來沒被當成訓練目標**（只用來設 curriculum 起點
-  與 A0 重播）。6×6 有約 **56 萬組完美標籤**躺著沒用，而量到的瓶頸正是分類形狀的。
-- **已量到（單 seed）**：BC 在**兩個盤面、每一個推論設定**都不輸 PPO，訓練成本 1/3 與 1/9。
-  6×6 的差距**隨 N 放大**：deterministic +0.053 → **best-of-16 +0.151（0.649 → 0.800）**。
-  ⚠ **站得住的宣稱是「成本」**；4×4 的 +0.018 **在 ±0.04 雜訊內**，
-  6×6 的 +0.053 是**單 seed 且該盤面雜訊沒量過** ⇒ 標「有動但未確證」。
-- **✅ value head 已實作（2026-09-05 傍晚）**：BC 現在同時回歸 critic，目標是重播時**實際觀測到的折扣報酬**。
-  **為什麼非做不可**：PPO 用 V(s) 算 advantage，留一個沒訓練的 critic ⇒ 微調第一批梯度是雜訊，
-  而被摧毀的正是剛學好的策略。
-  ⚠⚠ **但 value 回歸對策略品質的影響完全沒量**——小規模煙霧測試裡它**看起來偏低**
-  （合理擔憂：value 與 policy 共用 feature extractor）。**§3 的數字是 value-free 路徑量的，
-  用 `--value-coef 0` 可逐位元重現。**
-- **下一步（未做，依優先序）**：
-  **⓪ 先量 `--value-coef 0.5` vs `0`**（分鐘級）——做微調之前必須先知道 value 回歸有沒有傷到策略；
-  ① **BC 接 PPO 微調**（**`--init-from` 尚未實作**；微調要跑**全長、不用 curriculum**，
-  也就是 `CurriculumState(current_k=None)`，`_maybe_promote` 對 `None` 是 no-op）
-  ——它同時是**唯一能推翻「這題不該用 RL」這個結論的實驗**；
-  ② 6×6 的 **best-of-32／64**（約 15 分，直接回答 0.85 過不過得了）；
-  ③ 量 6×6 的 seed 雜訊（約 1 小時）；④ PPO 推到全長（1–2 小時，**要授權**）。
-- ⚠ **BC 的兩個已知限制**：
-  ① 只看得到專家軌跡上的狀態，一走偏就沒有訓練訊號（compounding error，DAgger 解的正是這個）；
-  ② **這些題有多解、資料集只記一條** ⇒ `choice_accuracy` 會**低估**策略
-  （4×4 對標籤 0.8811，實際 solve 0.8947 ⇒ 有效單步 0.9765）。**不要拿它換算 solve rate。**
+### 下一步，依優先序
+
+| 順位 | 做什麼 | 修的是什麼 | 成本 | 正牌 RL？ |
+|---|---|---|---|---|
+| **1** | **BC → PPO 微調**（`--init-from` **尚未實作**）| BC 的天花板（只會資料集那一條解）＋ 走偏後沒訊號 | 實作 1–2h ＋ 訓練小時級（**要授權**）| ✅ |
+| 2 | **ExIt／拒絕抽樣微調** | 同上，但用「搜尋」而不是「獎勵」：拿 best-of-N **解開的軌跡**當新標籤重訓 | 半天 | 介於 |
+| 3 | **DAgger** | 走偏後沒訊號（專家＝CP-SAT，現成免費）| 半天 | ❌ 仍是監督式 |
+| 4 | **AlphaZero 式** | 長程規劃本身 | 1–2 天 | ✅ |
+
+**名詞不懂就去 [`notes/01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)**，那裡有白話對照與「為什麼這題 RL 的優勢用不到」。
+
+**微調的具體約束**：跑**全長、不用 curriculum**（`CurriculumState(current_k=None)`，
+`_maybe_promote` 對 `None` 是 no-op）。
+**前置封鎖已解除**：value head 會不會傷到策略，2026-09-12 量完了——
+`--value-coef 0.5` vs `0` 差 **−0.0083**（在 ±0.02–0.04 雜訊內）⇒ **沒有證據支持它有害**，
+可以直接用帶 critic 的 checkpoint 去微調。
+
+### 還沒做、也記下來的
+
+- **6×6 的 seed 雜訊仍然沒量過**（用 BC 量只要約 16 分鐘：3 seed × 228s ＋ 評估）。
+  在那之前 6×6 的 0.0x 差異一律標「有動但未確證」。
+- **多尺寸為什麼有效沒有機制實驗**。事後解釋是「小盤面提供密度更高的長程訊號＝免費的 curriculum」，
+  要驗證得另外設計臂（例如 4+6 不含 5）。
+- **app image 有 22.9 GB**（基底是 CUDA devel 但 app 不用 GPU），換 slim 基底可大幅縮小，未驗證系統相依。
 
 ### ★ BC 還算 RL 嗎？——不算，而且這件事對 goal 有意義
 
@@ -122,9 +141,9 @@ GNN 的跨尺寸泛化（現在的 `Linear(4104→256)` 綁死 8×8 padding，�
 下一步接 PPO 微調就是 RL；而且「先監督再 RL」正是原始 AlphaGo 的做法。
 
 ⚠ **誠實的部分**：這個問題**獎勵極稀疏、專家示範免費且完整、解可驗證、mask 後平均分支只有 1.5**
-⇒ **RL 的三個典型優勢（探索、從獎勵學出示範外的行為、無標籤也能學）在這裡全部用不到。**
-**我們可能正在證明「這個問題本來就不該用 RL 解」——而這是「做中學」目前最扎實的產出，不是失敗。**
-完整論證見 [BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §4。
+⇒ **RL 的三個典型優勢在這裡全部用不到。** 目前最好的模型仍然是監督式訓練出來的。
+**BC → PPO 微調是唯一能推翻這個結論的實驗。**
+完整論證見 [BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §4 與 [`notes/01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)。
 
 ### 資料集完整性（2026-09-05 實測複驗，不是引用）
 
@@ -155,7 +174,7 @@ uv sync
 
 ```powershell
 cd D:\it_project\github_sync\zip-rl\linkedin-zip-challenge
-uv run pytest        # 2026-09-05 實測 261 passed, 8 xfailed
+uv run pytest        # 2026-09-12 實測 276 passed, 8 xfailed
 uv run ruff check .  # 期待 All checks passed!
 ```
 
@@ -186,6 +205,8 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/rl/train_config.py` | **改設定只改這裡**：goal（盤面／牆／步數／門檻）、PPO、網路、curriculum、資源上限 |
 | `src/core/rl/train_maskable_ppo.py` | PPO 訓練：`GridScalarExtractor`、curriculum callback、checkpoint、評估 |
 | `src/core/rl/train_behaviour_cloning.py` | **2026-09-05 新增**。監督式暖啟動，產出與 PPO **同架構、可互換**的 checkpoint（BC 是**第三個** env 建構點，見陷阱 #24）|
+| `src/core/rl/solver_service.py` | **2026-09-12 新增。唯一的服務端**：checkpoint 載入（lazy＋快取）、`puzzle` → env、best-of-N rollout。缺模型 503、尺寸不支援 400 |
+| `src/core/solvers/registry.py` | **solver 清單的唯一正本**（API／截圖端點／Gradio 都 import 它）|
 | `src/core/rl/baselines.py` | masked random／greedy 對照組 ＋ `evaluate()`。**評估 env 只能從 `make_eval_env()` 建** |
 | `src/core/rl/generate_dataset_v2.py` | 決定性資料集產生器，**保留 solution path** |
 | `src/core/rl/action_space.py` | 共用動作編碼（0:Up 1:Down 2:Left 3:Right）與 `path_to_actions()` |
@@ -215,7 +236,9 @@ mask = env.action_masks()        # (4,) bool —— MaskablePPO 直接吃這個�
 | 想知道什麼 | 去哪 |
 |---|---|
 | **量過的數字、踩過的坑**（30 個陷阱 ＋ 28 條已驗證事實 ＋ 已定案的設計決策 ＋ 實驗編年史） | [`rl-traps-and-facts.md`](rl-traps-and-facts.md) ← **動手前掃一遍標題** |
-| 某個實驗**怎麼做、為什麼是那個結論** | [`reports/`](reports/)：[A0 env 診斷](reports/2026-08-15_a0-env-v1-findings.md)、[預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md)（**§5 是 AlphaGo 對照與設計理由**）、[連通性特徵](reports/2026-09-05_rl-connectivity-feature.md)、[oracle 上界／best-of-N／搜尋](reports/2026-09-05_rl-lookahead-oracle.md)、**[行為克隆](reports/2026-09-05_rl-behaviour-cloning.md)**（**§4 是「BC 還算不算 RL」的完整論證**、§5 資料集複驗、§6 PPO 能不能成功）|
+| **名詞看不懂、判讀規則、推論怎麼跑**（做中學筆記）| [`notes/`](notes/)：[概念](notes/01-rl-methods-explained.md)、[判讀紀律](notes/02-reading-the-numbers.md)、[推論與上線](notes/03-inference-and-serving.md)、[每次討論的整理](notes/sessions/) |
+| **怎麼把服務起起來** | [`deployment-guide.md`](deployment-guide.md)（Docker 一鍵、驗收指令、常見失敗）|
+| 某個實驗**怎麼做、為什麼是那個結論** | [`reports/`](reports/)：**[收尾報告](reports/2026-09-12_rl-wrap-up.md)（最新，多尺寸／value-coef／A5／Docker）**、[A0 env 診斷](reports/2026-08-15_a0-env-v1-findings.md)、[預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md)（**§5 是 AlphaGo 對照與設計理由**）、[連通性特徵](reports/2026-09-05_rl-connectivity-feature.md)、[oracle 上界／best-of-N／搜尋](reports/2026-09-05_rl-lookahead-oracle.md)、**[行為克隆](reports/2026-09-05_rl-behaviour-cloning.md)**（**§4 是「BC 還算不算 RL」的完整論證**、§5 資料集複驗、§6 PPO 能不能成功）|
 | **某天做了什麼、量到什麼**（逆時序全記錄，1,900+ 行） | [`dev_log.md`](dev_log.md) ⚠ **不要整份讀**，用日期或關鍵字搜 |
 | 專案整體現況、兩條 track 的優先序 | [`roadmap.md`](roadmap.md) |
 | 原始作戰計畫、分階段 done 條件、A0–A6 路線 | [`plans/2026-08-15_track-rl-solver.md`](plans/2026-08-15_track-rl-solver.md) ＋ [restart plan（HTML，瀏覽器開）](reports/2026-08-15_rl-restart-plan.html) |

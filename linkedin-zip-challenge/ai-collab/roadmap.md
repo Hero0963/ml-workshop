@@ -139,8 +139,19 @@
    - Done 條件：一個穩定的 `image → Puzzle dict` 函式 ＋ 單元測試（VL 呼叫要能 mock，測試不依賴 Ollama）
      ＋ Gradio 上傳分頁；實驗腳本標明為 scratchpad。
 
-3. **RL solver 重啟** ← **★ 進行中：A0／A1／A2 ＋ 續訓都跑完了，卡在「推到全長值不值得」**
+3. **RL solver 重啟** ← **★ 2026-09-12：兩個 goal 都有達標路徑，solver 已掛上 API，服務可用 Docker 一鍵起**
    （原標題是「重啟前置研究」，2026-09-05 更名——前置研究早在 2026-08-15 就結束了）
+   - **🎯 現況一句話**：`goal1_4x4` best-of-2 = 0.9248 ✅；`goal2_6x6` best-of-32 = 0.8500 ✅（**剛好踩線**，
+     評估雜訊 ±0.01，best-of-64 = 0.8835 才有餘裕）。**A5 完成**：`RL (behaviour cloning)` 已是 API 的第 4 種 solver。
+   - **★ 多尺寸模型成立**（2026-09-12）：一個模型吃 4×4／5×5／6×6，**三個盤面全部贏過單尺寸專用模型**
+     （+0.0362／+0.0365／+0.0315，deterministic），訓練成本還略低（465.3s vs 478.1s）。
+     5×5 從此有模型（0.7496，先前只能借 6×6 模型的 0.2941）。詳見
+     [reports/2026-09-12_rl-wrap-up.md](reports/2026-09-12_rl-wrap-up.md)。
+   - **★ 下一步是 BC → PPO 微調**（本人 2026-09-11 定案「就是要用 RL 做」）。
+     擋路的 value-coef 對照已量完：`0.5` vs `0` 差 −0.0083，在雜訊內 ⇒ **封鎖解除**。
+     方法排序與名詞解釋在 **[notes/01-rl-methods-explained.md](notes/01-rl-methods-explained.md)**。
+   - **🐳 服務怎麼起**：[deployment-guide.md](deployment-guide.md)（`docker compose up -d --build`；
+     `models/` 是唯讀掛載，沒有 checkpoint 時 RL solver 回 503、其他 solver 照常）。
    - 🤝 **接手第一站：[handover-rl-solver.md](handover-rl-solver.md)**——自足的交接文件（環境建置、已驗證事實、
      已定案決策、程式地圖、下一步 A2 的具體做法、陷阱清單）。讀完那一份就能動手。
    - 📋 作戰計畫在 [plans/2026-08-15_track-rl-solver.md](plans/2026-08-15_track-rl-solver.md)
@@ -399,7 +410,7 @@
 | 2025-10-15 | **RL 暫停**；專案轉向服務化（FastAPI ＋ Gradio） |
 | 2025-10-16 | 服務化第一階段：FastAPI ＋ `pydantic-settings` ＋ routers/schemas 分層 ＋ Gradio 多分頁 |
 | 2025-10-20 | Gradio 互動編輯器（WYSIWYG）、即時預覽、大量 bug 修正 |
-| 2025-10-21 | `run_docker_dev.py` 一鍵啟動開發環境 |
+| 2025-10-21 | `start.py` 一鍵啟動開發環境 |
 | 2025-10-22 ~ 10-24 | VL 模型驗證：兩個模型各缺一半能力 → **混合策略**（prompt engineering 產 JSON）驗證成功 |
 | 2025-10-28 | Production-ready 重構：設定集中化、DRY（`prepare_solver_input`）、Svelte 整合、Docker 雙環境 |
 | 2025-10-30 | 文件精修 ＋ 本機／Docker dev／Docker prod 三種環境全部實測驗證 |

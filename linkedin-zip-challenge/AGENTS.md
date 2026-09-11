@@ -45,6 +45,8 @@
 | `ai-collab/commands.txt` | 常用咒語 |
 | `ai-collab/plans/` | **任務計畫書** `YYYY-MM-DD_track-<名稱>.md`：給接手某條 track 的 agent 用，含 worktree 環境建置、分階段 done 條件、track 間的協作約定 |
 | `ai-collab/reports/` | 任務報告 `YYYY-MM-DD_<主題>.md`（較大的任務才出；分析與推理放這裡，計畫書只放要做什麼） |
+| `ai-collab/notes/` | **做中學筆記**：名詞與方法的白話對照、判讀規則、推論怎麼跑，以及 `sessions/` 裡每次長討論的整理。判準是「**下一個人不必再問一次**」——`reports/` 證明某天成立了什麼，`notes/` 放懂了什麼 |
+| `ai-collab/deployment-guide.md` | 用 Docker 起整個服務：每個容器是什麼、埠、驗收指令、常見失敗 |
 | `README.md` / `README_zh-TW.md` | **對外門面**（英文／中文）。功能、遊戲規則、安裝與啟動 |
 | `gemini_readme_raw.md` | 歷史檔案：2025 年的原始協作提示語，**已被本檔取代**，保留當考古用 |
 | `.env.example` | 環境變數樣板（`.env` 本身**絕不進版控**） |
@@ -77,7 +79,7 @@ uv run pytest                      # 全部測試
 uv run pytest src/core/tests -v    # 只跑核心演算法
 uv run ruff check .                # 快速 lint
 uv run python -m src.app.main      # 起服務：http://localhost:7440/ui
-python run_docker_dev.py           # Docker 開發環境（hot-reload）
+python start.py --dev           # Docker 開發環境（hot-reload）
 ```
 
 - **沒跑就說沒跑**：不要推測輸出、不要拿記憶中的數字當實測結果。回報要貼**實際輸出關鍵行**。
@@ -103,8 +105,8 @@ python run_docker_dev.py           # Docker 開發環境（hot-reload）
 
 | 任務 | 動哪裡 |
 |------|--------|
-| 新增一種 solver | `src/core/solvers/<name>.py` ＋ `src/core/tests/solvers/test_<name>.py`；要上 API 再加進 `src/app/routers/solver.py` 的 `SOLVERS` |
-| 把既有 solver 掛上 API | `src/app/routers/solver.py` 的 `SOLVERS` dict ＋ `src/app/schemas/solver.py`（啟發式需要 `attempts` 參數） |
+| 新增一種 solver | `src/core/solvers/<name>.py` ＋ `src/core/tests/solvers/test_<name>.py`；要上線就在 **`src/core/solvers/registry.py`** 加一個 `SolverEntry`——API、截圖端點、Gradio 下拉選單**三處會一起拿到**（2026-09-12 前這份清單被抄了三份，加了一處另外兩處不會動）|
+| 把既有 solver 掛上 API | **`src/core/solvers/registry.py`**（唯一正本）＋ `src/app/schemas/solver.py`（啟發式需要 `attempts` 參數） |
 | 改謎題資料格式／parser | `src/core/utils.py` 的 `Puzzle` 與 `parse_puzzle_layout()`——**唯一 parser，不要在別處重寫**；改了要全體 solver 回歸 |
 | 改評分邏輯 | `src/core/utils.py` 的 `calculate_fitness_score()`；牽動所有啟發式 solver |
 | 改視覺化（GIF／PNG） | `src/core/utils.py` 的 `save_*` 系列 |
@@ -112,8 +114,9 @@ python run_docker_dev.py           # Docker 開發環境（hot-reload）
 | 改 Gradio 介面 | `src/ui/gradio_app.py`；它是 **Adapter**，負責把 UI 操作翻成 API 格式，邏輯不要塞進來 |
 | 改 Svelte 編輯器 | `src/custom_components/puzzle_editor/frontend/`（`Index.svelte`／`vite.config.ts`）；改完要 `npm run build` 才會反映到 `/svelte-ui` |
 | 改埠號／設定 | `src/settings.py`（唯一來源）＋ `.env.example`；**不要在程式裡硬寫** |
+| 用 Docker 起服務 | [`ai-collab/deployment-guide.md`](ai-collab/deployment-guide.md)（`docker compose up -d --build`；`models/` 是唯讀掛載，RL solver 靠它）|
 | 改出題器 | `src/core/puzzle_generation/puzzle_generator.py`（回溯 ＋ retry/decrement ＋ 內部逾時） |
-| 碰 RL | `src/core/rl/`——**先讀 `roadmap.md` 的決策表**，不要重蹈「調 reward 權重硬解 policy loop」 |
+| 碰 RL | `src/core/rl/`——**先讀 [`ai-collab/handover-rl-solver.md`](ai-collab/handover-rl-solver.md) 與 [`ai-collab/notes/`](ai-collab/notes/)**，不要重蹈「調 reward 權重硬解 policy loop」。服務端只在 `solver_service.py`，其餘檔案都是訓練用 |
 | 碰 VL 圖片解析 | **先讀 [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)**。傳輸層唯一正本是 `vl_models/backends.py`、出貨 parser 是 `puzzle_parser.py`、端點在 `src/app/routers/vision.py`。混合策略（`output_type=str` ＋ prompt engineering）是已驗證路線，**不要回頭試 tool-calling** |
 | 操作／示範讀圖功能 | [`ai-collab/vlm-operating-guide.md`](ai-collab/vlm-operating-guide.md)（寫給使用者的，含測資與預期輸出） |
 
