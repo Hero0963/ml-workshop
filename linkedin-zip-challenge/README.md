@@ -1,15 +1,19 @@
 # LinkedIn Zip Puzzle Solver Challenge
 
-A working study of one small combinatorial puzzle, attacked three different ways: **classical
-search**, a **fine-tuned vision-language model** that reads a puzzle out of a screenshot, and a
-**neural policy trained by imitation** that plays the puzzle move by move. All three are served
-from one FastAPI application with a Gradio console and a Svelte canvas editor, and the whole
-stack starts with a single command.
+The LinkedIn "Zip" puzzle, taken end to end: **make** a board, **read** one out of a
+screenshot, and **solve** it. One FastAPI application serves all three, with a Gradio console
+and a Svelte canvas editor on top, and the whole stack starts with a single command.
 
-The point is the comparison, not the leaderboard: the exact solver already wins on speed and
-correctness, so what the learned pieces are really for is to find out *where learning helps,
-where it does not, and how you would know*. The measurements that answer that — including the
-ones that refuted our own hypotheses — are in [`ai-collab/`](./ai-collab/).
+Two of those three pieces are learned. A **fine-tuned vision-language model** turns a
+screenshot into a board — that is the reading step, not a solver. Solving itself is done two
+ways, and comparing them is the point of the project: **classical search** (an exact
+constraint solver among others) against a **neural policy trained by imitation** that plays
+the board move by move.
+
+The exact solver already wins on speed and correctness, so what the learned solver is really
+for is to find out *where learning helps, where it does not, and how you would know*. The
+measurements that answer that — including the ones that refuted our own hypotheses — are in
+[`ai-collab/`](./ai-collab/).
 
 ---
 
@@ -157,7 +161,7 @@ otherwise.
 | **Model** | Three padded 3×3 convolutions (64 channels, no pooling) → 256-d features → policy and value heads. **1.17 M parameters**, of which 89.7% are the flattening layer. |
 | **How it is trained today** | **Behaviour cloning.** Every generated puzzle ships with its solution, so ~1.17 M `(board, next move)` pairs are a supervised dataset. Masked cross-entropy, 10 epochs, batch 512 — **7.8 minutes on one GPU**. |
 | **What it replaced** | MaskablePPO with a reverse curriculum: 8 M steps and ~2,000 s, and it **lost** to 7.8 minutes of supervised training on every board and every inference setting. |
-| **One model, three boards** | A single policy serves 4×4, 5×5 and 6×6. On a single deterministic run it beat a size-specific control trained on the same data on **all three** boards (+0.032 to +0.037). Given a best-of-32 budget the two converge — but the single model still needs **fewer attempts on every board**, and cost slightly less to train than the three controls together. |
+| **One model, three boards** | **A single policy serves 4×4, 5×5 and 6×6 — the goal, and it holds up.** Against size-specific controls trained on the same data it is better on a single deterministic run (+0.032 to +0.037 on every board), level under a best-of-32 budget, **cheaper at inference on every board**, and slightly cheaper to train than the three controls together. 5×5 had no model at all before this. |
 
 **Results** (held-out test, 1,931 / 2,001 / 2,000 puzzles). *Best-of-32* means: sample up to 32
 full attempts and keep the first that verifies — legitimate here because a Zip solution checks

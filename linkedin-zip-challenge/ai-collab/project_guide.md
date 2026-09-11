@@ -41,7 +41,7 @@ linkedin-zip-challenge/
 │   ├── handover-vlm-parser.md   # ★ VL track 接手第一站（自足）
 │   ├── vlm-operating-guide.md   # 讀圖功能的使用者操作手冊
 │   ├── deployment-guide.md      # ★ Docker 起服務：容器職責、驗收指令、排查
-│   ├── notes/                   # ★ 做中學筆記（概念、判讀規則、推論）＋ sessions/
+│   ├── notes/                   # ★ 做中學筆記：概念、判讀規則、推論、決策紀錄
 │   ├── plans/                   # 任務計畫書 YYYY-MM-DD_<主題>.md
 │   └── reports/                 # 任務報告 YYYY-MM-DD_<主題>.md
 ├── src/

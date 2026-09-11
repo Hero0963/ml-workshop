@@ -1,21 +1,22 @@
-# Session 整理 — 2026-09-11：RL track 收尾的起點
+# 決策紀錄 — 2026-09-11：RL track 的收尾方向
 
-> 一次長討論的沉澱。**問了什麼、答案是什麼、當場量了什麼、決定了什麼。**
-> 概念性的內容已經抽到 [`../01-rl-methods-explained.md`](../01-rl-methods-explained.md)、
-> [`../02-reading-the-numbers.md`](../02-reading-the-numbers.md)、
-> [`../03-inference-and-serving.md`](../03-inference-and-serving.md)，這裡只留脈絡與決定。
-> 分支 `feat/rl-a2-training`｜worktree `zip-rl`
+> **這條 track 在什麼時間點、根據什麼證據、做了哪些決定。**
+> 給的是「為什麼是這樣」而不是「做了什麼」——後者在 [`../dev_log.md`](../dev_log.md)。
+> 概念解釋在 [`01-rl-methods-explained.md`](01-rl-methods-explained.md)、
+> [`02-reading-the-numbers.md`](02-reading-the-numbers.md)、
+> [`03-inference-and-serving.md`](03-inference-and-serving.md)。
+> 分支 `feat/rl-a2-training`
 
 ---
 
-## 這次 session 的形狀
+## 脈絡
 
 從「接手 handover、對齊 goal」開始，變成一次**收尾盤點**：把所有還開著的問題一次量掉，
-然後決定這個 side project 要怎麼結束（或繼續）。
+再決定這條 track 要怎麼結束（或繼續）。
 
 ---
 
-## 一、當場做掉的量測（都是實跑，不是引用）
+## 一、支撐這些決定的量測（都是實跑，不是引用）
 
 | # | 問題 | 答案 | 成本 |
 |---|---|---|---|
@@ -48,25 +49,25 @@
 
 ---
 
-## 三、本人的問題與答案（概念部分）
+## 三、被問到、而答案值得留下來的問題
 
 | 問題 | 去哪看完整答案 |
 |---|---|
-| BC 是什麼 | [`../01-rl-methods-explained.md`](../01-rl-methods-explained.md) §1 |
+| BC 是什麼 | [`../01-rl-methods-explained.md`](01-rl-methods-explained.md) §1 |
 | 「只訓練 9 分鐘」是在訓練什麼 | 同上 §2 |
 | DAgger 是什麼 | 同上 §3 |
 | BC → PPO 微調是什麼、為什麼能推翻「這題不該用 RL」 | 同上 §4 |
 | AlphaZero 式的「**自我改進迴圈**」是什麼意思 | 同上 §5（含窮人版 ExIt）|
-| 「比較訓練方法只能用 deterministic」是什麼意思 | [`../02-reading-the-numbers.md`](../02-reading-the-numbers.md) §2 |
+| 「比較訓練方法只能用 deterministic」是什麼意思 | [`../02-reading-the-numbers.md`](02-reading-the-numbers.md) §2 |
 | 「4×4 達標」是能從頭走到尾嗎 | 同上 §1（是，沒有部分分數）|
 | 6×6 還差什麼、是資料量嗎 | 同上 §5（不是資料量，是單步錯誤率要砍 5.4 倍）|
 | 加大 N 有沒有幫助、N=32 會不會「突然學會」 | 同上 §4（不會學會，只會碰到；hazard 沒收斂到零）|
-| 實務上怎麼推理 | [`../03-inference-and-serving.md`](../03-inference-and-serving.md) |
+| 實務上怎麼推理 | [`../03-inference-and-serving.md`](03-inference-and-serving.md) |
 | 訓練時看得到即時 log 嗎 | 本檔 §五 |
 
 ---
 
-## 四、這次定下來的決定
+## 四、定下來的決定
 
 | 決定 | 內容 | 理由 |
 |---|---|---|
@@ -79,7 +80,7 @@
 
 ---
 
-## 五、訓練時的即時 log（讀碼確認）
+## 五、訓練時看得到什麼（讀碼確認）
 
 - **BC**：每個 epoch 結束**立刻** append 一行到 `logs/rl_a2/<run-id>/bc_progress.jsonl`
   （`train_behaviour_cloning.py:329`），同時 loguru 印到 stdout。
@@ -93,6 +94,6 @@
 
 ## 六、留給下一步的
 
-計畫在 [`../../plans/2026-09-11_wrapup-docker-and-multisize.md`](../../plans/2026-09-11_wrapup-docker-and-multisize.md)，
+計畫在 [`../plans/2026-09-11_wrapup-docker-and-multisize.md`](../plans/2026-09-11_wrapup-docker-and-multisize.md)，
 四條線：多尺寸模型、Docker 一鍵啟動、A5 把 RL solver 掛進 API、文件。
 收尾之後的主線是 **BC → PPO 微調**。

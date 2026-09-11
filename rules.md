@@ -93,10 +93,13 @@
      uv run pre-commit run --all-files
      ```
    - **快速診斷**：`uv run ruff check .` 或 `uv run ruff check <單一檔案路徑>`
-4. **Commit Message**：使用 Conventional Commits 風格，**必須包含 scope**
+4. **Commit Message**：**英文**，Conventional Commits 風格，**必須包含 scope**
    - `feat(solver): add ant colony optimization solver`
    - `fix(api): resolve tempfile permission error on Windows`
    - `docs(ai-collab): update roadmap after RL pause`
+   - **主旨一行、祈使句、盡量 72 字元內**；能一行講完就不要有 body
+   - 需要 body 時只寫**為什麼**（動機、取捨、踩到的坑），**不要列改了哪些檔**——那是 `git show` 的工作
+   - **精簡優先**（2026-09-12 本人要求）：長篇脈絡寫進 `ai-collab/reports/` 或 `notes/`，不要塞進 commit
 5. **Agent 環境限制**：Agent 執行指令時須使用 `uv run <cmd>`
 6. **Git 操作**：
    - Agent 可執行 `uv run pre-commit run --all-files` 進行代碼檢查

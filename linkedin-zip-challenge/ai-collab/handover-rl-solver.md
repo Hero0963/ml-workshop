@@ -236,7 +236,7 @@ mask = env.action_masks()        # (4,) bool —— MaskablePPO 直接吃這個�
 | 想知道什麼 | 去哪 |
 |---|---|
 | **量過的數字、踩過的坑**（30 個陷阱 ＋ 28 條已驗證事實 ＋ 已定案的設計決策 ＋ 實驗編年史） | [`rl-traps-and-facts.md`](rl-traps-and-facts.md) ← **動手前掃一遍標題** |
-| **名詞看不懂、判讀規則、推論怎麼跑**（做中學筆記）| [`notes/`](notes/)：[概念](notes/01-rl-methods-explained.md)、[判讀紀律](notes/02-reading-the-numbers.md)、[推論與上線](notes/03-inference-and-serving.md)、[每次討論的整理](notes/sessions/) |
+| **名詞看不懂、判讀規則、推論怎麼跑**（做中學筆記）| [`notes/`](notes/)：[概念](notes/01-rl-methods-explained.md)、[判讀紀律](notes/02-reading-the-numbers.md)、[推論與上線](notes/03-inference-and-serving.md)、[決策紀錄](notes/2026-09-11-decisions-rl-track.md) |
 | **怎麼把服務起起來** | [`deployment-guide.md`](deployment-guide.md)（Docker 一鍵、驗收指令、常見失敗）|
 | 某個實驗**怎麼做、為什麼是那個結論** | [`reports/`](reports/)：**[收尾報告](reports/2026-09-12_rl-wrap-up.md)（最新，多尺寸／value-coef／A5／Docker）**、[A0 env 診斷](reports/2026-08-15_a0-env-v1-findings.md)、[預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md)（**§5 是 AlphaGo 對照與設計理由**）、[連通性特徵](reports/2026-09-05_rl-connectivity-feature.md)、[oracle 上界／best-of-N／搜尋](reports/2026-09-05_rl-lookahead-oracle.md)、**[行為克隆](reports/2026-09-05_rl-behaviour-cloning.md)**（**§4 是「BC 還算不算 RL」的完整論證**、§5 資料集複驗、§6 PPO 能不能成功）|
 | **某天做了什麼、量到什麼**（逆時序全記錄，1,900+ 行） | [`dev_log.md`](dev_log.md) ⚠ **不要整份讀**，用日期或關鍵字搜 |

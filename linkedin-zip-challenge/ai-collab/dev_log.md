@@ -82,7 +82,7 @@ RL solver 是壓垮它的案例（第一個既不精確、也不保證可用的 
 **兩個模型的選型與訓練與結果**、專案結構、文件地圖。新增 `ai-collab/notes/`（做中學筆記：
 [`01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)、
 [`02-reading-the-numbers.md`](notes/02-reading-the-numbers.md)、
-[`03-inference-and-serving.md`](notes/03-inference-and-serving.md)、`sessions/`）與
+[`03-inference-and-serving.md`](notes/03-inference-and-serving.md)、決策紀錄）與
 `deployment-guide.md`。過期的 `docker-compose.yml.vl_version` 與被取代的 `run_docker_dev.py`
 移入 `soft-delete/20260912-005132/`。
 

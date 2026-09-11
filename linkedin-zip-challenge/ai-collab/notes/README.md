@@ -27,7 +27,7 @@
 | [`01-rl-methods-explained.md`](01-rl-methods-explained.md) | RL 名詞與方法的白話對照：BC／DAgger／PPO 微調／AlphaZero 式，以及「這題到底該不該用 RL」 |
 | [`02-reading-the-numbers.md`](02-reading-the-numbers.md) | 怎麼判讀分數才不會騙自己：算力對齊、雜訊地板、為什麼禁止外推 |
 | [`03-inference-and-serving.md`](03-inference-and-serving.md) | 訓練好的模型實際怎麼解一題：輸入輸出長什麼樣、失敗長什麼樣、成本多少 |
-| [`sessions/`](sessions/) | 每次長討論的整理（逐 session 一份，含當次的決定與理由）|
+| [`2026-09-11-decisions-rl-track.md`](2026-09-11-decisions-rl-track.md) | **決策紀錄**：RL track 在什麼證據下做了哪些決定（一個日期一份）|
 
 ## 寫作約定
 
