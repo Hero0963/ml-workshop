@@ -25,9 +25,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from loguru import logger
 
 from src.app.schemas.vision import VisionSolveResponse, WallOut
-from src.core.solvers.a_star import solve_puzzle_a_star
-from src.core.solvers.cp import solve_puzzle_cp
-from src.core.solvers.dfs import solve_puzzle as solve_puzzle_dfs
+from src.core.solvers.registry import SOLVERS
 from src.core.utils import save_detailed_animation_as_gif, save_solution_as_image
 from src.core.vl_models.prompt_variants import build_prompt
 from src.core.vl_models.puzzle_parser import (
@@ -43,13 +41,12 @@ from src.settings import get_settings
 
 router = APIRouter()
 
-# Mirrors src/app/routers/solver.py. CP-SAT is the default because a board read out of
-# an image can be nonsense, and it decides "no solution" quickly instead of exploring.
-SOLVERS = {
-    "DFS": solve_puzzle_dfs,
-    "A* (heapq)": solve_puzzle_a_star,
-    "CP-SAT": solve_puzzle_cp,
-}
+# `SOLVERS` comes from the shared registry, so this endpoint offers exactly what
+# /api/solver/solve offers. CP-SAT stays the default because a board read out of an image
+# can be nonsense, and it decides "no solution" quickly instead of exploring.
+# ⚠ The RL solver is in the list but is out of distribution here: it trained on boards
+# with 0 or 2-5 walls, and a real screenshot can carry ten or more. It will usually
+# answer "no solution found" rather than anything wrong, which is the honest failure.
 DEFAULT_SOLVER = "CP-SAT"
 
 SUPPORTED_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}

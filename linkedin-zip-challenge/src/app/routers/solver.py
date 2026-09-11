@@ -9,23 +9,19 @@ from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
 from src.app.schemas.solver import SolverRequest, SolverResponse
-from src.core.solvers.a_star import solve_puzzle_a_star
-from src.core.solvers.cp import solve_puzzle_cp
-from src.core.solvers.dfs import solve_puzzle as solve_puzzle_dfs
+from src.core.rl.solver_service import ModelUnavailableError, UnsupportedBoardError
+from src.core.solvers.registry import SOLVERS
 from src.core.utils import (
     parse_puzzle_layout,
     save_detailed_animation_as_gif,
     save_solution_as_image,
 )
 
-# --- Router and Solver Mapping ---
+# --- Router ---
+# `SOLVERS` is `src.core.solvers.registry`'s, not a local copy: the same mapping used to
+# be written out here, in the vision router and in the Gradio app, so a new solver
+# reached all three only if someone remembered all three.
 router = APIRouter()
-
-SOLVERS = {
-    "DFS": solve_puzzle_dfs,
-    "A* (heapq)": solve_puzzle_a_star,
-    "CP-SAT": solve_puzzle_cp,
-}
 
 
 @router.post("/solve", response_model=SolverResponse)
@@ -70,6 +66,15 @@ def solve_puzzle_api(request: SolverRequest) -> SolverResponse:
     # 3. Run the solver
     try:
         solution_path = solver_func(puzzle_data)
+    except ModelUnavailableError as e:
+        # The service is fine, the weights are missing -- retrying later is reasonable,
+        # and a caller should be able to tell that apart from a broken request.
+        logger.warning(f"RL solver unavailable: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)
+        )
+    except UnsupportedBoardError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         # Log the exception for more detailed server-side debugging
         logger.exception("Exception during puzzle solving")

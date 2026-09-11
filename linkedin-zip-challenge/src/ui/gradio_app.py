@@ -10,9 +10,7 @@ import requests
 from loguru import logger
 from PIL import Image, ImageDraw, ImageFont
 
-from src.core.solvers.a_star import solve_puzzle_a_star
-from src.core.solvers.cp import solve_puzzle_cp
-from src.core.solvers.dfs import solve_puzzle as solve_puzzle_dfs
+from src.core.solvers.registry import SOLVERS
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.tests.conftest import puzzle_04_data, puzzle_04_layout
 from src.settings import get_settings
@@ -22,11 +20,9 @@ settings = get_settings()
 API_BASE_URL = f"http://{settings.app_host}:{settings.app_port}"
 
 # --- Solver Mapping ---
-SOLVERS = {
-    "DFS": solve_puzzle_dfs,
-    "A* (heapq)": solve_puzzle_a_star,
-    "CP-SAT": solve_puzzle_cp,
-}
+# From the shared registry rather than a local copy: the dropdown used to be a third
+# hand-maintained list, so a solver added to the API did not appear in the UI.
+# The UI only needs the names -- solving happens through the API.
 
 # Use a puzzle from conftest as the default layout
 DEFAULT_LAYOUT = pprint.pformat(puzzle_04_layout)
