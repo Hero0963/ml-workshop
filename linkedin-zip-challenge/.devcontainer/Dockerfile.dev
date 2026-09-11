@@ -18,4 +18,8 @@ ENV APP_PORT=7440
 
 EXPOSE 7440
 
-CMD ["tail", "-f", "/dev/null"]
+# `--reload` is the point of the dev image: compose mounts ./src over this path, so an
+# edit on the host restarts the server. The container used to idle on `tail -f /dev/null`
+# and expected `run_docker_dev.py` to exec the server into it, which never returned and
+# left the health check unreachable.
+CMD ["sh", "-c", "uv run uvicorn src.app.main:app --host 0.0.0.0 --port ${APP_PORT:-7440} --reload --reload-dir src"]

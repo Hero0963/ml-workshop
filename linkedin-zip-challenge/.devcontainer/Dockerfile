@@ -43,3 +43,9 @@ ENV APP_PORT=7440
 
 # Expose the container port
 EXPOSE 7440
+
+# Without this the image builds and the container does nothing: the base image's default
+# command is a shell, so `docker compose up` used to report a healthy-looking container
+# with no server in it. Shell form on purpose -- APP_PORT has to be expanded at runtime,
+# and compose passes it through `env_file`.
+CMD ["sh", "-c", "uv run uvicorn src.app.main:app --host 0.0.0.0 --port ${APP_PORT:-7440}"]

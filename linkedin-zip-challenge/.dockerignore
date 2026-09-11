@@ -25,3 +25,22 @@ node_modules/
 .vscode/
 .idea/
 *.DS_Store
+# Large local artifacts. None of these belong in an image, and `models/` alone is 6.6GB
+# of checkpoints that would be copied into the build context on every build. The RL
+# checkpoints the solver needs are mounted as a read-only volume at runtime instead --
+# see docker-compose.yml -- so they stay out of the image without becoming unavailable.
+datasets/
+logs/
+models/
+puzzle_dataset/
+zip_puzzles/
+soft-delete/
+
+# Notebooks are Colab artifacts kept for their executed output; the service never reads
+# them.
+notebooks/
+
+# Test and lint caches
+.ruff_cache/
+htmlcov/
+.coverage
