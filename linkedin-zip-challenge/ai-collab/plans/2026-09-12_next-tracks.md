@@ -2,15 +2,17 @@
 
 > **給接手的 agent：只讀屬於你那一節就夠了。** 平行開發的規則（worktree、資源號誌、
 > 共用檔案協定）在 [`../../../AGENTS.md` §10](../../../AGENTS.md)。
-> 這三條 track **刻意切成檔案不重疊**，所以可以同時進行。
+> 這幾條 track **刻意切成檔案不重疊**，所以可以同時進行。
+>
+> **現況（2026-09-12）**：**Track A 是主線**，Track B 可並行，**Track C 未排程**。
 
 ---
 
 ## 0. 起點與前提
 
-- 三條都從 **`main`** 長新 worktree／分支（`feat/rl-a2-training` 已完成並待合併，
-  它帶著 Docker 修復、solver registry、RL solver 上線、多尺寸模型）。
-- **先合併 `feat/rl-a2-training` 再開這三條**，否則 Track B 會缺 Docker 那批修復。
+- 都從 **`main`** 長新 worktree／分支。`feat/rl-a2-training` 已於 2026-09-12 **fast-forward 併入
+  `main` 並推送**（`c67be16`），它帶著 Docker 修復、solver registry、RL solver 上線、多尺寸模型。
+- `main`、`origin/main`、`feat/rl-a2-training` 三者同一個 commit ⇒ **直接從 `main` 開就對了**。
 - 每條 track 的第一件事都一樣：`uv sync` → `uv run pytest` → `uv run ruff check .` 建立基線
   （2026-09-12 基準：**276 passed, 8 xfailed**）。
 
@@ -20,7 +22,7 @@
 |---|---|---|
 | A｜RL 微調 | `src/core/rl/`（`solver_service.py` 除外）| `src/app/`、`src/core/solvers/`、Docker 檔 |
 | B｜基礎設施與 solver | `.devcontainer/`、`docker-compose*.yml`、`start.py`、`src/core/solvers/`、`src/app/schemas/` | `src/core/rl/`、`src/core/vl_models/` |
-| C｜視覺評估 | `src/core/vl_models/`、`notebooks/` | `src/core/rl/`、`src/core/solvers/`、Docker 檔 |
+| C｜視覺評估（未排程）| `src/core/vl_models/`、`notebooks/` | `src/core/rl/`、`src/core/solvers/`、Docker 檔 |
 
 三條都會碰 `ai-collab/dev_log.md` 與 `roadmap.md` ⇒ **各加各的 `###`、只改自己那一項**。
 
@@ -95,9 +97,15 @@
 
 ---
 
-## Track C — 把視覺評估集變難
+## Track C（**未排程的選項，本人尚未決定要不要做**）— 把視覺評估集變難
 
-**為什麼做**：合成 held-out 的四層指標**全部飽和在 1.000**，它已經分辨不出兩種做法的差別
+> ⚠ **VLM track 已經完成並合併**（讀圖 2026-08-29 上線；`feat/vlm-parser` 有 **0 個 commit** 沒進 main）。
+> 這一節是從 README 的 *What's next* 抄下來的**選項**，不是待辦。**沒有本人明確指派就不要開工。**
+> 真的要做的話，`zip-vlm` worktree 只需要 `git merge --ff-only main` 跟上即可——
+> 那條分支沒有未合併的工作，所以不會有 merge commit，也沒有 rebase 的問題。
+> （⚠ `ai-collab/commands.txt` 有本人未提交的改動，不要動它。）
+
+**為什麼可能值得做**：合成 held-out 的四層指標**全部飽和在 1.000**，它已經分辨不出兩種做法的差別
 ⇒ 視覺這條線**現在沒有可用的尺**。本人已定案**不做真實截圖標註**，所以要從合成資料下手。
 
 **先讀**：[`../handover-vlm-parser.md`](../handover-vlm-parser.md)。
@@ -125,5 +133,6 @@
 
 ## 建議的開工順序
 
-**B 可以立刻開始**（不吃 GPU、不等別人）。**A 與 C 都要 GPU ⇒ 錯開**，
-或先讓 A 做不吃資源的部分（實作 `--init-from` ＋ 測試），等 C 的評估跑完再搶號誌。
+**現在的主線是 Track A**（本人 2026-09-11 定案「就是要用 RL 做」）。
+**Track B 可以同時開**——它不吃 GPU、檔案和 A 零交集。
+**Track C 未排程**，除非本人指派，否則不要佔用 GPU 與注意力。
