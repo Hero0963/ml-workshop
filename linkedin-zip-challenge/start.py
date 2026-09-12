@@ -57,7 +57,7 @@ RL_CHECKPOINT = (
     PROJECT_ROOT
     / "models"
     / "rl_a2"
-    / "bc_multi_456"
+    / "bc_multi_456_e6"
     / "checkpoints"
     / "model_final.zip"
 )

@@ -151,19 +151,31 @@ Vite 在 dev 是**執行期**注入 `import.meta.env`，不開瀏覽器量不到
 
 ## 5. RL solver 要的東西：`models/` 掛載
 
-RL solver 需要訓練好的 checkpoint，而 **`models/` 有 6.6 GB 且不進版控**。
+RL solver 需要訓練好的 checkpoint，而 **`models/` 有 9.7 GB 且不進版控**（2026-09-12 實測；
+幾乎全是歷次訓練的 checkpoint，**服務只讀其中一個 14 MB 的檔**）。
 所以它是**唯讀掛載**進容器的（`./models:/app/models:ro`），不是烤進 image：
 
 - image 因此不會膨脹，`.dockerignore` 也把 `models/`、`datasets/`、`logs/` 全排除；
 - 沒有 checkpoint 的機器**照樣起得來**——RL solver 回 **503**，其他三種 solver 正常。
 - 掛的是**這個 checkout 的** `models/`。新 worktree 沒有它（不進版控），要測 RL 就從別的 worktree 複製
-  `models/rl_a2/bc_multi_456`（14 MB）過來。
+  `models/rl_a2/bc_multi_456_e6`（14 MB）過來。
+
+**沒有任何 worktree 有它的話，自己生一個，約 5 分鐘**（這就是服務中的那個模型）：
+
+```bash
+cd linkedin-zip-challenge
+uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi \
+    --run-id bc_multi_456_e6 --epochs 6 --eval-split test --eval-episodes 1
+```
+
+權重刻意不進版控、也不對外託管：資料是程序化生成的、訓練 5 分鐘、CPU 也跑得動
+⇒ **權重是「一個指令的產物」，不是要分發的檔案**。
 
 目前服務的 checkpoint（`src/core/rl/solver_service.py` 的 `RUN_ID_BY_SIZE`）：
 
 | 盤面 | run id | 沒有它會怎樣 |
 |---|---|---|
-| 4×4／5×5／6×6 | **`bc_multi_456`**（一個模型全包）| 503 Service Unavailable |
+| 4×4／5×5／6×6 | **`bc_multi_456_e6`**（一個模型全包）| 503 Service Unavailable |
 | 其他尺寸 | 沒有 | **400 Bad Request**，訊息會說支援哪些尺寸 |
 
 一個模型服務三個尺寸是量出來的結果，不是省事：它在三個盤面**都**贏過同資料訓練的單尺寸專用模型
@@ -268,7 +280,7 @@ VISION_PROMPT_VARIANT=finetune
 `.env` 不進版控，每個 worktree 各一份，**所以它會各自過期**。
 
 **Q：RL solver 回 503。**
-這個 checkout 的 `models/rl_a2/bc_multi_456/checkpoints/model_final.zip` 不存在。訓練它、從別的 worktree 複製過來，
+這個 checkout 的 `models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip` 不存在。訓練它（§4 有指令）、從別的 worktree 複製過來，
 或確認 volume 有掛上（`docker compose -p zip-app-<checkout> exec zip-challenge-app ls /app/models/rl_a2`）。
 
 **Q：image 為什麼從 22.9 GB 變成 5.86 GB？還能更小嗎？**
