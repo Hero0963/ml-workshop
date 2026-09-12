@@ -106,7 +106,7 @@ python start.py --dev           # Docker 開發環境（hot-reload）
 | 任務 | 動哪裡 |
 |------|--------|
 | 新增一種 solver | `src/core/solvers/<name>.py` ＋ `src/core/tests/solvers/test_<name>.py`；要上線就在 **`src/core/solvers/registry.py`** 加一個 `SolverEntry`——API、截圖端點、Gradio 下拉選單**三處會一起拿到**（2026-09-12 前這份清單被抄了三份，加了一處另外兩處不會動）|
-| 把既有 solver 掛上 API | **`src/core/solvers/registry.py`**（唯一正本）＋ `src/app/schemas/solver.py`（啟發式需要 `attempts` 參數） |
+| 把既有 solver 掛上 API | **`src/core/solvers/registry.py`**（唯一正本）。啟發式要用 `_until_verified()` 包起來（沒通過 `verify.py` 的最佳猜測不能被畫成答案）；**預算固定在 registry、不開成 API 參數**，理由見 `ai-collab/reports/2026-09-12_heuristic-solvers-on-the-api.md` |
 | 改謎題資料格式／parser | `src/core/utils.py` 的 `Puzzle` 與 `parse_puzzle_layout()`——**唯一 parser，不要在別處重寫**；改了要全體 solver 回歸 |
 | 改評分邏輯 | `src/core/utils.py` 的 `calculate_fitness_score()`；牽動所有啟發式 solver |
 | 改視覺化（GIF／PNG） | `src/core/utils.py` 的 `save_*` 系列 |

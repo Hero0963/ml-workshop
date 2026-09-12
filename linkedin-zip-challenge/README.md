@@ -101,8 +101,7 @@ two fields are how you notice it. See [The two models](#the-two-models).
 
 ### 3. Solve it
 
-`POST /api/solver/solve` takes a board and a solver name. Ten solvers are implemented; four
-are wired into the API today.
+`POST /api/solver/solve` takes a board and a solver name. All ten solvers below are served.
 
 ---
 
@@ -118,16 +117,20 @@ dropdown comes from a single registry (`src/core/solvers/registry.py`).
 | **DFS** | exact | yes | Depth-first with pruning. |
 | **A\*** | exact | yes | Best-first over the same space. |
 | **RL (behaviour cloning)** | learned | yes | A neural policy. Not exact, not guaranteed — see below. |
-| Ant Colony Optimization | metaheuristic | — | Implemented and tested, not exposed. |
-| Genetic Algorithm | metaheuristic | — | " |
-| Particle Swarm Optimization | metaheuristic | — | " |
-| Simulated Annealing | metaheuristic | — | " |
-| Tabu Search | metaheuristic | — | " |
-| Monte Carlo | metaheuristic | — | " |
+| Ant Colony Optimization | metaheuristic | yes | Not exact, not guaranteed — see below. |
+| Genetic Algorithm | metaheuristic | yes | " |
+| Particle Swarm Optimization | metaheuristic | yes | " Its swap moves break walks apart, so expect it to give up. |
+| Simulated Annealing | metaheuristic | yes | " |
+| Tabu Search | metaheuristic | yes | " |
+| Monte Carlo | metaheuristic | yes | " The baseline: independent random walks. |
 
-The six metaheuristics are deliberately not exposed: on a board this small they lose to CP-SAT
-on every axis, and wiring them up is tracked as a known, deprioritised item rather than an
-oversight.
+The six metaheuristics are served for comparison, not for speed — on a board this small CP-SAT
+beats them on every axis. Each one returns the best path it saw whether or not that path solves
+anything, so the registry reruns it until an answer passes `src/core/solvers/verify.py`, for a
+fixed 5 seconds per request, and otherwise answers "could not find a solution". For a
+heuristic that means it gave up, not that the board has none. The budget is deliberately not an
+API parameter: the six count their effort in different units, and a fixed budget is what makes
+them comparable (`ai-collab/reports/2026-09-12_heuristic-solvers-on-the-api.md`).
 
 ---
 
@@ -311,4 +314,3 @@ A Traditional Chinese overview is in [`README_zh-TW.md`](./README_zh-TW.md).
 *   **Make the vision evaluation harder.** The synthetic held-out set is saturated at 1.000;
     visual noise, several renderer styles and larger boards would restore its power to
     discriminate.
-*   **Expose the six metaheuristic solvers** through the API for a like-for-like comparison.

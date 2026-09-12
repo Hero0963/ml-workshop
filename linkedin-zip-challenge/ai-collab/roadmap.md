@@ -24,7 +24,7 @@
 | Svelte 互動編輯器（`/svelte-ui`，Canvas WYSIWYG） | ✅ 完成，已整合進 FastAPI 靜態掛載 |
 | 程序化出題（隨機回溯 Hamiltonian path ＋ 多核） | ✅ 完成 |
 | Docker 雙環境（dev hot-reload／prod multi-stage） | ✅ 完成。**2026-09-12 app image 22.9 GB → 5.86 GB**（基底換 `python:3.11-slim-trixie`，系統函式庫零補、容器內 276 passed），`start.py` 與 `start.py --dev` 兩條都實跑驗收；**同日根治 worktree 撞名**：app 每個 checkout 一組（`zip-app-<checkout>`）、ollama 整台機器一個（`zip-ollama`），兩個 checkout 可同時服務；見 [deployment-guide.md](deployment-guide.md) §3 |
-| **API 只掛了 3/9 種 solver** | ⚠ 已知落差（`src/app/routers/solver.py` 的 `SOLVERS` 只有 DFS／A\*(heapq)／CP-SAT）；**Gradio 與 Svelte 兩邊的下拉選單也同樣只有 3 種**（2026-08-08 實測確認） |
+| **全部 solver 上 API** | ✅ **2026-09-12 十種全部上線**（Track C）：API、截圖端點、Gradio 下拉都從 `registry.py` 拿。六種啟發式包一層「重跑到通過 `verify.py`、每請求固定 5 秒」——**實測六題 21/36 解出，不包的話 91% 的回應會是被畫成答案的半成品**（[報告](reports/2026-09-12_heuristic-solvers-on-the-api.md)）。⚠ **Svelte 下拉仍寫死三種**（見下一步 #1）|
 | Swagger `/docs` 的 Echo 端點重複兩份 | 🐞 小 bug：`main.py` 掛 router 時給 `tags=["Echo"]`，而 `echo.py` 的 router 自帶 `tags=["echo"]`，FastAPI 合併後產生兩個群組 |
 | Svelte UI 的 Instructions 顯示原始 Markdown | 🐞 小 bug：`**middle**`／`**border**` 直接印出星號，該處沒有走 Markdown 渲染 |
 | RL solver（`src/core/rl/`） | 🚧 **重啟中**：A0／A1（2026-08-15）＋ **A2 兩輪訓練（2026-08-29）＋ 續訓加預算（2026-09-05）**。資料集加大 11 倍後「在背答案」已解掉（落差 +0.162／+0.250 → **+0.050／+0.009**）；續訓 3M 步後 6×6 held-out **0.344 → 0.409**、curriculum **k=27 → 30/36** ⇒「**加預算有效**」成立。**兩個 goal 仍未達門檻**。**★ 2026-09-05 量到 seed 雜訊地板（4×4 ±0.02–0.04）⇒ 0.877 其實是 0.854 ± 0.038**，且 `shaping_lambda` 對照是 null（規格偏離結案）。**優先序已重排回原本的 goal**。**★ P0「連通性特徵」已於 2026-09-05 做完：null 且方向為負**（兩臂 0.8537 vs 0.8275、差 −0.0263 未達 ±0.04；但逐 seed 配對差三個全負、死路率三個全升），**不進 6×6**；機制診斷顯示**策略根本沒在用這個訊號**（亮燈失敗佔失敗的比例 62.1% → 64.6% 幾乎不變）⇒ 下一個有機制的候選是**動作條件版**（決策前就知道「這一步會不會造成分裂」）。GNN 仍不做，理由已從「還沒證偽」升級為「它算的也是當前狀態的圖性質，繼承同一個限制」。**★★ 2026-09-05 再用 oracle 上界把整條線收掉**：強制執行完美的一步前瞻（分裂 ＋ 走進死巷，這是一步內可偵測必敗狀態的全部）只值 **+0.0156（4×4）／+0.0285（6×6）**，跨不過 ±0.04 ⇒ **動作條件版不做、割點不做、GNN 主要論據結案**。原因是 6×6 有 **59% 的窄化決策是「四個動作全部必敗」**——錯誤在好幾步前就犯下了，**缺的是長程規劃不是一步感知**。**★ 同時補上 6×6 的 best-of-N**（§7.20 缺的那半）：deterministic 0.4095 → **best-of-16 0.649（+0.240）**，4×4 則在 **best-of-4 就過 0.90**（0.9238，平均 1.33 次嘗試）⇒ **推論期搜尋是目前唯一買到 0.1 量級的槓桿**。**★★ 同日把「policy 排序 `dfs.py` 分支」也做完了（節點預算軸、五個臂）**：**先驗的價值第一次被單獨量到，而且很大**——不准回溯的預算下 4×4 policy **0.8771** vs 隨機排序 **0.0902**、6×6 **0.4205 vs 0.0005**（隨機排序在 500 節點內從沒到過 0.40）；解出時的中位節點數**正好等於路長** ⇒ 一半以上的題一次走到底不用回溯。**但「結構化搜尋比較好」不成立**：4×4 每個預算都贏 best-of-N，6×6 卻在 100 節點以上輸給它（0.5760 vs 0.6260 @175）**⇒ 我自己上一節的推薦被數據否掉一半**，機制與 oracle 同源（錯誤發生在很早，回溯只改尾巴、重抽會重擲早期決策）。確定性混淆已用 `dfs_policy_sampled` 排除（兩盤面都略差不是略好）。⚠ 4×4 的 1.0000 是**搜尋**解掉的不是策略（隨機排序也有 0.9990）⇒ 誠實說法是「省約 5 倍搜尋」。**★★ 同日又做完兩件事**：**帶重啟的 DFS 兩個設定都輸**（k1／k2 在每個預算都輸給 best-of-N *和* policy-DFS）⇒ 「回溯↔重啟」這條軸的極值在**完全不回溯**端點，這一族結案；**以及新增行為克隆（BC）**——資料集一直帶著 `solution_path` 卻**從沒被當成訓練目標**（只用來設 curriculum 起點），而 6×6 有約 56 萬組完美標籤。結果 **BC 在兩個盤面、每一個推論設定都不輸 PPO，訓練成本 1/3 與 1/9**：4×4 det **0.8947**／best-of-2 **0.9248 ✅**；6×6 det **0.4620**／best-of-16 **0.800**（PPO 是 0.4095／0.649）⇒ **6×6 離門檻只剩 0.05**。⚠ 單 seed、6×6 雜訊沒量過 ⇒「有動但未確證」，站得住的是**成本**。**★ 概念上 BC 不是 RL**（監督式模仿學習，無獎勵／無探索／無信用分配），定位是**暖啟動**、下一步接 PPO 微調；但誠實地說，這個問題**獎勵極稀疏＋示範免費＋解可驗證＋mask 後分支只有 1.5**⇒ **RL 的三個典型優勢全部用不到，我們可能正在證明「這題本來就不該用 RL」**——這是做中學最扎實的產出。**★ 資料集完整性已複驗**：現行包三個 split 內部重複 0、兩兩交集 0、digest 全過（4×4 15,419／1,927／1,928、6×6 16,000／2,000／2,000）；舊包 `main_n1700_456` 有 train 內部 4 筆重複 ＋ train∩val 1 筆（train∩test 仍為 0，不影響已發表數字）。**★ handover 已重整**：864 → 246 行，goal 提到最前面，量測與陷阱拆到 `rl-traps-and-facts.md` |
@@ -35,16 +35,19 @@
 
 > **★ 2026-08-08 本人定案的執行順序：先做 #2（VLM），再做 #3（RL），之後才換 `board-game-rl`。**
 > 本專案已被指定為當前的 side project 主菜（取代原排的 Transformer 0→1 教材）。
-> **#1 明確被跳過**——它最快見效，但本人選擇先做 VLM／RL。這是明示決定，開工時直接從 #2 起手，
-> 不必再重提 #1；要順手做由本人開口。下面的編號維持技術優先序，不代表執行順序。
+> **#1 已於 2026-09-12 由本人指派為 Track C，API 部分已完成**；只剩 Svelte 下拉（見 #1 最後一點）。
+> 下面的編號維持技術優先序，不代表執行順序。
 
-1. **把 9 種 solver 全部掛進 API**（技術上最划算，但**本人已決定暫緩**）
-   - 為什麼：`src/core/solvers/` 有 9 種實作、每種都有測試，但 `src/app/routers/solver.py` 的 `SOLVERS` dict 只暴露 3 種。
-     2026-08-08 實測佐證：打 `POST /api/solver/solve` 指定 `Simulated Annealing` → **404 `Solver 'Simulated Annealing' not found.`**；
-     Svelte 前端 bundle 內的下拉選項字串也只有 `DFS`／`A* (heapq)`／`CP-SAT`。**六種啟發式解法目前完全無法從介面觸及。**
-   - 注意：啟發式 solver 需要 `attempts` 參數，API schema（`src/app/schemas/solver.py`）要一併擴充，且要考慮逾時（同步阻塞可能拖很久）。
-     改完 Svelte 的下拉要重新 `npm run build` 才會反映。
-   - Done 條件：`SOLVERS` 含全部 9 種、schema 支援 `attempts`、Gradio 與 Svelte 兩邊下拉都可選、新增對應 API 測試且全綠。
+1. **把全部 solver 掛進 API** ← **✅ API／截圖端點／Gradio 已完成（2026-09-12，Track C，branch `feat/expose-heuristic-solvers`）**
+   - 十種都從 `src/core/solvers/registry.py` 上線。啟發式包一層 `_until_verified()`：重跑到答案通過
+     `src/core/solvers/verify.py` 為止，每請求固定 `HEURISTIC_TIME_BUDGET_SECONDS`（5 秒），用完就回「could not find a solution」。
+     **為什麼要包**：啟發式不管有沒有解出來都交回「看過最好的那條」，預設預算下 108 次只有 8 次是真解，不包就會把半成品畫成答案。
+   - **舊版 done 條件「schema 支援 `attempts`」刻意不做**：六種的預算單位各不相同（隨機走法數／迭代數／世代數／溫度排程），
+     共通單位只有秒；固定在伺服器端才是同尺度比較。理由與實測見
+     [`reports/2026-09-12_heuristic-solvers-on-the-api.md`](reports/2026-09-12_heuristic-solvers-on-the-api.md)。
+   - 截圖端點的 `solvable` 改成三態：非精確 solver（啟發式、RL）放棄時是 `None`，不再被說成「讀錯圖」。
+   - **還沒做**：Svelte 下拉（`src/custom_components/puzzle_editor/frontend/Index.svelte:13` 寫死 `DFS`／`A* (heapq)`／`CP-SAT`，
+     連 RL 都沒有），改完要 `npm run build`。不在 Track C 的檔案範圍，要做另開。
 
 2. **VL 圖片解析整合進主流程** ← **✅ 已完成並上線（2026-08-29 P4d/P5/P6）。下一件事是「把評估集變難」，見本項最後一段**
    - **✅ P5 程式骨幹已完成（2026-08-22）**：`backends.py`（傳輸層唯一正本）、`puzzle_parser.py`（正式 parser）、
@@ -411,7 +414,8 @@
 
 ## 開放問題（想到就補，不急著答）
 
-- 啟發式 solver 掛進 API 後，逾時要怎麼處理？（同步阻塞 vs 背景任務）
+- ~~啟發式 solver 掛進 API 後，逾時要怎麼處理？（同步阻塞 vs 背景任務）~~
+  → 2026-09-12 答：**同步就夠**。預設預算下單次跑 ≤ 0.12 秒，外層固定 5 秒預算，最壞約 5 秒 ≪ Gradio 的 120 秒 timeout，不需要背景任務。
 - `puzzle_dataset/`／`zip_puzzles/` 已累積多批資料集且不進版控，要不要定個保留策略？
 - Svelte 前端目前沒有自己的測試，值得補嗎？
 

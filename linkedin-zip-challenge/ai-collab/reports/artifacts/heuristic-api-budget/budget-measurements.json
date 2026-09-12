@@ -1,0 +1,1746 @@
+{
+  "measured_at": "2026-09-12T18:56:25+08:00",
+  "seed": 20260912,
+  "repeats_per_puzzle": 5,
+  "budget_seconds": 5.0,
+  "puzzles": [
+    "puzzle_01",
+    "puzzle_02",
+    "puzzle_03",
+    "puzzle_04",
+    "puzzle_05",
+    "puzzle_06"
+  ],
+  "raw_single_runs": [
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 0,
+      "seconds": 0.0339,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 1,
+      "seconds": 0.0347,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 2,
+      "seconds": 0.0328,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 3,
+      "seconds": 0.0334,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 4,
+      "seconds": 0.037,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 0,
+      "seconds": 0.0322,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 1,
+      "seconds": 0.0334,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 2,
+      "seconds": 0.0401,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 3,
+      "seconds": 0.0352,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 4,
+      "seconds": 0.0328,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 0,
+      "seconds": 0.0324,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 1,
+      "seconds": 0.0316,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 2,
+      "seconds": 0.0326,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 3,
+      "seconds": 0.03,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 4,
+      "seconds": 0.034,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 0,
+      "seconds": 0.0326,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 1,
+      "seconds": 0.0329,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 2,
+      "seconds": 0.0357,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 3,
+      "seconds": 0.0328,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 4,
+      "seconds": 0.0353,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 0,
+      "seconds": 0.0301,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 1,
+      "seconds": 0.0281,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 2,
+      "seconds": 0.0311,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 3,
+      "seconds": 0.0296,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 4,
+      "seconds": 0.0335,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 0,
+      "seconds": 0.0428,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 1,
+      "seconds": 0.0386,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 2,
+      "seconds": 0.0404,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 3,
+      "seconds": 0.0406,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 4,
+      "seconds": 0.0364,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_01",
+      "repeat": 0,
+      "seconds": 0.0899,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_01",
+      "repeat": 1,
+      "seconds": 0.0925,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_01",
+      "repeat": 2,
+      "seconds": 0.1065,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_01",
+      "repeat": 3,
+      "seconds": 0.0947,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_01",
+      "repeat": 4,
+      "seconds": 0.0877,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_02",
+      "repeat": 0,
+      "seconds": 0.0825,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_02",
+      "repeat": 1,
+      "seconds": 0.0875,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_02",
+      "repeat": 2,
+      "seconds": 0.0873,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_02",
+      "repeat": 3,
+      "seconds": 0.0891,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_02",
+      "repeat": 4,
+      "seconds": 0.0904,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_03",
+      "repeat": 0,
+      "seconds": 0.0836,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_03",
+      "repeat": 1,
+      "seconds": 0.0866,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_03",
+      "repeat": 2,
+      "seconds": 0.0883,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_03",
+      "repeat": 3,
+      "seconds": 0.0857,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_03",
+      "repeat": 4,
+      "seconds": 0.085,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_04",
+      "repeat": 0,
+      "seconds": 0.1185,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_04",
+      "repeat": 1,
+      "seconds": 0.1092,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_04",
+      "repeat": 2,
+      "seconds": 0.1026,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_04",
+      "repeat": 3,
+      "seconds": 0.1046,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_04",
+      "repeat": 4,
+      "seconds": 0.1015,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_05",
+      "repeat": 0,
+      "seconds": 0.0923,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_05",
+      "repeat": 1,
+      "seconds": 0.0894,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_05",
+      "repeat": 2,
+      "seconds": 0.0894,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_05",
+      "repeat": 3,
+      "seconds": 0.0962,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_05",
+      "repeat": 4,
+      "seconds": 0.0923,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_06",
+      "repeat": 0,
+      "seconds": 0.1023,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_06",
+      "repeat": 1,
+      "seconds": 0.1068,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_06",
+      "repeat": 2,
+      "seconds": 0.0993,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_06",
+      "repeat": 3,
+      "seconds": 0.1034,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_06",
+      "repeat": 4,
+      "seconds": 0.1279,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 0,
+      "seconds": 0.0337,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 1,
+      "seconds": 0.0455,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 2,
+      "seconds": 0.0387,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 3,
+      "seconds": 0.0324,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_01",
+      "repeat": 4,
+      "seconds": 0.0452,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 0,
+      "seconds": 0.0398,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 1,
+      "seconds": 0.0347,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 2,
+      "seconds": 0.0367,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 3,
+      "seconds": 0.0349,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_02",
+      "repeat": 4,
+      "seconds": 0.0428,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 0,
+      "seconds": 0.0475,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 1,
+      "seconds": 0.0439,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 2,
+      "seconds": 0.0448,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 3,
+      "seconds": 0.0352,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_03",
+      "repeat": 4,
+      "seconds": 0.0368,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 0,
+      "seconds": 0.0393,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 1,
+      "seconds": 0.0274,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 2,
+      "seconds": 0.0325,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 3,
+      "seconds": 0.0372,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_04",
+      "repeat": 4,
+      "seconds": 0.0297,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 0,
+      "seconds": 0.0294,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 1,
+      "seconds": 0.0348,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 2,
+      "seconds": 0.0255,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 3,
+      "seconds": 0.0328,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_05",
+      "repeat": 4,
+      "seconds": 0.0327,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 0,
+      "seconds": 0.0538,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 1,
+      "seconds": 0.0453,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 2,
+      "seconds": 0.0553,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 3,
+      "seconds": 0.0324,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_06",
+      "repeat": 4,
+      "seconds": 0.0387,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_01",
+      "repeat": 0,
+      "seconds": 0.0573,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_01",
+      "repeat": 1,
+      "seconds": 0.0445,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_01",
+      "repeat": 2,
+      "seconds": 0.0467,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_01",
+      "repeat": 3,
+      "seconds": 0.0492,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_01",
+      "repeat": 4,
+      "seconds": 0.041,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_02",
+      "repeat": 0,
+      "seconds": 0.0385,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_02",
+      "repeat": 1,
+      "seconds": 0.0422,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_02",
+      "repeat": 2,
+      "seconds": 0.0391,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_02",
+      "repeat": 3,
+      "seconds": 0.042,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_02",
+      "repeat": 4,
+      "seconds": 0.0407,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_03",
+      "repeat": 0,
+      "seconds": 0.0408,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_03",
+      "repeat": 1,
+      "seconds": 0.0438,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_03",
+      "repeat": 2,
+      "seconds": 0.0411,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_03",
+      "repeat": 3,
+      "seconds": 0.0408,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_03",
+      "repeat": 4,
+      "seconds": 0.0407,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_04",
+      "repeat": 0,
+      "seconds": 0.0499,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_04",
+      "repeat": 1,
+      "seconds": 0.049,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_04",
+      "repeat": 2,
+      "seconds": 0.0504,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_04",
+      "repeat": 3,
+      "seconds": 0.048,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_04",
+      "repeat": 4,
+      "seconds": 0.048,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_05",
+      "repeat": 0,
+      "seconds": 0.0405,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_05",
+      "repeat": 1,
+      "seconds": 0.0419,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_05",
+      "repeat": 2,
+      "seconds": 0.0456,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_05",
+      "repeat": 3,
+      "seconds": 0.044,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_05",
+      "repeat": 4,
+      "seconds": 0.0383,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_06",
+      "repeat": 0,
+      "seconds": 0.0439,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_06",
+      "repeat": 1,
+      "seconds": 0.0489,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_06",
+      "repeat": 2,
+      "seconds": 0.0468,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_06",
+      "repeat": 3,
+      "seconds": 0.0458,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_06",
+      "repeat": 4,
+      "seconds": 0.0464,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_01",
+      "repeat": 0,
+      "seconds": 0.0455,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_01",
+      "repeat": 1,
+      "seconds": 0.0355,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_01",
+      "repeat": 2,
+      "seconds": 0.0327,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_01",
+      "repeat": 3,
+      "seconds": 0.0394,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_01",
+      "repeat": 4,
+      "seconds": 0.0374,
+      "returned_a_path": true,
+      "is_solution": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_02",
+      "repeat": 0,
+      "seconds": 0.0355,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_02",
+      "repeat": 1,
+      "seconds": 0.0358,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_02",
+      "repeat": 2,
+      "seconds": 0.0342,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_02",
+      "repeat": 3,
+      "seconds": 0.0354,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_02",
+      "repeat": 4,
+      "seconds": 0.0386,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_03",
+      "repeat": 0,
+      "seconds": 0.0344,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_03",
+      "repeat": 1,
+      "seconds": 0.0345,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_03",
+      "repeat": 2,
+      "seconds": 0.0349,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_03",
+      "repeat": 3,
+      "seconds": 0.0338,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_03",
+      "repeat": 4,
+      "seconds": 0.0356,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_04",
+      "repeat": 0,
+      "seconds": 0.0431,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_04",
+      "repeat": 1,
+      "seconds": 0.0436,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_04",
+      "repeat": 2,
+      "seconds": 0.0415,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_04",
+      "repeat": 3,
+      "seconds": 0.04,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_04",
+      "repeat": 4,
+      "seconds": 0.0443,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_05",
+      "repeat": 0,
+      "seconds": 0.0331,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_05",
+      "repeat": 1,
+      "seconds": 0.0346,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_05",
+      "repeat": 2,
+      "seconds": 0.0325,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_05",
+      "repeat": 3,
+      "seconds": 0.033,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_05",
+      "repeat": 4,
+      "seconds": 0.0356,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_06",
+      "repeat": 0,
+      "seconds": 0.0392,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_06",
+      "repeat": 1,
+      "seconds": 0.0407,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_06",
+      "repeat": 2,
+      "seconds": 0.0392,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_06",
+      "repeat": 3,
+      "seconds": 0.039,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_06",
+      "repeat": 4,
+      "seconds": 0.0406,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_01",
+      "repeat": 0,
+      "seconds": 0.0246,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_01",
+      "repeat": 1,
+      "seconds": 0.0243,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_01",
+      "repeat": 2,
+      "seconds": 0.0244,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_01",
+      "repeat": 3,
+      "seconds": 0.0246,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_01",
+      "repeat": 4,
+      "seconds": 0.0243,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_02",
+      "repeat": 0,
+      "seconds": 0.0217,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_02",
+      "repeat": 1,
+      "seconds": 0.0213,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_02",
+      "repeat": 2,
+      "seconds": 0.0225,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_02",
+      "repeat": 3,
+      "seconds": 0.0217,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_02",
+      "repeat": 4,
+      "seconds": 0.0217,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_03",
+      "repeat": 0,
+      "seconds": 0.0241,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_03",
+      "repeat": 1,
+      "seconds": 0.0238,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_03",
+      "repeat": 2,
+      "seconds": 0.0234,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_03",
+      "repeat": 3,
+      "seconds": 0.0231,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_03",
+      "repeat": 4,
+      "seconds": 0.0233,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_04",
+      "repeat": 0,
+      "seconds": 0.0267,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_04",
+      "repeat": 1,
+      "seconds": 0.0266,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_04",
+      "repeat": 2,
+      "seconds": 0.0261,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_04",
+      "repeat": 3,
+      "seconds": 0.026,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_04",
+      "repeat": 4,
+      "seconds": 0.0282,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_05",
+      "repeat": 0,
+      "seconds": 0.0211,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_05",
+      "repeat": 1,
+      "seconds": 0.0217,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_05",
+      "repeat": 2,
+      "seconds": 0.021,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_05",
+      "repeat": 3,
+      "seconds": 0.0209,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_05",
+      "repeat": 4,
+      "seconds": 0.0212,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_06",
+      "repeat": 0,
+      "seconds": 0.0272,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_06",
+      "repeat": 1,
+      "seconds": 0.0277,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_06",
+      "repeat": 2,
+      "seconds": 0.0275,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_06",
+      "repeat": 3,
+      "seconds": 0.0278,
+      "returned_a_path": true,
+      "is_solution": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_06",
+      "repeat": 4,
+      "seconds": 0.0272,
+      "returned_a_path": true,
+      "is_solution": false
+    }
+  ],
+  "served_at_budget": [
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_01",
+      "seconds": 0.069,
+      "runs": 2,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_02",
+      "seconds": 0.902,
+      "runs": 27,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_03",
+      "seconds": 2.332,
+      "runs": 71,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_04",
+      "seconds": 2.336,
+      "runs": 67,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_05",
+      "seconds": 0.093,
+      "runs": 3,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "puzzle": "puzzle_06",
+      "seconds": 5.005,
+      "runs": 129,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_01",
+      "seconds": 0.277,
+      "runs": 3,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_02",
+      "seconds": 0.678,
+      "runs": 8,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_03",
+      "seconds": 0.165,
+      "runs": 2,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_04",
+      "seconds": 0.112,
+      "runs": 1,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_05",
+      "seconds": 0.352,
+      "runs": 4,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "puzzle": "puzzle_06",
+      "seconds": 5.006,
+      "runs": 39,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_01",
+      "seconds": 5.04,
+      "runs": 126,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_02",
+      "seconds": 5.022,
+      "runs": 141,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_03",
+      "seconds": 5.016,
+      "runs": 133,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_04",
+      "seconds": 5.0,
+      "runs": 141,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_05",
+      "seconds": 5.0,
+      "runs": 165,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "puzzle": "puzzle_06",
+      "seconds": 5.012,
+      "runs": 102,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_01",
+      "seconds": 0.204,
+      "runs": 4,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_02",
+      "seconds": 1.022,
+      "runs": 20,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_03",
+      "seconds": 0.11,
+      "runs": 2,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_04",
+      "seconds": 0.291,
+      "runs": 4,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_05",
+      "seconds": 0.165,
+      "runs": 3,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Simulated Annealing",
+      "puzzle": "puzzle_06",
+      "seconds": 5.004,
+      "runs": 88,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_01",
+      "seconds": 0.052,
+      "runs": 1,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_02",
+      "seconds": 4.406,
+      "runs": 104,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_03",
+      "seconds": 1.398,
+      "runs": 33,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_04",
+      "seconds": 0.655,
+      "runs": 13,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_05",
+      "seconds": 0.131,
+      "runs": 3,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Tabu Search",
+      "puzzle": "puzzle_06",
+      "seconds": 5.044,
+      "runs": 101,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_01",
+      "seconds": 1.224,
+      "runs": 41,
+      "solved": true,
+      "served_a_path": true
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_02",
+      "seconds": 4.998,
+      "runs": 206,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_03",
+      "seconds": 5.003,
+      "runs": 213,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_04",
+      "seconds": 5.008,
+      "runs": 189,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_05",
+      "seconds": 4.997,
+      "runs": 235,
+      "solved": false,
+      "served_a_path": false
+    },
+    {
+      "solver": "Monte Carlo",
+      "puzzle": "puzzle_06",
+      "seconds": 5.023,
+      "runs": 158,
+      "solved": false,
+      "served_a_path": false
+    }
+  ]
+}
