@@ -31,13 +31,13 @@
 > | 跑法 | 誰在容器裡 | 狀態 |
 > |---|---|---|
 > | **A. Ollama 在 Docker、app 在本機**（下面這三行） | 只有模型 | ✅ **2026-08-29 實測驗過，讀圖功能可用** |
-> | B. 整套 Docker（`python start.py --dev`） | 模型＋app＋Svelte | ⚠ **設定已就緒但未實測**：這台機器**從沒 build 過 app 的 image**，第一次要拉 `pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel`（約 20 GB）再 `uv sync`。網路設定已驗過（compose 會把 app 的 `OLLAMA_PROVIDER_URL` 覆寫成 `http://ollama:11434/v1`），但整條路徑沒跑過 |
+> | B. 整套 Docker（`python start.py --dev`） | 模型＋app＋Svelte | ⚠ **2026-09-12 在 `zip-infra` 實測「起得來」**（app image 換基底後 5.86 GB，約 20 秒到 health 200，四種 solver 可用），**但讀圖沒有從這條路端到端跑過**。compose 會把 app 的 `OLLAMA_PROVIDER_URL` 覆寫成 `http://host.docker.internal:11435/v1`（ollama 已拆成自己的 compose 專案）|
 >
 > **A 就是 `AGENTS.md` 記載的開發跑法，建議用它。**
 
 ```powershell
 cd D:\it_project\github_sync\zip-vlm\linkedin-zip-challenge
-docker compose -f docker-compose.dev.yml up -d ollama
+docker compose -f docker-compose.ollama.yml up -d
 uv run python -m src.app.main
 ```
 
@@ -365,7 +365,9 @@ uv run python C:\tools\llama.cpp\convert_hf_to_gguf.py models/merged/qwen35-4b-z
 
 ### 第 3 步：匯進 Ollama
 
-`docker-compose.dev.yml` 已經把 `./models` 唯讀掛到容器的 `/models`，所以不必複製 9 GB 進容器。
+`docker-compose.ollama.yml` 已經把 `./models` 唯讀掛到容器的 `/models`，所以不必複製 9 GB 進容器。
+（掛的是**起 ollama 的那個 checkout** 的 `models/`——ollama 整台機器只有一個，見
+[`deployment-guide.md`](deployment-guide.md) §3。）
 
 ```powershell
 docker exec zip_ollama_server sh -c "printf 'FROM /models/gguf/zip-qwen35-4b-p4c-text-f16.gguf\nFROM /models/gguf/zip-qwen35-4b-p4c-mmproj-f16.gguf\n' > /tmp/Modelfile && ollama create zip-qwen35-4b-p4c:f16 -f /tmp/Modelfile"
@@ -445,14 +447,14 @@ uv run python -m src.core.vl_models.score_predictions logsision\metadata.jsonl
 
 | 症狀 | 多半是什麼 | 怎麼修 |
 |---|---|---|
-| API 回 **503** | `zip_ollama_server` 沒跑 | `docker compose -f docker-compose.dev.yml up -d ollama` |
+| API 回 **503** | `zip_ollama_server` 沒跑 | `docker compose -f docker-compose.ollama.yml up -d` |
 | API 回 **503**，但容器有跑 | `.env` 的 URL 不對 | host 上跑 app 要 `http://127.0.0.1:11435/v1`；容器裡跑則由 compose 覆寫，不用改 |
 | 第一次呼叫等了快一分鐘 | 正常，在載 9.3 GB 進顯卡 | 第二次起 3–7 秒 |
 | 每次都很慢、答案還很爛 | 模型 tag 是未微調的那個 | `docker exec zip_ollama_server ollama list` 對一下，再看 §5 |
 | 回答全是一大段推理文字 | 思考沒關掉 | 出貨路徑已經固定關閉。若你自己呼叫 Ollama，`/v1` **不吃 `think`**，要 `reasoning_effort="none"` |
 | 改了 `.env` 沒反應 | 設定有 `@cache` | 重開 app |
 | 改了程式沒反應 | 7440 上有多個 process | `netstat -ano \| findstr :7440` |
-| `docker compose up` 說埠被佔 | 另一個 worktree 的 stack 開著 | **兩個 worktree 不可同時起**，先關掉另一個 |
+| `docker compose up` 說埠被佔 | 另一個 checkout 的 app 開著 | 2026-09-12 起每個 checkout 各一組 stack，**可以同時跑**：在這個 checkout 的 `.env` 改 `APP_PORT`（dev 再改 `SVELTE_PORT`），或關掉另一個。`python start.py --status` 看是誰 |
 | Gradio 分頁不見 | app 是舊版本 | 重開 app |
 
 ---

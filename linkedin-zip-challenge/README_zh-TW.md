@@ -41,11 +41,12 @@ cd ml-workshop/linkedin-zip-challenge
 python start.py
 ```
 
-`start.py` 只需要 Python 3 與**已啟動的 Docker**。它會：從範本建立 `.env` → 建 image → 起服務 →
-**等到 API 真的回應為止** → 然後告訴你哪些能用、哪些不能：
+`start.py` 只需要 Python 3 與**已啟動的 Docker**。它會：從範本建立 `.env` → 確認整台機器唯一的 ollama 在跑 →
+建並起**這個 checkout 的** app → **等到 API 真的回應為止** → 然後告訴你哪些能用、哪些不能：
 
 ```
-$ docker compose -f docker-compose.yml up -d --build
+$ docker compose -f docker-compose.ollama.yml up -d
+$ docker compose -f docker-compose.yml -p zip-app-ml-workshop up -d --build
 Waiting for http://127.0.0.1:7440/api/echo/health
 API is up.
 Ollama is up. Models: ['zip-qwen35-4b-p4c:f16', ...]
@@ -63,7 +64,8 @@ RL solver weights found (models/rl_a2/bc_multi_456/checkpoints/model_final.zip).
 | `python start.py --status` | 現在跑著什麼、少了哪些選配 |
 | `python start.py --down` | 停掉並移除容器 |
 
-**第一次建置要下載好幾 GB，約 10–15 分鐘**；之後啟動約兩分鐘。
+**第一次建置要幾分鐘**——作者機器上實測 110 秒，大部分時間在下載 wheel；全新的機器還要加上建 Svelte 前端。
+之後從啟動到 API 回 200 約 10 秒。
 
 **兩個選配缺了會誠實降級**：沒有 Ollama 容器 ⇒ 讀截圖不能用，其餘正常；
 `models/` 底下沒有 checkpoint ⇒ RL solver 回 **503**，其他 solver 不受影響。
@@ -181,8 +183,9 @@ API、截圖端點與 Gradio 下拉選單的清單來自**同一份 registry**�
 ```
 linkedin-zip-challenge/
 ├── start.py                  # 一鍵啟動：從 clone 到服務跑起來
-├── docker-compose.yml        # 正式環境（app ＋ ollama）
-├── docker-compose.dev.yml    # 開發環境（＋ 熱更新、Svelte dev server）
+├── docker-compose.yml        # 正式環境的 app；每個 checkout 各一組
+├── docker-compose.dev.yml    # 開發環境的 app（＋ 熱更新、Svelte dev server）
+├── docker-compose.ollama.yml # 整台機器唯一的 ollama，所有 checkout 共用
 ├── .devcontainer/
 │   ├── Dockerfile            # 多階段：先建 Svelte，再建 Python app
 │   └── Dockerfile.dev        # 開發用 image（uvicorn --reload）

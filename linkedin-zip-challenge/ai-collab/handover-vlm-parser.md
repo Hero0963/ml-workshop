@@ -88,14 +88,16 @@ uv run ruff check .           # 應為 All checks passed!
 
 ```powershell
 cd D:\it_project\github_sync\zip-vlm\linkedin-zip-challenge
-docker compose -f docker-compose.dev.yml up -d ollama
+docker compose -f docker-compose.ollama.yml up -d
 docker exec zip_ollama_server ollama --version     # 應為 0.32.13 或更新
 docker exec zip_ollama_server ollama list          # 應看到 zip-qwen35-4b-p4c:f16（微調版）與 qwen3.5:4b-q8_0 等
 ```
 
 - 容器名 **`zip_ollama_server`**、host 埠 **11435**（不是 11434，11434 被本機另一專案佔用，**不要改回去**）。
 - 模型放在具名 volume `linkedin-zip-challenge_ollama_data`，**所有 worktree 共用同一份**，不必重拉。
-- ⚠ **兩個 worktree 不可同時起 docker stack**（容器名與埠全機唯一）。要跟 RL track 協調。
+- ⚠ 2026-09-12 起 **ollama 是整台機器一個**（compose 專案 `zip-ollama`），app 則是**每個 checkout 一組**
+  （`zip-app-<checkout>`），兩個 checkout 可以同時起——各自在 `.env` 用不同的 `APP_PORT` 即可。
+  細節見 [`deployment-guide.md`](deployment-guide.md) §3。
 
 ### Colab（只有要再訓練或匯出時才需要）
 

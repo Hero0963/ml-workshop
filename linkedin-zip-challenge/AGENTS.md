@@ -114,7 +114,7 @@ python start.py --dev           # Docker 開發環境（hot-reload）
 | 改 Gradio 介面 | `src/ui/gradio_app.py`；它是 **Adapter**，負責把 UI 操作翻成 API 格式，邏輯不要塞進來 |
 | 改 Svelte 編輯器 | `src/custom_components/puzzle_editor/frontend/`（`Index.svelte`／`vite.config.ts`）；改完要 `npm run build` 才會反映到 `/svelte-ui` |
 | 改埠號／設定 | `src/settings.py`（唯一來源）＋ `.env.example`；**不要在程式裡硬寫** |
-| 用 Docker 起服務 | [`ai-collab/deployment-guide.md`](ai-collab/deployment-guide.md)（`docker compose up -d --build`；`models/` 是唯讀掛載，RL solver 靠它）|
+| 用 Docker 起服務 | [`ai-collab/deployment-guide.md`](ai-collab/deployment-guide.md)（`python start.py`；ollama 整台機器一個、app 每個 checkout 一組；`models/` 是唯讀掛載，RL solver 靠它）|
 | 改出題器 | `src/core/puzzle_generation/puzzle_generator.py`（回溯 ＋ retry/decrement ＋ 內部逾時） |
 | 碰 RL | `src/core/rl/`——**先讀 [`ai-collab/handover-rl-solver.md`](ai-collab/handover-rl-solver.md) 與 [`ai-collab/notes/`](ai-collab/notes/)**，不要重蹈「調 reward 權重硬解 policy loop」。服務端只在 `solver_service.py`，其餘檔案都是訓練用 |
 | 碰 VL 圖片解析 | **先讀 [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)**。傳輸層唯一正本是 `vl_models/backends.py`、出貨 parser 是 `puzzle_parser.py`、端點在 `src/app/routers/vision.py`。混合策略（`output_type=str` ＋ prompt engineering）是已驗證路線，**不要回頭試 tool-calling** |

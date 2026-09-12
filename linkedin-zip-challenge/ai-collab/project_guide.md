@@ -66,8 +66,9 @@ linkedin-zip-challenge/
 ├── .devcontainer/
 │   ├── Dockerfile               # PRODUCTION：多階段（node build → python runtime）
 │   └── Dockerfile.dev           # DEVELOPMENT
-├── docker-compose.yml           # production（單一自足服務）
-├── docker-compose.dev.yml       # development（後端 ＋ Svelte dev server 兩容器）
+├── docker-compose.yml           # production 的 app（單一自足映像檔；每個 checkout 各一組）
+├── docker-compose.dev.yml       # development 的 app（後端 ＋ Svelte dev server 兩容器）
+├── docker-compose.ollama.yml    # 整台機器唯一的 ollama（吃 GPU，所有 checkout 共用）
 ├── start.py                  # 一鍵啟動：clone 完就能起服務
 ├── .env / .env.example          # 環境變數（.env 絕不進版控）
 ├── .python-version              # 3.11
@@ -162,14 +163,16 @@ npm run build
 python start.py --dev
 ```
 
-兩個容器（後端 ＋ Svelte dev server）＋ volume mount。
-- 統一入口：`http://localhost:7440/ui`、`http://localhost:7440/svelte-ui`
-- 前端 hot-reload 要直接開 `http://localhost:5173`
+兩個容器（後端 ＋ Svelte dev server）＋ volume mount，外加整台機器共用的 ollama。
+- 統一入口：`http://localhost:7440/ui`
+- 前端開 `http://localhost:5173/svelte-ui/`（hot-reload）；**dev 模式下 `7440/svelte-ui/` 是 404**，
+  因為 `./src` 蓋掉 image、host 沒有編好的 `dist/`
 
 ### 方式 3：Docker 生產模擬
 
 ```powershell
-docker compose -f docker-compose.yml up --build -d
+docker compose -f docker-compose.ollama.yml up -d    # 整台機器一次
+docker compose up -d --build                         # 這個 checkout 的 app
 ```
 
 多階段建置（`node:lts-alpine` 建前端 → Python runtime），單一自足映像檔，全部從 `7440` 出。

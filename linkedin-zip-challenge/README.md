@@ -44,11 +44,12 @@ python start.py
 ```
 
 `start.py` needs nothing but Python 3 and a running Docker. It creates `.env` from the
-template, builds the images, brings the stack up, **waits until the API actually answers**, and
-then tells you what works and what does not:
+template, makes sure the machine's one Ollama is running, builds and starts this checkout's
+app, **waits until the API actually answers**, and then tells you what works and what does not:
 
 ```
-$ docker compose -f docker-compose.yml up -d --build
+$ docker compose -f docker-compose.ollama.yml up -d
+$ docker compose -f docker-compose.yml -p zip-app-ml-workshop up -d --build
 Waiting for http://127.0.0.1:7440/api/echo/health
 API is up.
 Ollama is up. Models: ['zip-qwen35-4b-p4c:f16', ...]
@@ -66,8 +67,9 @@ RL solver weights found (models/rl_a2/bc_multi_456/checkpoints/model_final.zip).
 | `python start.py --status` | What is running, and which optional pieces are missing |
 | `python start.py --down` | Stop and remove the containers |
 
-**The first build downloads several GB and takes 10–15 minutes.** After that, start-up is
-about two minutes.
+**The first build takes a few minutes** — 110 seconds on the author's machine, most of it
+downloading wheels; a clean machine also builds the Svelte frontend. After that, start-up to a
+healthy API is about ten seconds.
 
 **Two things are optional and degrade honestly if absent.** Without the Ollama container the
 screenshot reader is unavailable and everything else works; without a trained checkpoint under
@@ -198,8 +200,9 @@ self-improvement — in [`ai-collab/notes/`](./ai-collab/notes/).
 ```
 linkedin-zip-challenge/
 ├── start.py                  # One command from a fresh clone to a running stack
-├── docker-compose.yml        # Production stack (app + ollama)
-├── docker-compose.dev.yml    # Development stack (+ hot reload, Svelte dev server)
+├── docker-compose.yml        # Production app; one stack per checkout
+├── docker-compose.dev.yml    # Development app (+ hot reload, Svelte dev server)
+├── docker-compose.ollama.yml # The one Ollama on the machine, shared by every checkout
 ├── .devcontainer/
 │   ├── Dockerfile            # Multi-stage: Svelte build, then the Python app
 │   └── Dockerfile.dev        # Development image (uvicorn --reload)
