@@ -57,6 +57,40 @@ dev 的 svelte 容器裡 `VITE_API_URL=http://127.0.0.1:7440`。
 
 **沒做的**：換 CPU 版 torch（剩下 5.66 GB 的大宗是 12 個 `nvidia-*` wheel，但那要動 `pyproject.toml`／`uv.lock`，
 不屬於 Docker 層）；hot reload 實際觸發（要改 `src/` 才測得到，只驗到 reloader 起來、盯的是 `/app/src`）。
+### Track A — BC → PPO 微調：步子縮小十倍之後，6×6 第一次看到 RL 的加值（branch `feat/rl-ppo-finetune`, worktree `zip-rl`）
+
+完整報告在 [`reports/2026-09-12_rl-bc-ppo-finetune.md`](reports/2026-09-12_rl-bc-ppo-finetune.md)。
+
+**做了什麼**：`train_maskable_ppo.py` 加 `--init-from <run-id>`（只搬 actor＋critic 權重，optimizer 重開、超參仍來自
+`train_config`、先比對觀測空間、強制關 curriculum）與 `--learning-rate` 覆寫；測試 276 → **280 passed, 8 xfailed**。
+對照組一律是**同一個 `bc_multi_456` 不微調**，評分用產出 BC 基準的同一支 probe（重評 BC 逐位重現 0.940445／0.991714）。
+
+**① 預設超參（lr 3e-4）會把 BC 弄壞。** 4×4 三個 seed 都比 BC 差約 0.025（deterministic −0.0249／−0.0249／−0.0264、
+best-of-32 −0.0218／−0.0259／−0.0264）；seed 全距只有 0.0016 ⇒ **確證**。6×6 直接崩：訓練集抽樣 0.785 → 0.07，
+held-out deterministic 0.5205 → **0.2415**（900k 手動停，因為對崩掉的模型跑 best-of-32 要 20–40 分鐘卻沒有新資訊）。
+診斷：前 100k 步 approx_kl 4×4 **0.14–0.16**、6×6 **0.35**（正常約 0.01–0.02）；6×6 還加上熵暴增約 13 倍。
+另外 **BC 的 critic 沒有真的暖好**：第一次更新 explained variance 約 −0.005——它只看過永遠成功的專家軌跡。
+
+**② 只改學習率 3e-4 → 3e-5**：KL 回到 0.009（4×4）／0.019（6×6），訓練曲線不再先掉。
+- **4×4（3 個 seed）**：deterministic **+0.0070**（全距 0.0020），但 **best-of-32 −0.0129**（全距 0.0011）
+  ⇒ **兩件事都是確證**。機制檢驗：held-out 專家狀態上的熵 **−60%**、每題相異路徑 2.37 → 1.59
+  ⇒ **變尖銳、多樣性下降**，和 LLM 做 RL 常見的「pass@1 升、pass@k 降」同形。
+  過擬合對照：進步約 2/3 帶到測試集 ⇒ 沒有背題的證據。
+- **6×6（3 個 seed）**：deterministic 0.5575／0.5255／0.5400 對 BC 0.5200 ⇒ **3/3 為正、平均 +0.021、全距 0.032**
+  ⇒ **方向一致、幅度未定**（順帶第一次量到 6×6 微調的 seed 雜訊 ≈ ±0.016，4×4 是 ±0.001）。
+  seed 1 的 **+0.0375** 不能當代表值。測試集的進步比訓練集（+0.025）還大 ⇒ 不是背題。
+  **best-of-32（seed 1）：0.7850 對 BC 0.8535 ⇒ −0.0685**，分水嶺在 N=2 與 N=4 之間。
+  ⇒ **依本專案的判定基準（best-of-32），微調是淨損失。**
+
+**⚠ 我自己踩到小樣本的坑**：300 題算出的 6×6 best-of-16 是 **+0.013**，完整 2,000 題是 **−0.059**，**方向相反**
+（該樣本數的取樣誤差約 ±0.046）。**小樣本只能看機制，不能看勝負。**
+
+**③ 順手量到、會改變優先序的事**：**BC 本身在 6×6 嚴重過擬合**——訓練集 deterministic 0.9005 vs 測試集 0.5200（落差 0.38；
+4×4 只有 0.042），BC 的 val 選擇準確率在 epoch 6 就到頂、之後只剩訓練 loss 在降。
+handover §2 關掉「加資料」的依據（落差 +0.009）量的是 **PPO** 模型——對 BC 這條線**從來沒被測過**。
+
+**踩到的坑**：probe 用 run id 命名產物，重評已發表的 checkpoint 會**覆蓋**原檔 ⇒ 包一層 `hi-collab/scratch/probe_to.py` 改輸出目錄。
+兩個 seed 的 deterministic 逐位相同（0.915588）——驗過是巧合（權重 36/36 不同、各有 106 題只有自己解對）。
 
 ### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
 

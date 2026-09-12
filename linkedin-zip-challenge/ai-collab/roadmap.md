@@ -147,9 +147,17 @@
      （+0.0362／+0.0365／+0.0315，deterministic），訓練成本還略低（465.3s vs 478.1s）。
      5×5 從此有模型（0.7496，先前只能借 6×6 模型的 0.2941）。詳見
      [reports/2026-09-12_rl-wrap-up.md](reports/2026-09-12_rl-wrap-up.md)。
-   - **★ 下一步是 BC → PPO 微調**（本人 2026-09-11 定案「就是要用 RL 做」）。
-     擋路的 value-coef 對照已量完：`0.5` vs `0` 差 −0.0083，在雜訊內 ⇒ **封鎖解除**。
+   - **★ BC → PPO 微調已完成（2026-09-12，Track A，分支 `feat/rl-ppo-finetune`）**：`--init-from` 已實作。
+     **結論：PPO 微調買到「單次嘗試更準」，代價是「多樣性下降」，依判定基準 best-of-32 是淨損失**
+     （4×4 −0.0129、3 seed 確證；6×6 −0.0685、單 seed）。deterministic 反而變好（4×4 +0.0070 確證、
+     6×6 3/3 為正但全距 0.032）⇒ **只給一次嘗試時微調有用，能花推論預算時 BC 仍然贏。**
+     ⚠ **PPO 預設學習率 3e-4 會把 BC 弄壞**（6×6 deterministic 0.5205 → 0.2415），微調一律用 `--learning-rate 3e-5`。
+     **下一步該做 ExIt／拒絕抽樣微調**——要在 best-of-32 上贏，方法必須**保住多樣性**。
+     完整數字見 [reports/2026-09-12_rl-bc-ppo-finetune.md](reports/2026-09-12_rl-bc-ppo-finetune.md)；
      方法排序與名詞解釋在 **[notes/01-rl-methods-explained.md](notes/01-rl-methods-explained.md)**。
+   - **★ 意外收穫：BC 本身在 6×6 嚴重過擬合**——deterministic 訓練集 **0.9005** vs 測試集 **0.5200**（4×4 只差 0.042），
+     val 選擇準確率在 epoch 6 就到頂。**BC 早停或加資料可能還有空間**（未驗證）。
+     ⚠ 這不是重開已關掉的「繼續加資料」——那條線量的是 PPO 模型，不是 BC。
    - **🐳 服務怎麼起**：[deployment-guide.md](deployment-guide.md)（`docker compose up -d --build`；
      `models/` 是唯讀掛載，沒有 checkpoint 時 RL solver 回 503、其他 solver 照常）。
    - 🤝 **接手第一站：[handover-rl-solver.md](handover-rl-solver.md)**——自足的交接文件（環境建置、已驗證事實、
