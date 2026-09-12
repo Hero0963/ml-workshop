@@ -6,6 +6,47 @@
 
 ## 2026-09-12
 
+### RL Track — 收尾：不再訓練，把「掃 epoch」變成一份現成配方交出去（branch `feat/rl-ppo-finetune`, worktree `zip-rl`）
+
+**本人定案：這條 track 先收尾，不要再訓練東西。** 所以這一輪**沒有跑任何訓練或批次評估**
+（`../ml-workshop/.agent-heavy-job` 全程 `free`，沒有動過），做的是三件事：修掉已過期的敘述、
+把下一步的作法與成本算清楚寫成配方交接、把進度推上 `main`。
+
+**基線**（開工先跑，之後拿它比較）：`uv run pytest` **280 passed, 8 xfailed in 23.96s**、`uv run ruff check .` 全綠。
+handover 原本記的 276 是同日較早的 commit——**通過數取決於分支帶了哪些 commit，不是固定值**。
+
+**★ 掃 epoch 的成本比之前估的便宜一半，而且不是靠猜。** 原本寫「每點約 17 分鐘（5 分訓練 ＋ 12 分評估）」。
+但 `bc_multi_456`（10 epochs）與 `bc_multi_456_e6`（6 epochs）是兩次**獨立執行**，
+`bc_progress.jsonl` 的**前六行逐位相同**（loss 0.16514／0.106681／0.090412／0.07982／0.070765／0.061844）
+⇒ **BC 的訓練軌跡對同一個 seed 是決定性的**，「epoch N 的模型」就是同一條軌跡上的第 N 個點
+⇒ **訓練一次 10 epochs、每個 epoch 存一個 checkpoint 就拿齊所有點**（約 9 分鐘，實測 44–55 秒／epoch），
+每點省掉那 5 分鐘重訓。評估的秒數也是從既有產物讀出來的（不是估的）：6×6 best-of-32 × 2,000 題
+**590.1s／570.1s**、4×4 × 1,931 題 139.9s／131.0s、多樣性 probe 173.0s。
+⚠ **越早的 epoch 越貴**：成本由解不開的題決定（每題燒滿 32 次），e6 每題 5.24 次、e10 是 7.76 次
+⇒ 更早的 epoch 單點可能 15–25 分鐘。完整配方（含點的排程、判讀規則、**必跑的對照**：
+重評 e6 要復現 0.9465，復現不了就是換了尺、整組數字作廢）寫進
+[`handover-rl-solver.md`](handover-rl-solver.md) §3。
+
+**刻意沒寫的程式。** 配方需要兩個小改動（BC 加 `--checkpoint-every-epoch`、probe 加選用的 `--checkpoint`），
+**沒有先寫進去**——沒跑過的旗標就是死程式碼，而它唯一的用途是那個還沒授權的 sweep。作法已寫死在 handover，補上去只要幾分鐘。
+
+**修掉三處會誤導接手者的過期敘述**：
+① roadmap 兩處還寫「服務中的仍是 `bc_multi_456`（10 epochs）」——當天晚一點就換成早停版了；
+② handover §1 寫「`start.py` 與 `deployment-guide.md` 仍寫舊 run id，合併前要讓 Track B 補」——`babc1cb` 已經補完，
+實際 grep 確認服務／啟動檢查／文件三處一致，只剩部署指南裡「503 長什麼樣」的示範訊息印舊路徑（那是刻意的）；
+③ 陷阱 #1 寫「pre-commit 的 ruff 釘在 v0.4.8，與專案的 0.14.1 打架」——`.pre-commit-config.yaml` 現在釘的就是 v0.14.1，
+坑已從根本修掉（規則本身保留：hook 改檔會中止 commit，重新 `git add` 再 commit，永遠不用 `--no-verify`）。
+
+**[`rl-traps-and-facts.md`](rl-traps-and-facts.md) 新增三條事實 ＋ 兩個陷阱**：事實是訓練軌跡的決定性、
+best-of-N 的成本由解不開的題決定、十個 epoch 的 val 準確率已免費躺在磁碟上（但它是 pass@1 訊號，
+與 best-of-32 會分歧）；陷阱是「probe 用 run id 命名產物會覆蓋已發表的檔」與
+「**從別的 worktree 繼承來的 `VIRTUAL_ENV`**」——後者這輪實際遇到：shell 的 `VIRTUAL_ENV` 指著 `zip-vlm` 的 venv，
+`uv` 每次都警告並忽略它（所以測試數字沒問題），但直接叫 `python` 就會跑進別條 track 的環境。
+
+**沒做、留給接手的人**（依優先序，都要先拿授權）：① 掃 epoch（約 1 小時 20 分，配方已備）
+② ExIt／拒絕抽樣微調（半天，唯一對準「保住多樣性」的方法）③ 6×6 的 seed 雜訊仍然沒量過
+——它可以搭在①的贏家 epoch 上一起做（+30 分鐘），一次清兩筆。
+
 ### Track B — app image 22.9 GB → 5.86 GB ＋ 兩份 compose 實跑驗收（branch `feat/infra-slim-image`, worktree `zip-infra`）
 
 細節與原始輸出在 [`deployment-guide.md`](deployment-guide.md) §3（身分）／§6（驗收）／§8（image 大小）。

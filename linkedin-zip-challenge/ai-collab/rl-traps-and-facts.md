@@ -164,6 +164,25 @@
     那次是所有 worker 一起閒置，這次是持續滿載）。
     並行兩個探針時實測系統 CPU **18%（24 核）**，遠低於 75% 上限。
 
+**2026-09-12 新增（Track A 收尾時查到的，都是從既有產物讀出來的，不是新跑的實驗）**
+
+29. **★★ BC 的訓練軌跡對同一個 seed 是決定性的 ⇒「epoch N 的模型」就是同一條軌跡上的第 N 個點。**
+    `bc_multi_456`（10 epochs）與 `bc_multi_456_e6`（6 epochs）是**兩次獨立執行**，
+    `logs/rl_a2/*/bc_progress.jsonl` 的**前六行逐位相同**（loss 0.16514／0.106681／0.090412／0.07982／
+    0.070765／0.061844，val_choice_accuracy 一路到 0.899857 也相同；只有 `seconds` 不同）。
+    **實務後果有兩個**：① 掃 epoch **不必每點重訓**——訓練一次、每個 epoch 存一個 checkpoint
+    就拿齊所有點（約 9 分鐘，實測 44–55 秒／epoch）；② epoch 之間是**配對比較**，差異裡不含訓練 seed 雜訊
+    （但也因此只能宣稱「這個 seed 上」的最佳點）。
+30. **★ best-of-N 評估的成本由「解不開的題」決定，所以模型越弱越貴。**
+    6×6 × 2,000 題 × `--max-attempts 32` 實測 **590.1s**（e10，每題 7.76 次）／**570.1s**（e6，每題 5.24 次）；
+    4×4 × 1,931 題是 139.9s／131.0s；多樣性 probe（2,000 題的熵 ＋ 300 題子集的 best-of-16）173.0s。
+    **估成本時要往「更早的 epoch 更貴」算**（每題燒滿 32 次時單點可能 15–25 分鐘），不要拿 e6 的秒數乘倍數。
+31. **BC 十個 epoch 的 val 選擇準確率已經在磁碟上，不用重跑**
+    （`logs/rl_a2/bc_multi_456/bc_progress.jsonl`）：e1 0.8698／e2 0.8856／e3 0.8884／e4 0.8798／e5 0.8984／
+    **e6 0.8999**（頂）／e7 0.8970／e8 0.8863／e9 0.8891／e10 0.8891。
+    ⚠ 它是 **pass@1 型訊號**，6 vs 10 那組已經證明它與 best-of-32 會分歧（e6 的 bo32 高 0.093、bo1 卻低 0.055）
+    ⇒ **只能用來排除明顯太弱的 epoch，不能用來選 best-of-N 的贏家。**
+
 ---
 
 
@@ -185,8 +204,10 @@
 
 ## 7. 陷阱清單（我踩過的）
 
-1. **pre-commit 的 `ruff` 是釘 v0.4.8，與專案 venv 的 0.14.1 格式化結果不同。**
-   commit 時 hook 會改檔並中止；**重新 `git add` 同一批檔案再 commit 一次**即可（不要用 `--no-verify`）。
+1. ~~**pre-commit 的 `ruff` 是釘 v0.4.8，與專案 venv 的 0.14.1 格式化結果不同。**~~
+   **★ 2026-09-12 確認已從根本修掉**：`.pre-commit-config.yaml` 現在釘的就是 **v0.14.1**（與 `pyproject.toml` 同版），
+   兩邊不會再打架。**留著這條是為了規則本身**：hook 改了檔就會中止 commit，
+   **重新 `git add` 同一批檔案再 commit 一次**即可（永遠不要用 `--no-verify`）。
 2. **`uv run` 要在子專案目錄下**；用 `python <script.py>` 直接跑會 `ModuleNotFoundError: No module named 'src'`，
    要嘛 `uv run python -m src.core.rl.<module>`，要嘛帶 `PYTHONPATH=.`。
 3. **出題器會回 `None`**（parity）。任何生成迴圈都要處理，不能假設一定拿得到題目。
@@ -304,6 +325,18 @@
       **「訓練 env 與評估 env 的觀測空間必須相同」**，它同時涵蓋兩條路，而我當時驗的三段涵蓋不了。
     - **防線**：`test_training_and_evaluation_envs_agree_on_the_observation_space`，
       加上把評估的 env 建構收斂成唯一的 `baselines.make_eval_env()`。
+
+**2026-09-12 新增**
+
+25. **★ probe 用 run id 命名產物，重評已發表的 checkpoint 會直接覆蓋原檔。**
+    `hi-collab/scratch/probe_cross_size.py` 寫的是 `logs/rl_probes/cross_size_<run id>_<size>_<split>.json`
+    ⇒ 重評 `bc_multi_456` 就會蓋掉當初發表那份。**包一層 `probe_to.py` 改輸出目錄**
+    （`logs/rl_probes/rescore_20260912/` 就是這樣來的），不要先覆蓋再後悔。
+26. **★ shell 繼承來的 `VIRTUAL_ENV` 會指向別的 worktree 的 venv。** 2026-09-12 在 `zip-rl` 實際遇到：
+    `VIRTUAL_ENV` 指著 `zip-vlm/linkedin-zip-challenge/.venv`，每個 `uv run` 都印
+    `warning: VIRTUAL_ENV=... does not match the project environment path .venv and will be ignored`。
+    **`uv run` 會忽略它、用對的 venv，所以測試數字沒問題；但直接叫 `python` 就會跑進別條 track 的環境。**
+    一律 `uv run`（陷阱 #2 的第二個理由）。
 
 ---
 
