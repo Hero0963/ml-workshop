@@ -25,7 +25,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from loguru import logger
 
 from src.app.schemas.vision import VisionSolveResponse, WallOut
-from src.core.solvers.registry import SOLVERS
+from src.core.solvers.registry import EXACT_SOLVERS, SOLVERS
 from src.core.utils import save_detailed_animation_as_gif, save_solution_as_image
 from src.core.vl_models.prompt_variants import build_prompt
 from src.core.vl_models.puzzle_parser import (
@@ -46,7 +46,8 @@ router = APIRouter()
 # can be nonsense, and it decides "no solution" quickly instead of exploring.
 # ⚠ The RL solver is in the list but is out of distribution here: it trained on boards
 # with 0 or 2-5 walls, and a real screenshot can carry ten or more. It will usually
-# answer "no solution found" rather than anything wrong, which is the honest failure.
+# answer "no solution found" rather than anything wrong, which is the honest failure --
+# and, like a heuristic giving up, it is reported as `solvable=None`, not as a misread.
 DEFAULT_SOLVER = "CP-SAT"
 
 SUPPORTED_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -206,6 +207,14 @@ def solve_from_image(
         WallOut(cell1=cell1, cell2=cell2) for cell1, cell2 in sorted(puzzle["walls"])
     ]
     warnings = list(result.warnings)
+    if solution_path:
+        solvable: bool | None = True
+    elif solver_name in EXACT_SOLVERS:
+        solvable = False
+    else:
+        # A solver that can give up proves nothing by giving up, so the reading stays
+        # unjudged instead of being called a misread -- here and in the request log.
+        solvable = None
     _record(
         image_bytes,
         suffix,
@@ -214,16 +223,23 @@ def solve_from_image(
         generation_seconds=result.generation_seconds,
         grid_size=list(puzzle["grid_size"]),
         wall_count=len(walls),
-        solvable=bool(solution_path),
+        solvable=solvable,
         parser_warnings=list(result.warnings),
     )
 
     if not solution_path:
-        warnings.append(
-            "The board as read has no solution, so at least one wall or waypoint was "
-            "misread -- every real Zip board is generated from a complete path."
-        )
-        logger.warning("Unsolvable reading from {}", image.filename)
+        if solvable is False:
+            warnings.append(
+                "The board as read has no solution, so at least one wall or waypoint was "
+                "misread -- every real Zip board is generated from a complete path."
+            )
+            logger.warning("Unsolvable reading from {}", image.filename)
+        else:
+            warnings.append(
+                f"{solver_name} is not exact and found no solution within its budget, "
+                "which says nothing about whether the board was read correctly. "
+                f"{DEFAULT_SOLVER} decides it for sure."
+            )
         return VisionSolveResponse(
             model_name=settings.ollama_model_name,
             prompt_variant=settings.vision_prompt_variant,
@@ -231,7 +247,7 @@ def solve_from_image(
             layout=layout,
             walls=walls,
             warnings=warnings,
-            solvable=False,
+            solvable=solvable,
             solver_name=solver_name,
         )
 

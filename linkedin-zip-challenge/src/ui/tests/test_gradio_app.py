@@ -157,6 +157,42 @@ def test_solve_from_image_ui_says_so_when_the_reading_is_unsolvable(
 
 
 @patch("src.ui.gradio_app.requests.post")
+def test_solve_from_image_ui_does_not_blame_the_reading_when_a_solver_gave_up(
+    mock_post, tmp_path
+):
+    """`solvable` is None when a solver that can give up did; that is not a misread."""
+    # Arrange
+    image_path = tmp_path / "board.png"
+    image_path.write_bytes(b"\x89PNG\r\n\x1a\n")
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "model_name": "m",
+        "prompt_variant": "finetune",
+        "solver_name": "Monte Carlo",
+        "grid_size": [6, 6],
+        "layout": [["01"]],
+        "walls": [],
+        "warnings": ["Monte Carlo is not exact and found no solution ..."],
+        "solvable": None,
+        "solution_path": None,
+        "solution_final_image_b64": None,
+        "solution_gif_b64": None,
+    }
+    mock_post.return_value = mock_response
+
+    # Act
+    summary, _, _, solution_html = solve_from_image_ui(
+        str(image_path), "Monte Carlo", False
+    )
+
+    # Assert
+    assert "**Solvable**: unknown" in summary
+    assert "misread" not in summary
+    assert solution_html == ""
+
+
+@patch("src.ui.gradio_app.requests.post")
 def test_solve_from_image_ui_shows_the_api_error_detail(mock_post, tmp_path):
     """A missing model must reach the user as a message, not an empty panel."""
     # Arrange
