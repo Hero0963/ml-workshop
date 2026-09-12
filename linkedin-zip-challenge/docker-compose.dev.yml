@@ -1,65 +1,40 @@
 # docker-compose.dev.yml
-# This docker-compose file is for DEVELOPMENT.
-# It uses volume mounts for hot-reloading both frontend and backend.
+# The DEVELOPMENT app: volume mounts for hot-reloading both frontend and backend.
 #
+#     python start.py --dev                                  # recommended
+#
+# or by hand:
+#
+#     docker compose -f docker-compose.ollama.yml up -d      # once per machine
 #     docker compose -f docker-compose.dev.yml up -d --build
 #
 # The app container starts uvicorn itself with --reload. It used to idle on
 # `tail -f /dev/null` and wait for `run_docker_dev.py` to exec a server into it,
 # which never returned and left the health check unreachable.
+#
+# Same identity rules as docker-compose.yml: start.py names this project
+# `zip-dev-<checkout dir>`, nothing hardcodes a container or image name, and Ollama is in
+# docker-compose.ollama.yml. The name below only matters without start.py: it keeps a
+# plain `docker compose` from putting dev and prod in one project, where their images
+# would share a tag and each build would replace the other.
+
+name: linkedin-zip-challenge-dev
 
 services:
-  ollama:
-    image: ollama/ollama:latest
-    # NOTE: deliberately NOT named `ollama_server` - that name is taken by another
-    # project on this machine (freelancer-ai-translator). Same reason the host port
-    # is configurable: several local stacks each ship their own Ollama.
-    container_name: zip_ollama_server
-    environment:
-      - OLLAMA_CONTEXT_LENGTH=8192
-    ports:
-      - "${OLLAMA_HOST_PORT:-11435}:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-      # Read-only so `ollama create` can import a locally merged checkpoint without
-      # copying ~9GB into the container layer. `models/` is git-ignored; the directory
-      # is created by the P4d merge step and is absent on a fresh clone, which Docker
-      # handles by creating an empty one.
-      - ./models:/models:ro
-    restart: on-failure
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
   zip-challenge-app:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile.dev  # <--- Points to the .dev Dockerfile
-    # Its own tag, so a dev build never overwrites the production image (see
-    # docker-compose.yml).
-    image: zip-challenge-app:dev
-    container_name: zip_challenge_dev_app
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "${APP_PORT:-7440}:${APP_PORT:-7440}"
     env_file:
       - ./.env
     environment:
-      # `.env` holds the host-side address, because that is how the app is usually run
-      # (`uv run python -m src.app.main`). Inside the compose network 127.0.0.1 is this
-      # container, not the ollama one, so it is overridden here -- `environment:` takes
-      # precedence over `env_file:`, which keeps both ways of running correct without
-      # asking anyone to remember to edit `.env` when they switch.
-      - OLLAMA_PROVIDER_URL=http://ollama:11434/v1
+      # See docker-compose.yml: the host-side address in `.env` is wrong inside a
+      # container, and Ollama is reached through the port it publishes on the host.
+      - OLLAMA_PROVIDER_URL=http://host.docker.internal:${OLLAMA_HOST_PORT:-11435}/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./src:/app/src
       # The RL solver's checkpoints, read-only. `models/` is 6.6GB and not in version
@@ -85,9 +60,9 @@ services:
     build:
       context: ./src/custom_components/puzzle_editor/frontend
       dockerfile: Dockerfile
-    container_name: svelte_frontend_dev
     ports:
-      - "5173:5173"
+      # vite always listens on 5173 inside; only the host side moves per checkout.
+      - "${SVELTE_PORT:-5173}:5173"
     environment:
       - VITE_API_URL=http://zip-challenge-app:${APP_PORT}
       - SVELTE_PORT=5173
@@ -101,9 +76,3 @@ services:
     stdin_open: true
     tty: true
     restart: on-failure
-
-volumes:
-  ollama_data:
-    # Pinned to the pre-existing volume so the ~15GB of models pulled in 2025-10
-    # (qwen2.5vl:7b, openbmb/minicpm-o2.6, bsahane/Qwen2.5-VL-7B-Instruct) survive.
-    name: linkedin-zip-challenge_ollama_data

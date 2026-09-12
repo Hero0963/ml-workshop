@@ -8,7 +8,7 @@
 
 ### Track B — app image 22.9 GB → 5.86 GB ＋ 兩份 compose 實跑驗收（branch `feat/infra-slim-image`, worktree `zip-infra`）
 
-細節與原始輸出在 [`deployment-guide.md`](deployment-guide.md) §5／§7。
+細節與原始輸出在 [`deployment-guide.md`](deployment-guide.md) §3（身分）／§6（驗收）／§8（image 大小）。
 
 **大在哪先量再改。** `docker history` 顯示舊基底 `pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel` 裡的
 conda（附 torch 2.3.0）7.59 GB、CUDA toolkit／cuDNN／CUDA 函式庫 4.79＋2.45＋2.01 GB——
@@ -27,14 +27,25 @@ wheel 自帶函式庫。驗法不是看 health 200（那回答不了這題），
 
 **順手修掉兩個「看起來有起來」的缺陷**（都在 Track B 擁有的檔案內）：
 ① 兩份 compose 建出**同名 image**（`linkedin-zip-challenge-zip-challenge-app`），建 dev 就蓋掉 prod
-⇒ 各加 `image: zip-challenge-app:prod`／`:dev`，並實測 `--no-build` 會用本機 image、不去 registry 拉；
+（第一版先各加 `image:` 擋住，同日被下面的根治取代——那個寫死的名字換個 worktree 照樣撞）；
 ② `start.py --dev` 叫你開 `7440/svelte-ui/`，但 dev 模式下那是 **404**（`./src` 蓋掉 image、host 沒有 `dist/`），
 vite 的網址又少了 `/svelte-ui/` ⇒ dev 模式改印 `5173/svelte-ui/`（實測 302 → 200）。
 
-**⚠ 一個會影響平行開發的事實**：compose 專案名＝目錄名，每個 worktree 都叫 `linkedin-zip-challenge`，
-加上固定的容器名與埠號 ⇒ **整台機器只有一組 stack，從哪個 worktree `up` 就被誰接管**。
-本次就把 `zip-rl` 起的 stack 換成了 `zip-infra` 的（目前在跑的是瘦身版正式 stack）。已寫進 deployment-guide §3；
-這可能也值得進 `AGENTS.md §10`（共用地板，沒動，留給本人決定）。
+**★ 根治 worktree 撞名：app 每個 checkout 一組、ollama 整台機器一個。** 瘦身時從 `zip-infra` 一跑 `up`，
+就把 `zip-rl` 起的 stack 安靜地換掉了。撞名的不只一處：compose 專案名（預設＝目錄名，每個 worktree 都叫
+`linkedin-zip-challenge`）、寫死的 `container_name`、從 main 複製來的 `.env` 埠號、image 標籤。
+第一個念頭是「整台一組、接管前先講一聲」——那是規定，不是根治。**真正的原因是兩種身分被綁在同一個專案裡**：
+app 服務的是「這個 checkout 的程式碼」，該每個 checkout 一份；ollama 佔的是 GPU，該整台一份。拆開之後：
+`docker-compose.ollama.yml` 自成專案 `zip-ollama`（名字寫死＝刻意的單例），`start.py` **只在它沒跑時才起、
+在跑就完全不碰**——`--dry-run` 證實從別的 checkout 對它 `up` 會 **Recreate**（`./models` 掛載路徑不同），
+那會把別人正在用的模型卸掉；app 專案由 `start.py` 依 checkout 目錄命名 `zip-app-<checkout>`／`zip-dev-<checkout>`，
+所有寫死的容器名與 image 名都拿掉；app 改走 `host.docker.internal:11435` 找 ollama（不同專案、不同網路）。
+**驗證**：在 scratchpad 做一個假的第二個 checkout（`APP_PORT=7441`），兩組同時服務——7441 的 RL 回 **503**
+（它沒有 `models/`，證明真的是另一份程式與資料）、7440 照常四種都解出；對方起來、關掉的前後，
+zip-infra 的 app 與 ollama **容器 ID 與啟動時間完全沒變**。prod↔dev 切換也由 `start.py` 自己停掉另一個。
+剩下唯一能撞的是 host 埠，而那會**大聲失敗**（`port is already allocated`），`start.py` 會提示改 `.env` 的 `APP_PORT`。
+⚠ 已知限制：`Index.svelte:4` 把 API 寫死成 `127.0.0.1:7440`，不在 7440 的 checkout，其 Svelte 編輯器會打到別人的 app
+——在 `src/`，Track B 不動，已回報。
 
 **沒做的**：換 CPU 版 torch（剩下 5.66 GB 的大宗是 12 個 `nvidia-*` wheel，但那要動 `pyproject.toml`／`uv.lock`，
 不屬於 Docker 層）；hot reload 實際觸發（要改 `src/` 才測得到，只驗到 reloader 起來、盯的是 `/app/src`）。

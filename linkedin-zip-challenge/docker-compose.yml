@@ -1,83 +1,50 @@
 # docker-compose.yml
-# The PRODUCTION stack: one command brings up everything the app needs.
+# The PRODUCTION app: FastAPI + Gradio + the built Svelte editor + the solvers.
 #
+#     python start.py                                        # recommended
+#
+# or by hand:
+#
+#     docker compose -f docker-compose.ollama.yml up -d      # once per machine
 #     docker compose up -d --build
 #
 # The image is self-contained (multi-stage build: Svelte frontend, then the Python app),
 # so there is no source mount and an edit on the host changes nothing until a rebuild --
 # that immutability is the point. For hot reload use `docker-compose.dev.yml`.
 #
-# ⚠ The two files declare the same container names and share `ollama_data`, so they are
-# alternatives, not layers: bring one down before starting the other.
-#
-# What runs here and why:
-#   ollama            - serves the fine-tuned vision-language model that /api/vision/solve
-#                       reads screenshots with. Needs the GPU.
-#   zip-challenge-app - FastAPI + Gradio + the built Svelte editor, and the RL solver.
+# One app stack per checkout. start.py names the compose project after the checkout
+# (`zip-app-<checkout dir>`), so two worktrees never share containers, a network or an
+# image -- which is also why no container name or image name is hardcoded here. What
+# they can still share is a host port: give each worktree its own APP_PORT in `.env`.
+# Ollama is not in this file because it is one per machine: docker-compose.ollama.yml.
 
 services:
-  ollama:
-    image: ollama/ollama:latest
-    # NOTE: deliberately NOT named `ollama_server` - that name is taken by another
-    # project on this machine. Same reason the host port is configurable: several local
-    # stacks each ship their own Ollama.
-    container_name: zip_ollama_server
-    environment:
-      - OLLAMA_CONTEXT_LENGTH=8192
-    ports:
-      - "${OLLAMA_HOST_PORT:-11435}:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-      # Read-only so `ollama create` can import a locally merged checkpoint without
-      # copying ~9GB into the container layer.
-      - ./models:/models:ro
-    restart: on-failure
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
   zip-challenge-app:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
-    # Named per compose file. Without it both files tag their build as
-    # `linkedin-zip-challenge-zip-challenge-app`, so building one silently replaced the
-    # other and `start.py --no-build` could start the wrong image.
-    image: zip-challenge-app:prod
-    container_name: zip_challenge_prod_app
     ports:
       - "${APP_PORT:-7440}:${APP_PORT:-7440}"
     env_file:
       - ./.env
     environment:
       # `.env` holds the host-side address, because that is how the app is usually run
-      # (`uv run python -m src.app.main`). Inside the compose network 127.0.0.1 is this
-      # container, not the ollama one, so it is overridden here -- `environment:` takes
-      # precedence over `env_file:`, which keeps both ways of running correct without
-      # asking anyone to remember to edit `.env` when they switch.
-      - OLLAMA_PROVIDER_URL=http://ollama:11434/v1
+      # (`uv run python -m src.app.main`). Inside a container 127.0.0.1 is the container
+      # itself, so it is overridden here -- `environment:` takes precedence over
+      # `env_file:`. Ollama is a separate compose project, not on this project's network,
+      # so the app reaches it the same way a host process does: the port Ollama publishes.
+      - OLLAMA_PROVIDER_URL=http://host.docker.internal:${OLLAMA_HOST_PORT:-11435}/v1
+    extra_hosts:
+      # Docker Desktop resolves host.docker.internal on its own; a Linux engine needs this.
+      - "host.docker.internal:host-gateway"
     volumes:
       # The RL solver's checkpoints. `models/` is 6.6GB and not in version control, so it
       # is mounted rather than baked: the image stays small and a machine without trained
       # weights still starts -- /api/solver/solve answers 503 for the RL solver and every
       # other solver keeps working.
       - ./models:/app/models:ro
-    depends_on:
-      # Started, not healthy: the vision endpoint is the only thing that needs Ollama, and
-      # the model runtime takes far longer to come up than the app. A 503 from one
-      # endpoint beats the whole stack waiting.
-      ollama:
-        condition: service_started
+    # No depends_on: Ollama lives in another project, and only /api/vision needs it. A 503
+    # from that one endpoint beats the app waiting for a model runtime to load.
     healthcheck:
       test:
         - CMD-SHELL
@@ -92,10 +59,3 @@ services:
     stdin_open: true
     tty: true
     restart: on-failure
-
-volumes:
-  ollama_data:
-    # Pinned to the pre-existing volume so the ~15GB of models pulled in 2025-10
-    # (qwen2.5vl:7b, openbmb/minicpm-o2.6, bsahane/Qwen2.5-VL-7B-Instruct) and the
-    # fine-tuned `zip-qwen35-4b-p4c` tag survive.
-    name: linkedin-zip-challenge_ollama_data

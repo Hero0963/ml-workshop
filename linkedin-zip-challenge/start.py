@@ -3,18 +3,28 @@
 
     python start.py            # production stack (code baked into the image)
     python start.py --dev      # development stack (hot reload + Svelte dev server)
-    python start.py --down     # stop everything
-    python start.py --status   # what is running, and what it can and cannot do
+    python start.py --down     # stop this checkout's stack (add --dev for the dev one)
+    python start.py --status   # what is running on this machine, and what it can do
 
-It does the four things a newcomer would otherwise have to know about: create `.env` from
-the template, bring the compose stack up, wait until the API actually answers, and say
-plainly which optional pieces are missing and what that costs. Nothing here is clever --
-the point is that `docker compose up` alone does not tell you whether the service works,
-and this does.
+It does the things a newcomer would otherwise have to know about: create `.env` from the
+template, make sure the machine's Ollama is running, bring this checkout's app up, wait
+until the API actually answers, and say plainly which optional pieces are missing and
+what that costs. Nothing here is clever -- the point is that `docker compose up` alone
+does not tell you whether the service works, and this does.
+
+Two kinds of service, two kinds of identity:
+
+* Ollama holds the GPU, so there is one per machine (`docker-compose.ollama.yml`, a fixed
+  project name). It is started when absent and otherwise left alone.
+* The app serves the code of the checkout it was built from, so there is one per
+  checkout: its compose project is named after the checkout directory. It used to take
+  the default -- the name of this directory, which is `linkedin-zip-challenge` in every
+  worktree -- so `up` in one worktree silently replaced the stack another was running.
 """
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +38,10 @@ ENV_FILE = PROJECT_ROOT / ".env"
 ENV_TEMPLATE = PROJECT_ROOT / ".env.example"
 PROD_COMPOSE = "docker-compose.yml"
 DEV_COMPOSE = "docker-compose.dev.yml"
+OLLAMA_COMPOSE = "docker-compose.ollama.yml"
+# Pinned in docker-compose.ollama.yml. The fixed name is what keeps it one per machine.
+OLLAMA_CONTAINER = "zip_ollama_server"
+APP_SERVICE = "zip-challenge-app"
 
 DEFAULT_APP_PORT = "7440"
 DEFAULT_OLLAMA_PORT = "11435"
@@ -51,6 +65,17 @@ RL_CHECKPOINT = (
 
 def say(message: str) -> None:
     print(message, flush=True)
+
+
+def stack_name(dev: bool) -> str:
+    """This checkout's compose project: `zip-app-<checkout>` or `zip-dev-<checkout>`.
+
+    The checkout is the directory above this one -- `ml-workshop`, or a worktree such as
+    `zip-infra` -- which is unique on the machine, unlike this directory's own name.
+    Compose accepts only lowercase letters, digits, `-` and `_`.
+    """
+    checkout = re.sub(r"[^a-z0-9_-]+", "-", PROJECT_ROOT.parent.name.lower()).strip("-")
+    return f"zip-{'dev' if dev else 'app'}-{checkout or 'default'}"
 
 
 def read_env() -> dict[str, str]:
@@ -94,13 +119,42 @@ def ensure_env_file() -> None:
     )
 
 
-def compose(args: list[str], compose_file: str, check: bool = True) -> int:
-    command = ["docker", "compose", "-f", compose_file, *args]
+def compose(
+    args: list[str], compose_file: str, project: str | None = None, check: bool = True
+) -> int:
+    command = ["docker", "compose", "-f", compose_file]
+    if project:
+        command += ["-p", project]
+    command += args
     say(f"$ {' '.join(command)}")
     result = subprocess.run(command, cwd=PROJECT_ROOT)
     if check and result.returncode != 0:
         sys.exit(f"Command failed with exit code {result.returncode}.")
     return result.returncode
+
+
+def ollama_running() -> bool:
+    probe = subprocess.run(
+        ["docker", "inspect", "--format", "{{.State.Running}}", OLLAMA_CONTAINER],
+        capture_output=True,
+        text=True,
+    )
+    return probe.stdout.strip() == "true"
+
+
+def ensure_ollama() -> None:
+    """Starts the machine's Ollama when it is not running; never touches a running one.
+
+    `up` on a running one is not a no-op: its `./models` mount is a path inside whichever
+    checkout started it, so from any other checkout compose sees a changed service and
+    recreates it -- unloading the model under whoever is using it.
+    """
+    if ollama_running():
+        say(
+            f"Ollama ({OLLAMA_CONTAINER}) is already running; it is shared, left as is."
+        )
+        return
+    compose(["up", "-d"], OLLAMA_COMPOSE)
 
 
 def wait_for_health(port: str) -> bool:
@@ -117,7 +171,6 @@ def wait_for_health(port: str) -> bool:
             print(".", end="", flush=True)
         time.sleep(HEALTH_POLL_SECONDS)
     say("\nThe API did not become healthy in time.")
-    say("Look at the logs:  docker compose logs -f zip-challenge-app")
     return False
 
 
@@ -137,7 +190,7 @@ def report_ollama(port: str) -> None:
             time.sleep(HEALTH_POLL_SECONDS)
     say(
         "Ollama did not answer. `Solve from Screenshot` will be unavailable; everything "
-        "else works. Logs:  docker compose logs -f ollama"
+        f"else works. Logs:  docker logs -f {OLLAMA_CONTAINER}"
     )
 
 
@@ -173,7 +226,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dev", action="store_true", help="Hot-reloading dev stack.")
     parser.add_argument(
-        "--down", action="store_true", help="Stop and remove containers."
+        "--down",
+        action="store_true",
+        help="Stop and remove this checkout's containers.",
     )
     parser.add_argument(
         "--status", action="store_true", help="Report without starting."
@@ -183,29 +238,51 @@ def main() -> None:
 
     ensure_docker()
     compose_file = DEV_COMPOSE if args.dev else PROD_COMPOSE
-    env = read_env()
+    project = stack_name(args.dev)
 
     if args.down:
-        compose(["down", "--remove-orphans"], compose_file)
-        say("Stopped.")
+        compose(["down", "--remove-orphans"], compose_file, project)
+        say(
+            f"Stopped {project}. Ollama is shared by every checkout and was left "
+            f"running; stop it with:  docker compose -f {OLLAMA_COMPOSE} down"
+        )
         return
 
     if args.status:
-        compose(["ps"], compose_file, check=False)
+        subprocess.run(["docker", "compose", "ls"], cwd=PROJECT_ROOT)
+        say(f"This checkout's stacks: {stack_name(False)}, {stack_name(True)}.")
+        say(f"Ollama ({OLLAMA_CONTAINER}) running: {ollama_running()}.")
         report_rl_weights()
         return
 
     ensure_env_file()
     env = read_env()
+    ensure_ollama()
+
+    # Prod and dev of one checkout publish the same host port, so they are alternatives:
+    # starting one stops the other.
+    other_dev = not args.dev
+    compose(
+        ["down", "--remove-orphans"],
+        DEV_COMPOSE if other_dev else PROD_COMPOSE,
+        stack_name(other_dev),
+        check=False,
+    )
 
     say("Building and starting. The first build downloads a few GB and takes a while.")
     up = ["up", "-d"] if args.no_build else ["up", "-d", "--build"]
-    compose(up, compose_file)
+    if compose(up, compose_file, project, check=False) != 0:
+        sys.exit(
+            "`up` failed. If a port is already allocated, another checkout's stack (or a "
+            "`uv run` server) holds it: `python start.py --status` shows what is running. "
+            "Give this checkout its own APP_PORT (and SVELTE_PORT for --dev) in .env."
+        )
 
     healthy = wait_for_health(env.get("APP_PORT", DEFAULT_APP_PORT))
     report_ollama(env.get("OLLAMA_HOST_PORT", DEFAULT_OLLAMA_PORT))
     report_rl_weights()
     if not healthy:
+        say(f"Look at the logs:  docker compose -p {project} logs -f {APP_SERVICE}")
         sys.exit(1)
     print_urls(env, args.dev)
 

@@ -23,7 +23,7 @@
 | Gradio 主控台（`/ui`，4 分頁） | ✅ 完成：出題／naive 解題／互動解題／Echo |
 | Svelte 互動編輯器（`/svelte-ui`，Canvas WYSIWYG） | ✅ 完成，已整合進 FastAPI 靜態掛載 |
 | 程序化出題（隨機回溯 Hamiltonian path ＋ 多核） | ✅ 完成 |
-| Docker 雙環境（dev hot-reload／prod multi-stage） | ✅ 完成。**2026-09-12 app image 22.9 GB → 5.86 GB**（基底換 `python:3.11-slim-trixie`，系統函式庫零補、容器內 276 passed），`start.py` 與 `start.py --dev` 兩條都實跑驗收；見 [deployment-guide.md](deployment-guide.md) |
+| Docker 雙環境（dev hot-reload／prod multi-stage） | ✅ 完成。**2026-09-12 app image 22.9 GB → 5.86 GB**（基底換 `python:3.11-slim-trixie`，系統函式庫零補、容器內 276 passed），`start.py` 與 `start.py --dev` 兩條都實跑驗收；**同日根治 worktree 撞名**：app 每個 checkout 一組（`zip-app-<checkout>`）、ollama 整台機器一個（`zip-ollama`），兩個 checkout 可同時服務；見 [deployment-guide.md](deployment-guide.md) §3 |
 | **API 只掛了 3/9 種 solver** | ⚠ 已知落差（`src/app/routers/solver.py` 的 `SOLVERS` 只有 DFS／A\*(heapq)／CP-SAT）；**Gradio 與 Svelte 兩邊的下拉選單也同樣只有 3 種**（2026-08-08 實測確認） |
 | Swagger `/docs` 的 Echo 端點重複兩份 | 🐞 小 bug：`main.py` 掛 router 時給 `tags=["Echo"]`，而 `echo.py` 的 router 自帶 `tags=["echo"]`，FastAPI 合併後產生兩個群組 |
 | Svelte UI 的 Instructions 顯示原始 Markdown | 🐞 小 bug：`**middle**`／`**border**` 直接印出星號，該處沒有走 Markdown 渲染 |

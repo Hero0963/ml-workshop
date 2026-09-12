@@ -1,0 +1,55 @@
+# docker-compose.ollama.yml
+# The ONE Ollama on this machine, shared by every checkout and worktree.
+#
+#     docker compose -f docker-compose.ollama.yml up -d     # start.py does this for you
+#
+# It is its own compose project on purpose. It used to be a service inside the app's
+# compose files, whose project name defaults to the directory name -- and in every
+# worktree that directory is called `linkedin-zip-challenge`. So `up` in one worktree
+# silently recreated the stack another worktree was running. The app is per checkout (it
+# serves that checkout's code); the GPU is per machine. Each now gets the identity that
+# matches: this file pins its name, the app files take theirs from the checkout.
+#
+# Serves the fine-tuned vision-language model that /api/vision/solve reads screenshots
+# with. The app reaches it through the host port below, not a shared network.
+
+name: zip-ollama
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    # NOTE: deliberately NOT named `ollama_server` - that name is taken by another
+    # project on this machine. The fixed name is also what keeps this a singleton: a
+    # second copy fails loudly instead of quietly running beside the first.
+    container_name: zip_ollama_server
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=8192
+    ports:
+      - "${OLLAMA_HOST_PORT:-11435}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      # Read-only so `ollama create` can import a locally merged checkpoint without
+      # copying ~9GB into the container layer. This is the `models/` of whichever
+      # checkout started the container; nothing else reads it.
+      - ./models:/models:ro
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:
+    # Pinned to the pre-existing volume so the ~15GB of models pulled in 2025-10
+    # (qwen2.5vl:7b, openbmb/minicpm-o2.6, bsahane/Qwen2.5-VL-7B-Instruct) and the
+    # fine-tuned `zip-qwen35-4b-p4c` tag survive.
+    name: linkedin-zip-challenge_ollama_data
