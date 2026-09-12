@@ -45,10 +45,28 @@
 | 4×4 | 0.9410 | **0.9953**（1.41 次／題）| 0.90 | **✅ 有餘裕** |
 | 6×6 | 0.5430 | **0.9465**（5.24 次／題）| 0.85 | **✅ 有餘裕（+0.096）** |
 
-**⚠ 服務中的仍然是 `bc_multi_456`（10 epochs）**，它的數字是 4×4 det 0.9404／bo32 0.9917、
-6×6 det 0.5205／bo32 **0.8535（剛好踩線）**。**要不要換成早停版，由本人決定**——
-三個尺寸的 deterministic 都沒退（4×4 +0.0005、5×5 +0.0205、6×6 +0.0225），推論還更便宜（6×6 每題 7.76 → 5.24 次）。
-`solver_service.py` 不屬於 Track A 的檔案所有權，所以沒有動。
+**★ 2026-09-12 已把服務模型換成它**（本人當次授權；`solver_service.py:48-62` 的 `RUN_ID_BY_SIZE` 三個尺寸都指向
+`bc_multi_456_e6`）。實跑驗證：一題 6×6 第一次嘗試就解開，log 印 `RL solver (bc_multi_456_e6) solved a 6x6`。
+舊的 `bc_multi_456`（10 epochs）留在原地沒有刪，數字是 4×4 bo32 0.9917、6×6 bo32 **0.8535（踩線）**。
+⚠ **只有一種情況舊的比較好**：呼叫端把 `attempts` 設成 1（best-of-1 6×6 0.4810 vs 0.4265）。API 預設是 32。
+
+⚠ **跨了檔案所有權**：計畫書把 `solver_service.py` 排除在 Track A 之外，這次是本人當次指示才動的。
+**還有兩個檔案寫著舊 run id，它們屬於 Track B，沒有動**：`start.py:42-49`（`--status` 的權重檢查路徑）
+與 `deployment-guide.md:60-69,132-134`。合併前要記得讓 B 補，否則 `start.py --status` 會對著舊路徑報告。
+
+### 服務用的權重怎麼來（`models/` 不進版控，fresh clone 沒有它）
+
+**一行指令，約 5 分鐘**（`goal3_multi` ＋ 6 epochs 就是現在服務中的那個模型）：
+
+```bash
+cd linkedin-zip-challenge
+uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi \
+    --run-id bc_multi_456_e6 --epochs 6 --eval-split test --eval-episodes 1
+```
+
+產出 `models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip`（**14 MB**）。
+沒有它，`/api/solver/solve` 的 RL solver 回 **503**，其他 solver 照常（`solver_service.py:92-96`）。
+⚠ `models/` 整個目錄目前 **9.7 GB**（全是歷次訓練的 checkpoint，刻意從不刪除），但**服務只讀其中這 14 MB**。
 
 ⚠ **早停版是單一 seed**（epoch 的效果本身是同 seed 配對比較、不含訓練雜訊，但「別的 seed 幅度多少」沒量），
 而 best-of-N 的**評估雜訊約 ±0.01**——不過 6×6 的 +0.093 遠大於它。**沒有掃 epoch，最佳點可能比 6 更早。**

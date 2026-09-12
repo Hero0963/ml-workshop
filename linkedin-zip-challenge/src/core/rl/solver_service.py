@@ -41,21 +41,28 @@ FINAL_CHECKPOINT_NAME = "model_final"
 
 # Which checkpoint answers for which board. One model for all three, because the
 # multi-size arm won on every board against a size-specific control trained on the same
-# data (2026-09-12: 4x4 0.9404 vs 0.9042, 5x5 0.7496 vs 0.7131, 6x6 0.5205 vs 0.4890,
-# deterministic) and cost slightly less to train than the three controls together. It is
-# also the only policy that can answer a 5x5 at all -- the older packs held sizes 4 and 6
-# only. The per-size shape is kept because nothing guarantees the next model is universal.
+# data and cost slightly less to train than the three controls together. It is also the
+# only policy that can answer a 5x5 at all -- the older packs held sizes 4 and 6 only.
+# The per-size shape is kept because nothing guarantees the next model is universal.
+#
+# `_e6` is the same recipe stopped at 6 epochs instead of 10 (2026-09-12). Fewer epochs
+# leave the policy less peaked, which costs single-attempt accuracy and buys diversity --
+# and this endpoint spends `DEFAULT_ATTEMPTS` rollouts, so diversity is what it wants:
+# 6x6 best-of-32 0.8535 -> 0.9465 and 7.76 -> 5.24 attempts per puzzle, 4x4 0.9917 ->
+# 0.9953. Deterministic does not regress either (4x4 0.9410, 5x5 0.7701, 6x6 0.5430).
+# ⚠ The trade is real at the other end: best-of-1 drops (6x6 0.4810 -> 0.4265), so a
+# caller that passes `attempts=1` is better served by the 10-epoch `bc_multi_456`.
 RUN_ID_BY_SIZE: dict[int, str] = {
-    4: "bc_multi_456",
-    5: "bc_multi_456",
-    6: "bc_multi_456",
+    4: "bc_multi_456_e6",
+    5: "bc_multi_456_e6",
+    6: "bc_multi_456_e6",
 }
 
 # The first waypoint is where the pen starts, by the rules of the puzzle.
 FIRST_WAYPOINT_NUMBER = 1
 
-# Best-of-N budget. 32 is the number the 6x6 result is quoted at (0.8500 on held-out
-# test, 8.05 attempts per puzzle, about 0.4s); 4x4 clears its bar at 2 and simply stops
+# Best-of-N budget. 32 is the number the 6x6 result is quoted at (0.9465 on held-out
+# test, 5.24 attempts per puzzle); 4x4 clears its bar at 2 (0.9529) and simply stops
 # early. Attempts halt at the first solve, so this is a ceiling, not a cost.
 DEFAULT_ATTEMPTS = 32
 

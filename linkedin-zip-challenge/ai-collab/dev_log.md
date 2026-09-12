@@ -97,6 +97,12 @@ handover §2 關掉「加資料」的依據（落差 +0.009）量的是 **PPO** 
 ⚠ 單一 seed、**沒有掃 epoch**（最佳點可能更早）、選 epoch 6 的依據是 val 選擇準確率（pass@1 型訊號，本實驗正好說明它與 best-of-N 會分歧）。
 **服務中的仍是 10 epochs 版，要不要換由本人決定**（`solver_service.py` 不屬於本 track）。
 
+**⑤ 收尾：服務模型換成早停版**（本人當次授權）。`solver_service.py` 的 `RUN_ID_BY_SIZE` 三個尺寸改指
+`bc_multi_456_e6`，並更新 `DEFAULT_ATTEMPTS` 註解裡過期的數字（0.8500／8.05 次 → 0.9465／5.24 次）。
+測試 280 passed 全綠，**且實跑驗證**：一題 6×6 第一次嘗試就解開，log 印 `RL solver (bc_multi_456_e6) solved a 6x6`。
+⚠ **這跨了檔案所有權**（計畫書把 `solver_service.py` 排除在 Track A 外）。**`start.py:42-49` 與 `deployment-guide.md`
+仍寫舊 run id，那兩個檔是 Track B 的，刻意沒動**——合併前要讓 B 補上，否則 `start.py --status` 會對著舊路徑報告。
+
 **踩到的坑**：probe 用 run id 命名產物，重評已發表的 checkpoint 會**覆蓋**原檔 ⇒ 包一層 `hi-collab/scratch/probe_to.py` 改輸出目錄。
 兩個 seed 的 deterministic 逐位相同（0.915588）——驗過是巧合（權重 36/36 不同、各有 106 題只有自己解對）。
 
