@@ -44,8 +44,16 @@ app 服務的是「這個 checkout 的程式碼」，該每個 checkout 一份�
 （它沒有 `models/`，證明真的是另一份程式與資料）、7440 照常四種都解出；對方起來、關掉的前後，
 zip-infra 的 app 與 ollama **容器 ID 與啟動時間完全沒變**。prod↔dev 切換也由 `start.py` 自己停掉另一個。
 剩下唯一能撞的是 host 埠，而那會**大聲失敗**（`port is already allocated`），`start.py` 會提示改 `.env` 的 `APP_PORT`。
-⚠ 已知限制：`Index.svelte:4` 把 API 寫死成 `127.0.0.1:7440`，不在 7440 的 checkout，其 Svelte 編輯器會打到別人的 app
-——在 `src/`，Track B 不動，已回報。
+**最後一塊拼圖（本人授權後補做）**：`Index.svelte:4` 把 API 寫死成 `127.0.0.1:7440`，不在 7440 的 checkout，
+其 Svelte 編輯器會打到別人的 app。改成 `import.meta.env.VITE_API_URL ?? ""`——**建置版走同源相對路徑**
+（app 在哪個埠就打哪個埠），dev 由 compose 的 `VITE_API_URL` 提供位址（原本填的是容器主機名
+`http://zip-challenge-app:7440`，瀏覽器根本解析不到，所以那個變數從來沒生效過）。
+⚠ **中途寫錯一次要記下來**：本來想在 `vite.config.ts` 用 `define` 給 dev 一個預設位址，
+實測**兩邊都沒生效**——`define` 在 dev 是掛到 globalThis、不替換 `import.meta.env`，而 build 分支我又給了空物件。
+已移除，改成「dev 一定要有 `VITE_API_URL`（compose 會給）」並寫進文件。
+驗證：正式版 image 的 `dist/` 裡搜不到 `127.0.0.1:7440`、`/svelte-ui/` 200、四種 solver 照常；
+dev 的 svelte 容器裡 `VITE_API_URL=http://127.0.0.1:7440`。
+⚠ 仍未驗：在瀏覽器裡實際按下解題按鈕——Vite 在 dev 是執行期注入 `import.meta.env`，不開瀏覽器量不到最終值。
 
 **沒做的**：換 CPU 版 torch（剩下 5.66 GB 的大宗是 12 個 `nvidia-*` wheel，但那要動 `pyproject.toml`／`uv.lock`，
 不屬於 Docker 層）；hot reload 實際觸發（要改 `src/` 才測得到，只驗到 reloader 起來、盯的是 `/app/src`）。

@@ -6,6 +6,13 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 export default defineConfig({
   base: '/svelte-ui/',
   plugins: [svelte()],
+
+  /**
+   * API 的位址不寫在這裡，也不寫死在 Index.svelte：
+   * 建置版走同源相對路徑（app 自己在 /svelte-ui/ 上服務它），dev server 則靠環境變數
+   * `VITE_API_URL`（compose 會傳進來），因為頁面來自 :5173 而 API 在 app 的埠上。
+   * 不透過 Docker 直接 `npm run dev` 的話，要自己設 `VITE_API_URL`。
+   */
   server: {
     host: '0.0.0.0', // 依然保持 '0.0.0.0'
 

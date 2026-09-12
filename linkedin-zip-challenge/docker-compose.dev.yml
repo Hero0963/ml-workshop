@@ -64,7 +64,11 @@ services:
       # vite always listens on 5173 inside; only the host side moves per checkout.
       - "${SVELTE_PORT:-5173}:5173"
     environment:
-      - VITE_API_URL=http://zip-challenge-app:${APP_PORT}
+      # Read by the browser, not by this container: the editor page is served from :5173
+      # and calls the app directly (CORS is open). So it must be an address the host can
+      # reach -- `zip-challenge-app:7440` only resolves inside the compose network, which
+      # is why nothing used this variable until 2026-09-12.
+      - VITE_API_URL=http://127.0.0.1:${APP_PORT:-7440}
       - SVELTE_PORT=5173
     env_file:
       - ./.env

@@ -1,7 +1,12 @@
 <script>
   import { onMount, tick } from "svelte";
 
-  const API_BASE_URL = "http://127.0.0.1:7440";
+  // Empty means "same origin", which is what the built editor wants: it is served by the
+  // app itself at /svelte-ui/, on whatever port that app listens on. A hardcoded
+  // 127.0.0.1:7440 sent every checkout's editor to whichever app owns 7440. The vite dev
+  // server is the exception -- the page comes from :5173, so compose passes the app's
+  // address in VITE_API_URL.
+  const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
   // --- State Variables ---
   let rows = 6;

@@ -92,9 +92,10 @@ ollama 佔的是 **GPU**，應該整台機器一份。所以拆開，各自拿�
 - **剩下唯一會撞的是 host 埠，而它會大聲失敗**（`port is already allocated`），不會安靜接管。
   兩個 worktree 要同時起 app，就在其中一個的 `.env` 改 `APP_PORT`（開發版再改 `SVELTE_PORT`）。
   `python start.py --status` 會列出整台機器上在跑的 compose 專案、各自從哪個目錄起的。
-- ⚠ **已知限制（未修，在 `src/`）**：Svelte 編輯器把 API 寫死成 `127.0.0.1:7440`（`Index.svelte` 的 `API_BASE_URL`）。
-  **不在 7440 的 checkout，它的 Svelte 編輯器會打到 7440 那一個 app**（也就是別的 checkout 的程式）。
-  Gradio 與 API 本身沒有這個問題——它們讀的是 `.env` 的 `APP_PORT`。
+- **Svelte 編輯器原本寫死 `127.0.0.1:7440`，2026-09-12 一併修掉**：不在 7440 的 checkout，它的編輯器會打到
+  7440 那一個 app（別的 checkout 的程式）。現在建置版走**同源相對路徑**（`API_BASE_URL` 是空字串），
+  所以 app 在哪個埠它就打哪個埠；dev 因為頁面來自 vite 的 5173，由 compose 的 `VITE_API_URL` 提供位址。
+  Gradio 與 API 本身從來沒有這個問題——它們讀的是 `.env` 的 `APP_PORT`。
 - **不用 `start.py` 的時候**：專案名退回預設，正式版是目錄名 `linkedin-zip-challenge`、開發版是檔案裡寫的
   `linkedin-zip-challenge-dev`（兩者分開，image 才不會互相覆蓋）。單一 checkout 沒問題；**多個 worktree 請用 `start.py`**
   （或自己給 `docker compose -p <名字>`）。
@@ -138,9 +139,13 @@ docker compose -p linkedin-zip-challenge down --remove-orphans
 | 啟動 | `python start.py` | `python start.py --dev` |
 | 專案／image | `zip-app-<checkout>`／`zip-app-<checkout>-zip-challenge-app` | `zip-dev-<checkout>`／`zip-dev-<checkout>-zip-challenge-app`（和正式版共用 5.858 GB 的層，並存不多佔空間）|
 
-dev 的編輯器頁面在 5173，但它打 API 的位址**寫死**在 `Index.svelte` 的 `API_BASE_URL = "http://127.0.0.1:7440"`，
-也就是瀏覽器直接跨來源打 app；後端 CORS 是 `allow_origins=["*"]`，從 5173 送 preflight 實測 200。
-所以 compose 裡的 `VITE_API_URL` **其實沒有被讀**。⚠ 未驗：在瀏覽器裡實際按下解題按鈕。
+dev 的編輯器頁面在 5173，瀏覽器直接跨來源打 app（後端 CORS 是 `allow_origins=["*"]`，從 5173 送 preflight 實測 200），
+位址由 compose 的 `VITE_API_URL=http://127.0.0.1:${APP_PORT}` 提供——**建置版不吃這個變數**，走同源相對路徑。
+不透過 Docker 直接 `npm run dev` 的話要自己設 `VITE_API_URL`，否則編輯器會把 API 打到 vite 自己的埠。
+
+已驗到的是：正式版 image 的 `dist/` 裡搜不到 `127.0.0.1:7440`、`/svelte-ui/` 200；dev 的 svelte 容器裡
+`VITE_API_URL=http://127.0.0.1:7440`（`docker exec` 實測）。⚠ **未驗**：在瀏覽器裡實際按下解題按鈕。
+Vite 在 dev 是**執行期**注入 `import.meta.env`，不開瀏覽器量不到最終值——這一段要靠人工點一次才算數。
 
 ---
 
