@@ -4,6 +4,8 @@
 Run:
     uv run python -m src.core.rl.train_maskable_ppo --goal goal1_4x4
     uv run python -m src.core.rl.train_maskable_ppo --goal goal2_6x6 --resume
+    uv run python -m src.core.rl.train_maskable_ppo --goal goal3_ctrl_4x4 \
+        --init-from bc_multi_456 --run-id ppo_ft_bc456_4x4
 
 Board size, wall policy, hyperparameters and the done condition all live in
 `src.core.rl.train_config`; this module only executes a goal. Command line flags cover the
@@ -507,6 +509,40 @@ def build_model(goal: Goal, vec_env: VecEnv, run_dir: Path, seed: int, device: s
     )
 
 
+def final_checkpoint(run_id: str) -> Path:
+    return MODEL_ROOT / run_id / CHECKPOINT_DIRNAME / f"{FINAL_CHECKPOINT_NAME}.zip"
+
+
+def init_policy_from(model: MaskablePPO, checkpoint: Path) -> None:
+    """Copies a trained actor *and* critic into a freshly built model.
+
+    Only the network weights move. The optimiser stays fresh and every hyperparameter
+    stays the goal's, because the source is typically a behaviour-cloning run whose Adam
+    moments were accumulated under a different loss. SB3's `set_parameters` is not used
+    for that reason: it loads `policy.optimizer` too, and unlike `load` it never compares
+    observation spaces, so a mismatch would surface deep inside `load_state_dict`.
+    """
+    source = MaskablePPO.load(checkpoint, device=model.device)
+    for space in ("observation_space", "action_space"):
+        if getattr(source, space) != getattr(model, space):
+            raise ValueError(
+                f"{checkpoint} was trained with a different {space}: "
+                f"{getattr(source, space)} vs {getattr(model, space)}"
+            )
+    model.policy.load_state_dict(source.policy.state_dict())
+
+
+def starting_curriculum(goal: Goal, init_from: str | None) -> CurriculumState:
+    """A fine-tune starts at full length.
+
+    The warm start was trained on whole solutions, so replaying the reverse curriculum
+    from k=3 would spend the run relearning endgames the policy already plays.
+    """
+    if init_from is not None:
+        return CurriculumState(current_k=None)
+    return CurriculumState(current_k=goal.curriculum.k_start)
+
+
 def model_policy(
     model: MaskablePPO,
 ) -> Callable[[PuzzleEnvV2, np.random.Generator], int]:
@@ -570,6 +606,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--n-envs", type=int, default=None, help="Overrides the goal's PPO n_envs."
     )
     parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=None,
+        help="Overrides the goal's PPO learning rate; a warm start may need a smaller "
+        "step than a run from scratch.",
+    )
+    parser.add_argument(
         "--run-id", type=str, default=None, help="Defaults to the goal key."
     )
     parser.add_argument(
@@ -593,6 +636,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
+        "--init-from",
+        type=str,
+        default=None,
+        help="Run id under models/rl_a2/ whose final policy (actor and critic) is the "
+        "starting point. Turns the curriculum off: a warm start trains at full length.",
+    )
+    parser.add_argument(
         "--vec",
         choices=VEC_ENV_KINDS,
         default=None,
@@ -614,6 +664,8 @@ def resolve_goal(args: argparse.Namespace) -> Goal:
         goal = replace(goal, timesteps=args.timesteps)
     if args.n_envs is not None:
         goal = replace(goal, ppo=replace(goal.ppo, n_envs=args.n_envs))
+    if args.learning_rate is not None:
+        goal = replace(goal, ppo=replace(goal.ppo, learning_rate=args.learning_rate))
     if args.vec is not None:
         goal = replace(goal, resources=replace(goal.resources, vec_env=args.vec))
     if args.dataset is not None:
@@ -629,7 +681,12 @@ def resolve_goal(args: argparse.Namespace) -> Goal:
 
 
 def main() -> None:
-    args = build_arg_parser().parse_args()
+    parser = build_arg_parser()
+    args = parser.parse_args()
+    if args.resume and args.init_from is not None:
+        parser.error(
+            "--init-from starts a new run; resume that run with --resume alone"
+        )
     goal = resolve_goal(args)
     run_id = args.run_id or goal.key
     limits = apply_resource_limits(goal.resources)
@@ -653,6 +710,9 @@ def main() -> None:
     logger.info(f"Longest solution in the training split: {max_path_length} cells")
 
     state_path = run_dir / STATE_FILENAME
+    init_checkpoint = (
+        final_checkpoint(args.init_from) if args.init_from is not None else None
+    )
     run_config = {
         "goal": asdict(goal),
         "hyperparameters_are_untuned": True,
@@ -660,9 +720,10 @@ def main() -> None:
         "max_path_length": max_path_length,
         "seed": args.seed,
         "resource_limits": limits,
+        "init_from": str(init_checkpoint) if init_checkpoint is not None else None,
     }
 
-    curriculum_state = CurriculumState(current_k=goal.curriculum.k_start)
+    curriculum_state = starting_curriculum(goal, args.init_from)
     resumed_from = None
     if args.resume:
         saved = read_state(state_path)
@@ -684,6 +745,9 @@ def main() -> None:
         model = MaskablePPO.load(resumed_from, env=vec_env, device=args.device)
     else:
         model = build_model(goal, vec_env, run_dir, args.seed, args.device)
+    if init_checkpoint is not None:
+        init_policy_from(model, init_checkpoint)
+        logger.info(f"Initialised policy from {init_checkpoint}; curriculum off")
     parameters = sum(p.numel() for p in model.policy.parameters())
     logger.info(f"Policy parameters: {parameters:,} on {model.device}")
 

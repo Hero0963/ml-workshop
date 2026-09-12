@@ -35,14 +35,17 @@ from src.core.rl.train_config import (
 from src.core.rl.train_maskable_ppo import (
     WALL_FILTERS,
     apply_resource_limits,
+    build_model,
     CurriculumState,
     EpisodeOutcome,
     GridScalarExtractor,
     classify_episode,
+    init_policy_from,
     make_vec_env,
     next_curriculum_k,
     read_action_masks,
     resolve_goal,
+    starting_curriculum,
 )
 from src.core.utils import Puzzle
 
@@ -196,6 +199,7 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
         goal = "goal1_4x4"
         timesteps = 4096
         n_envs = 2
+        learning_rate = 3e-5
         vec = "subproc"
         dataset = "main_n1700_456"
         shaping_lambda = 0.5
@@ -205,6 +209,7 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
 
     assert resolved.timesteps == Args.timesteps
     assert resolved.ppo.n_envs == Args.n_envs
+    assert resolved.ppo.learning_rate == Args.learning_rate
     assert resolved.resources.vec_env == Args.vec
     assert resolved.dataset == Args.dataset
     assert resolved.shaping_lambda == Args.shaping_lambda
@@ -212,6 +217,7 @@ def test_resolved_goal_overrides_do_not_touch_the_registry() -> None:
     registered = GOALS["goal1_4x4"]
     assert registered.timesteps != Args.timesteps
     assert registered.ppo.n_envs != Args.n_envs
+    assert registered.ppo.learning_rate != Args.learning_rate
     assert registered.resources.vec_env == "dummy"
     assert registered.shaping_lambda != Args.shaping_lambda
     assert registered.connectivity_features != Args.connectivity_features
@@ -224,6 +230,7 @@ def test_shaping_lambda_zero_is_an_override_not_an_omission() -> None:
         goal = "goal1_4x4"
         timesteps = None
         n_envs = None
+        learning_rate = None
         vec = None
         dataset = None
         shaping_lambda = 0.0
@@ -242,6 +249,7 @@ def test_connectivity_features_override_carries_both_directions() -> None:
         goal = "goal1_4x4"
         timesteps = None
         n_envs = None
+        learning_rate = None
         vec = None
         dataset = None
         shaping_lambda = None
@@ -395,3 +403,88 @@ def test_one_env_serves_a_mixed_size_sample_list() -> None:
         seen.add(env.height)
 
     assert seen == {4, 6}, f"only saw {seen}; the env is not resampling across sizes"
+
+
+# --- Warm start (--init-from) ------------------------------------------------------
+# BC -> PPO fine-tuning is only an experiment if the fine-tune really starts from the
+# cloned policy. A load that silently kept the random init would still train, and would
+# report "PPO did not help" -- the very conclusion the run exists to test.
+
+
+def _tiny_model(
+    sample: PuzzleSample,
+    run_dir,
+    seed: int,
+    learning_rate: float | None = None,
+    connectivity_features: bool = False,
+):
+    base = GOALS["goal1_4x4"]
+    ppo = replace(base.ppo, n_envs=1)
+    if learning_rate is not None:
+        ppo = replace(ppo, learning_rate=learning_rate)
+    goal = replace(base, ppo=ppo, connectivity_features=connectivity_features)
+    vec_env = make_vec_env(
+        [sample], goal, seed=GENERATOR_SEED, curriculum_k=None, vec="dummy"
+    )
+    return build_model(goal, vec_env, run_dir, seed=seed, device="cpu")
+
+
+def test_init_from_copies_every_policy_weight(sample: PuzzleSample, tmp_path) -> None:
+    source = _tiny_model(sample, tmp_path, seed=1)
+    checkpoint = tmp_path / "source.zip"
+    source.save(checkpoint)
+    target = _tiny_model(sample, tmp_path, seed=2)
+    expected = source.policy.state_dict()
+    assert any(
+        not th.equal(target.policy.state_dict()[name], tensor)
+        for name, tensor in expected.items()
+    ), "both seeds built the same weights, so the test would pass without a load"
+
+    init_policy_from(target, checkpoint)
+
+    loaded = target.policy.state_dict()
+    assert loaded.keys() == expected.keys()
+    assert any(name.startswith("value_net") for name in loaded), "critic must move too"
+    for name, tensor in expected.items():
+        assert th.equal(loaded[name], tensor), name
+
+
+def test_init_from_keeps_the_fine_tune_hyperparameters(
+    sample: PuzzleSample, tmp_path
+) -> None:
+    """Only weights move: the source's learning rate and Adam moments stay behind."""
+    source = _tiny_model(sample, tmp_path, seed=1, learning_rate=1e-3)
+    loss = sum(parameter.sum() for parameter in source.policy.parameters())
+    source.policy.optimizer.zero_grad()
+    loss.backward()
+    source.policy.optimizer.step()
+    assert source.policy.optimizer.state, "the source needs Adam state to leave behind"
+    checkpoint = tmp_path / "source.zip"
+    source.save(checkpoint)
+    target = _tiny_model(sample, tmp_path, seed=2)
+
+    init_policy_from(target, checkpoint)
+
+    fine_tune_rate = GOALS["goal1_4x4"].ppo.learning_rate
+    assert target.learning_rate == fine_tune_rate
+    assert target.policy.optimizer.param_groups[0]["lr"] == fine_tune_rate
+    assert not target.policy.optimizer.state
+
+
+def test_init_from_refuses_a_different_observation_space(
+    sample: PuzzleSample, tmp_path
+) -> None:
+    source = _tiny_model(sample, tmp_path, seed=1, connectivity_features=True)
+    checkpoint = tmp_path / "source.zip"
+    source.save(checkpoint)
+    target = _tiny_model(sample, tmp_path, seed=2)
+
+    with pytest.raises(ValueError, match="observation_space"):
+        init_policy_from(target, checkpoint)
+
+
+def test_a_warm_start_trains_at_full_length() -> None:
+    goal = GOALS["goal3_ctrl_4x4"]
+
+    assert starting_curriculum(goal, None).current_k == goal.curriculum.k_start
+    assert starting_curriculum(goal, "bc_multi_456").current_k is None
