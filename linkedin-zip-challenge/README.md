@@ -101,7 +101,8 @@ two fields are how you notice it. See [The two models](#the-two-models).
 
 ### 3. Solve it
 
-`POST /api/solver/solve` takes a board and a solver name. All ten solvers below are served.
+`POST /api/solver/solve` takes a board and a solver name. Nine of the ten solvers below are served;
+Particle Swarm Optimization is kept in the code but not offered.
 
 ---
 
@@ -120,17 +121,17 @@ the editor reads it from `GET /api/solver/list`.
 | **RL (behaviour cloning)** | learned | yes | A neural policy. Not exact, not guaranteed — see below. |
 | Ant Colony Optimization | metaheuristic | yes | Not exact, not guaranteed — see below. |
 | Genetic Algorithm | metaheuristic | yes | " |
-| Particle Swarm Optimization | metaheuristic | yes | " Its swap moves break walks apart, so expect it to give up. |
 | Simulated Annealing | metaheuristic | yes | " |
 | Tabu Search | metaheuristic | yes | " |
 | Monte Carlo | metaheuristic | yes | " The baseline: independent random walks. |
+| Particle Swarm Optimization | metaheuristic | **no** | Implemented and measured, not served: its swap moves break walks apart, so it almost never solves a 6x6 board (`ai-collab/reports/2026-09-19_pso-not-served.md`). |
 
-The six metaheuristics are served for comparison, not for speed — on a board this small CP-SAT
+The five served metaheuristics are there for comparison, not for speed — on a board this small CP-SAT
 beats them on every axis. Each one returns the best path it saw whether or not that path solves
 anything, so the registry reruns it until an answer passes `src/core/solvers/verify.py`, for a
 fixed 5 seconds per request, and otherwise answers "could not find a solution". For a
 heuristic that means it gave up, not that the board has none. The budget is deliberately not an
-API parameter: the six count their effort in different units, and a fixed budget is what makes
+API parameter: they count their effort in different units, and a fixed budget is what makes
 them comparable (`ai-collab/reports/2026-09-12_heuristic-solvers-on-the-api.md`).
 
 ---

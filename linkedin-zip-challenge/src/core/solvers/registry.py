@@ -8,7 +8,8 @@ that made it worth fixing: it is the first solver that is neither exact nor alwa
 available, so "which solvers exist" and "what is true about each" now travel together.
 
 Adding a solver: write it under `src/core/solvers/`, then add one `SolverEntry` here. The
-API, the screenshot endpoint and the Gradio dropdown all pick it up.
+API, the screenshot endpoint, the Gradio dropdown and (through `GET /api/solver/list`) the
+Svelte editor all pick it up.
 """
 
 import functools
@@ -25,7 +26,6 @@ from src.core.solvers.cp import solve_puzzle_cp
 from src.core.solvers.dfs import solve_puzzle as solve_puzzle_dfs
 from src.core.solvers.genetic_algorithm import solve_puzzle_genetic_algorithm
 from src.core.solvers.monte_carlo import solve_puzzle_monte_carlo
-from src.core.solvers.particle_swarm_optimization import solve_puzzle_pso
 from src.core.solvers.simulated_annealing import solve_puzzle_simulated_annealing
 from src.core.solvers.tabu_search import solve_puzzle_tabu_search
 from src.core.solvers.verify import is_solution
@@ -149,15 +149,11 @@ SOLVER_ENTRIES: tuple[SolverEntry, ...] = (
         kind=HEURISTIC,
         note=f"Keeps the best walks and mutates them, no crossover. {_HEURISTIC_CAVEAT}",
     ),
-    SolverEntry(
-        name="Particle Swarm Optimization",
-        solve=_until_verified(solve_puzzle_pso),
-        kind=HEURISTIC,
-        note=(
-            "Moves walks toward the best one by swapping cells, which breaks them into "
-            f"non-adjacent steps -- expect it to give up. {_HEURISTIC_CAVEAT}"
-        ),
-    ),
+    # Particle Swarm Optimization (`particle_swarm_optimization.py`) is implemented and
+    # measured but deliberately not served: its move swaps two cells, which breaks a walk
+    # into non-adjacent steps, so it almost never solves a 6x6 board. It stays in the code
+    # as the example of a move that ignores the puzzle's constraint.
+    # See `ai-collab/reports/2026-09-19_pso-not-served.md` before adding it back.
     SolverEntry(
         name="Simulated Annealing",
         solve=_until_verified(solve_puzzle_simulated_annealing),

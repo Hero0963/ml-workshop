@@ -1,4 +1,4 @@
-# Handover — solvers track（把十種 solver 掛上 API）
+# Handover — solvers track（把 solver 掛上 API：九種上線，PSO 保留實作不開放）
 
 > **接手這條線只要讀這一份。** Track C 的程式碼於 **2026-09-12** 完成，**2026-09-19** 收尾（文件校正、rebase 到 `main`）；
 > **2026-09-19 已 `--ff-only` 合併進 `main` 並 push**（`a8c3626..78c36c6`，含 Svelte 編輯器，見 §5.1）。
@@ -9,14 +9,16 @@
 
 ## 1. 現在的狀態（一句話）
 
-**十種 solver 全部從 `POST /api/solver/solve` 可以叫到**，實測兩題各 10/10 回 200，
-而且**凡是畫出圖的回應都通過 `is_solution` 驗證**。
+**九種 solver 從 `POST /api/solver/solve`、截圖端點、Gradio、Svelte 都叫得到**，
+而且**凡是畫出圖的回應都通過 `is_solution` 驗證**（2026-09-12 十種上線時實測兩題各 10/10 回 200）。
+**2026-09-19 本人定案：PSO 不開放**，但實作、測試與量測都保留（見 §4.6）。
 
 | 類別 | 誰 | 保證 |
 |---|---|---|
 | `EXACT` | DFS、A\* (heapq)、CP-SAT | 一定給答案或證明無解 |
 | `LEARNED` | RL (behaviour cloning) | 不保證；分布外（多牆盤面）會放棄 |
-| `HEURISTIC` | ACO、GA、PSO、SA、Tabu、Monte Carlo | 不保證；放棄 ≠ 盤面無解 |
+| `HEURISTIC` | ACO、GA、SA、Tabu、Monte Carlo | 不保證；放棄 ≠ 盤面無解 |
+| （不上線） | PSO | 有實作、有測試、有量測；不在 registry 裡 |
 
 ## 2. 架構：三個東西，各自只做一件事
 
@@ -61,12 +63,17 @@ src/core/solvers/verify.py       ← is_solution(puzzle, path)：唯一的裁判
 
 1. **預算不開成 API 參數。** 六種的預算單位不可共量（隨機走法／迭代／世代×族群／溫度排程），
    秒是唯一共同單位。要開的話開 `budget_seconds`（並設上限），**不是 `attempts`**——
-   舊 roadmap 的那條 done 條件已作廢。
+   舊 roadmap 的那條 done 條件已作廢。**2026-09-19 本人定案：`budget_seconds` 也不做**
+   （沒人需要，開了就多一個要設上限的 DoS 面；想看「多給時間能多解幾題」就離線改 `measure_budget.py` 的預算跑）。
 2. **同步就夠，不要背景任務。** 最壞 5.04s ≪ 120s。⚠ 這個結論綁在 5 秒這個值上。
 3. **`solvable` 是三態，不是布林。** 只有精確 solver 的「無解」能證明圖讀錯了；
    啟發式或 RL 放棄是 `None`（未判定）。schema、router、Gradio 三邊都已對齊。
 4. **`_until_verified` 只包 `HEURISTIC`。** RL 不包——它自己有 `DEFAULT_ATTEMPTS` 的取樣邏輯，
    包了會變成雙層重試，預算難以推理。
+5. **不要加 API 參數 `budget_seconds`**（2026-09-19 本人定案，理由見 4.1）。
+6. **PSO 不開放、但保留**（2026-09-19 本人定案）。它的移動是「交換路徑上兩格」，會把相鄰的路徑拆成跳躍的步，
+   所以 6×6 幾乎解不出來；留在程式裡當「移動方式不守約束會怎樣」的教材。
+   `test_registry.py::test_pso_is_implemented_but_not_served` 釘住這個決定，要加回去先讀 [`reports/2026-09-19_pso-not-served.md`](reports/2026-09-19_pso-not-served.md)。
 
 ## 5. 還沒做的事（給下一個人）
 
@@ -85,13 +92,9 @@ Svelte 編輯器現在開啟時打 `GET /api/solver/list`（直接由 `SOLVER_EN
 
 ### 5.2 可以做但沒有人要求的
 
-- **`budget_seconds` 請求欄位**（見 §4.1）。做之前先想清楚上限，否則是 DoS 面。
-- **同尺度的 solver 比較表進 README**：現在十種在同一個 registry 下可比了，
+- **同尺度的 solver 比較表進 README**：現在上線的九種在同一個 registry 下可比了，
   但 README 只說「CP-SAT 每一項都贏」，沒有把表放上去。報告 §2/§3 的數字可以直接用。
-- **PSO 要不要留著**：單次呼叫 0/30（Monte Carlo 也是 0/30）、包了 5 秒預算後 **0/6**——六種裡唯一一個加了預算還一題都沒解出的（Monte Carlo 1/6）。
-  （但 2026-09-19 的 Svelte 端到端裡，它在 **4×4** 蛇形盤面上兩次都解出來且通過驗證 ⇒ 不是完全不能解，是盤面一大就失效。）
-  留著的理由是「它示範了一個 move 設計錯誤會怎麼樣」——交換兩格會把相鄰路徑拆散，
-  它探索的空間裡合法路徑幾乎是零測度集。**這是教材價值，不是功能價值**，要砍要留是取捨不是 bug。
+- ~~`budget_seconds` 請求欄位~~、~~PSO 要不要留著~~：**2026-09-19 都已定案**，見 §4.5、§4.6。
 
 ## 6. 陷阱
 
@@ -101,10 +104,10 @@ Svelte 編輯器現在開啟時打 `GET /api/solver/list`（直接由 `SOLVER_EN
   影響只有「log 多印一些」，不影響正確性；真的要修就改成 per-call 的 sink filter。
 - ⚠ **預算是「跑完一次才檢查」**，所以最壞耗時是 `5s + 一次完整跑的時間`。
   實測 5.04s，因為單次最慢 0.128s。**若哪天有人調大啟發式的預設參數，這個上界會跟著變。**
-- ⚠ **測試裡一定要 monkeypatch `HEURISTIC_TIME_BUDGET_SECONDS`**，否則六種啟發式的
+- ⚠ **測試裡一定要 monkeypatch `HEURISTIC_TIME_BUDGET_SECONDS`**，否則上線的啟發式的
   參數化測試會把測試套件拖長 30 秒。現成範例在 `src/app/tests/test_solver_api.py`。
 - ⚠ **`models/` 不進版控**：新開的 worktree 沒有它 ⇒ RL solver 回 503（正確行為），
-  `src/core/tests/rl/test_solver_service.py` 的端到端測試會 skip。要完整測十種，從 `zip-rl` 複製
+  `src/core/tests/rl/test_solver_service.py` 的端到端測試會 skip。要完整測九種，從 `zip-rl` 複製
   `models/rl_a2/bc_multi_456_e6`（14 MB）過來——`zip-solvers` 在 2026-09-12 做 API 往返（報告 §9）前已經複製了。
 
 ## 7. 怎麼驗證你沒弄壞它
@@ -115,13 +118,18 @@ uv run pytest                    # 2026-09-19 基線（C2 之後、有 models/�
                                  # 沒有 models/ 時 RL 端到端測試會變 skip（見 §6）
 uv run ruff check .
 
-# 重跑預算量測（約 4 分鐘，seed 已固定在腳本裡）
+# 重跑預算量測（約 4 分鐘，seed 已固定在腳本裡）。⚠ 它從 registry 取啟發式，
+# 所以 2026-09-19 之後重跑不含 PSO；PSO 的舊數字留在已提交的 budget-measurements.json
 PYTHONPATH=. uv run python ai-collab/reports/artifacts/heuristic-api-budget/measure_budget.py
 
 # Svelte 編輯器端到端（約 15 秒）：先 build、起服務，再用 headless Chrome 操作建置版
 cd src/custom_components/puzzle_editor/frontend; npm ci; npm run build; cd ../../../..
 uv run uvicorn src.app.main:app --port 7452          # 另一個終端機
 PYTHONPATH=. uv run python ai-collab/reports/artifacts/svelte-solver-list/drive_editor.py <repo 外的暫存目錄>
+
+# PSO 在 RL held-out 4×4／6×6 上的分數（資料集只在跑過 RL 的 worktree 裡，例如 zip-rl）
+PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py raw <dataset 目錄>     # 約 2 分鐘，決定性
+PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py served <dataset 目錄>  # 8 個 worker，先看號誌
 ```
 
 `src/core/tests/solvers/test_registry.py` 是這條線的守門員：它釘住「三個入口共用一份 registry」、

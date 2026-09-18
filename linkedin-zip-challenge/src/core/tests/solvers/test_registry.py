@@ -12,13 +12,13 @@ from pathlib import Path
 from src.app.routers import solver as solver_router
 from src.app.routers import vision as vision_router
 from src.core.solvers import registry
+from src.core.solvers.particle_swarm_optimization import solve_puzzle_pso
 from src.core.tests.conftest import puzzle_01_data, solution_01
 from src.ui import gradio_app
 
 HEURISTIC_NAMES = {
     "Ant Colony Optimization",
     "Genetic Algorithm",
-    "Particle Swarm Optimization",
     "Simulated Annealing",
     "Tabu Search",
     "Monte Carlo",
@@ -67,13 +67,23 @@ def test_the_exact_solvers_are_the_ones_that_always_answer() -> None:
     assert vision_router.DEFAULT_SOLVER in registry.EXACT_SOLVERS
 
 
-def test_all_six_heuristics_are_served_as_heuristics() -> None:
+def test_the_served_heuristics_are_exactly_these() -> None:
     served = {
         entry.name
         for entry in registry.SOLVER_ENTRIES
         if entry.kind == registry.HEURISTIC
     }
     assert served == HEURISTIC_NAMES
+
+
+def test_pso_is_implemented_but_not_served() -> None:
+    """Decided 2026-09-19: it almost never solves a 6x6 board, so it is kept, not offered.
+
+    The reasons and numbers are in `ai-collab/reports/2026-09-19_pso-not-served.md`; read
+    them before changing this test.
+    """
+    assert callable(solve_puzzle_pso)
+    assert "Particle Swarm Optimization" not in registry.SOLVERS
 
 
 def test_no_heuristic_is_served_without_verification() -> None:
