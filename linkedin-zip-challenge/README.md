@@ -53,7 +53,7 @@ $ docker compose -f docker-compose.yml -p zip-app-ml-workshop up -d --build
 Waiting for http://127.0.0.1:7440/api/echo/health
 API is up.
 Ollama is up. Models: ['zip-qwen35-4b-p4c:f16', ...]
-RL solver weights found (models/rl_a2/bc_multi_456/checkpoints/model_final.zip).
+RL solver weights found (models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip).
 
   Gradio console   http://127.0.0.1:7440/ui
   Svelte editor    http://127.0.0.1:7440/svelte-ui/

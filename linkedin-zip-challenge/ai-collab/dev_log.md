@@ -147,6 +147,62 @@ handover §2 關掉「加資料」的依據（落差 +0.009）量的是 **PPO** 
 **踩到的坑**：probe 用 run id 命名產物，重評已發表的 checkpoint 會**覆蓋**原檔 ⇒ 包一層 `hi-collab/scratch/probe_to.py` 改輸出目錄。
 兩個 seed 的 deterministic 逐位相同（0.915588）——驗過是巧合（權重 36/36 不同、各有 106 題只有自己解對）。
 
+### Solvers Track — 十種 solver 全部上 API，而關鍵不是「多了六個選項」而是「多了一個裁判」（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
+
+完整量測與設計理由在 [`reports/2026-09-12_heuristic-solvers-on-the-api.md`](reports/2026-09-12_heuristic-solvers-on-the-api.md)；
+接手讀 [`handover-solvers.md`](handover-solvers.md)。
+
+**先講最重要的發現：這六種 solver 不能直接上線。** 它們的共同寫法是「回傳看過最好的那條路」，
+而好壞由 `calculate_fitness_score()` 決定——**它們沒有「找不到」這個回傳值**。
+而兩個端點都是拿到什麼畫什麼。實測 180 次預設參數的呼叫：
+
+| | 數量 | 比例 |
+|---|---|---|
+| 回傳了一條路 | 180 | 100% |
+| 其中**真的是解** | 16 | **8.9%** |
+| 其中**不是解、但會被畫成 GIF 送出去** | **164** | **91.1%** |
+
+所以 registry 多了一層 `_until_verified()`：重跑到答案通過 `verify.py` 為止，每請求固定 5 秒，
+用完就回「could not find a solution」。包上之後六題的解出率 **8.9% → 58.3%（21/36）**，最慢的請求 5.04 秒。
+
+**裁判為什麼要獨立寫一份 `verify.py`，而不是用現成的 fitness score**：因為啟發式正在最佳化那個分數。
+一條靠分數漏洞拿高分的路，會被同一個漏洞認證為解。那個分數實際有兩個漏洞——第一步之後不再檢查
+blocked cell、負座標會從網格另一側繞回去索引。**優化目標不能同時當驗收標準**，這條在別的地方也成立。
+
+**API 實測**（`uv run python -m src.app.main` ＋ 十次 POST，兩題）：**各 10/10 回 200，
+而且凡是畫出圖的回應 100% 通過 `is_solution`**。RL 在 `puzzle_01` 放棄是**可預期且正確**的
+（10 道牆，它訓練在 0 或 2–5 道牆上），換到 0 道牆的 `puzzle_02` 就 0.62 秒解出來。
+
+**一個反直覺的量測**：難度的指標不是盤面大小，是「數字密度高 ＋ 牆少」。
+`puzzle_04`（7×7、14 道牆）四種解得出來；`puzzle_06`（7×7、21 個數字、**0 道牆**）六種全滅。
+**牆砍掉合法後繼步，反而讓隨機走法更好走。**
+
+**兩個刻意不做的決定**：
+
+1. **預算不開成 API 參數**（舊 roadmap 的 done 條件寫「schema 支援 `attempts`」，作廢）。
+   六種的預算單位不可共量：隨機走法數／迭代數／世代×族群／溫度排程。`attempts` 只有 Monte Carlo 吃得到，
+   要正確對應得開六組旋鈕——**而六組不同的旋鈕沒辦法拿來比較**，上線的目的正是同尺度比較。
+   秒是唯一共同單位，所以固定在伺服器端。
+2. **同步就夠，不加背景任務**（roadmap 的開放問題結案）。最壞 5.04s ≪ Gradio 的 120s timeout。
+
+**連帶修掉一個使用者看得到的錯誤**：截圖端點原本「solver 找不到解 ⇒ 判定圖讀錯了」。
+這個推論**只對精確 solver 成立**（真實盤面都是從完整路徑生成的，所以精確 solver 說無解就證明讀錯）；
+啟發式或 RL 放棄什麼都沒證明。`VisionSolveResponse.solvable` 因此從 `bool` 變成 `bool | None`，
+三態一路貫穿 schema、router、Gradio 文案與 request log——**事後分析不會再把「啟發式放棄」誤算成解析失敗**。
+
+**還沒做，留給下一個人**：Svelte 下拉仍寫死三種（連 RL 都沒有），正確做法是加一個回傳
+`SOLVER_ENTRIES` 的端點讓前端去問，不要再寫死第四份清單。細節在 `handover-solvers.md` §5.1。
+
+**順手修掉的過期**：`README.md`／`README_zh-TW.md` 的啟動範例、`deployment-guide.md` 的錯誤訊息範例
+都還寫著服務中的模型是 `bc_multi_456`，但 `solver_service.RUN_ID_BY_SIZE` 早在同日就換成 `bc_multi_456_e6` 了。
+（這三處不在 Track C 的檔案範圍：README 只有 solver 表格歸 C、`deployment-guide.md` 歸 Track B。
+Track B 已全數合併、沒有人在動，而且是事實錯誤，所以保留。`roadmap.md` RL 項的同一個錯誤 `main` 的 `a8c3626` 已經修了，這邊的版本丟掉。）
+
+**2026-09-19 收尾**：handover 原本寫「已合併進 `main`」，實際上兩個 commit 都還在 branch 上 ⇒ 改成「待本人合併」；
+`roadmap.md` 裡「108 次只有 8 次是真解」與報告不符，用 `budget-measurements.json` 重算是 **180 次 16 次**，已校正；
+handover 的「這個 worktree 沒有 `models/`」也過期了（做 API 往返前就複製了，RL 才解得出 `puzzle_02`）。
+`main` 在這條 branch 之後多了 `a8c3626`（RL 文件，同樣動了 `dev_log.md`／`roadmap.md`），所以先 rebase 才能 `--ff-only`。
+
 ### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
 
 完整報告在 [`reports/2026-09-12_rl-wrap-up.md`](reports/2026-09-12_rl-wrap-up.md)；

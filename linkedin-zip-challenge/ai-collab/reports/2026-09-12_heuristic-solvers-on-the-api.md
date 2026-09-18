@@ -121,7 +121,44 @@ request log 裡記的也是三態，所以事後分析不會把「啟發式放�
 
 ---
 
-## 9. 誠實的結論
+## 9. 十種 solver 的實際 API 往返
+
+`uv run python -m src.app.main` 起服務，對 `POST /api/solver/solve` 打十次，
+原始回應存在 [`artifacts/heuristic-api-budget/api-roundtrip.json`](artifacts/heuristic-api-budget/api-roundtrip.json)。
+`verified` 欄是把回應裡的 `solution_path` 解析回座標後，再送進 `is_solution` 的結果。
+
+**`puzzle_01`（6×6、10 道牆）**
+
+| Solver | HTTP | 秒 | 畫了圖 | verified |
+|---|---|---|---|---|
+| DFS | 200 | 0.54 | ✅ | True |
+| A\* (heapq) | 200 | 0.50 | ✅ | True |
+| CP-SAT | 200 | 0.54 | ✅ | True |
+| RL (behaviour cloning) | 200 | 3.99 | — | 放棄 |
+| Ant Colony Optimization | 200 | 0.65 | ✅ | True |
+| Genetic Algorithm | 200 | 0.55 | ✅ | True |
+| Particle Swarm Optimization | 200 | 5.05 | — | 放棄 |
+| Simulated Annealing | 200 | 0.64 | ✅ | True |
+| Tabu Search | 200 | 0.62 | ✅ | True |
+| Monte Carlo | 200 | 2.02 | ✅ | True |
+
+**`puzzle_02`（6×6、0 道牆、12 個數字）**——補這一題是因為 RL 在上一題放棄了，
+而它放棄是**可預期**的：它訓練在 0 或 2–5 道牆的盤面上，10 道牆是分布外。
+
+| Solver | HTTP | 秒 | verified |
+|---|---|---|---|
+| DFS／A\*／CP-SAT | 200 | 0.53–0.56 | True |
+| **RL (behaviour cloning)** | 200 | **0.62** | **True** |
+| ACO／GA／SA／Tabu | 200 | 0.55–2.43 | True |
+| Particle Swarm Optimization | 200 | 5.03 | 放棄 |
+| Monte Carlo | 200 | 5.02 | 放棄 |
+
+**兩題都是 10/10 回 200，而且「畫出圖的回應」100% 通過 `is_solution`。**
+這正是包裝要保證的性質：可以放棄，但不可以把半成品當答案送出去。
+
+---
+
+## 10. 誠實的結論
 
 **上線它們是為了比較，不是為了效能。** CP-SAT 在這六題上每一題都是毫秒級的確定答案；
 最好的啟發式（GA）要 1.10 秒而且有一題解不出來。這個落差本身就是這條 track 的產出：
