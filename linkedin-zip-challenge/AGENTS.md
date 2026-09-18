@@ -15,13 +15,15 @@
 含：9 種 solver、FastAPI 後端、Gradio 主控台、Svelte Canvas 編輯器、出題器、GIF／PNG 視覺化、Docker 雙環境。
 **VL 圖片解析（`src/core/vl_models/`）已在主流程上**（2026-08-29）：微調模型由本機 Ollama 服務，
 接 `POST /api/vision/solve` 與 Gradio 的 `Solve from Screenshot` 分頁。
-另有一塊**未進主流程**的實驗：`src/core/rl/`（⏸ 暫停）。
+**RL solver（`src/core/rl/`）也已上線**（2026-09-12，行為克隆的策略，API 的 `RL (behaviour cloning)`）。
+
+> 🛑 **2026-09-19 專案收尾：停止開發與實驗。** 先讀 [`ai-collab/reports/2026-09-19_project-wrap-up.md`](ai-collab/reports/2026-09-19_project-wrap-up.md)（現況、驗收、沒做完的）。兩個模型的權重**不在版控**，見 [`ai-collab/model-weights.md`](ai-collab/model-weights.md)。要重啟任何一條 track，照下面 §1 讀該 track 的 handover，並先拿本人授權。
 
 ## 1. 每次上線的標準動作
 
 1. 看 SessionStart 簡報（分支／最近 commit／工作區狀態／下一步）。
 2. **接手進行中的 track → 先讀該 track 的交接文件**，那一份是自足的：環境建置、已驗證事實、下一步、
-   陷阱清單、該讀哪些延伸文件都在裡面。目前有三條 track 各有一份：
+   陷阱清單、該讀哪些延伸文件都在裡面。三條 track（**2026-09-19 起都已停止**）各有一份：
    - 全部 solver 上 API／Gradio／Svelte（roadmap 第 1 項）→ [`ai-collab/handover-solvers.md`](ai-collab/handover-solvers.md)
    - VLM 圖片解析（roadmap 第 2 項）→ [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)
    - RL solver（roadmap 第 3 項）→ [`ai-collab/handover-rl-solver.md`](ai-collab/handover-rl-solver.md)

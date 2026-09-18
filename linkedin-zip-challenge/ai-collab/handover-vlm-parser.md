@@ -1,5 +1,7 @@
 # 交接文件 — VLM Track（圖片解析）
 
+> 🛑 **2026-09-19 專案收尾，這條 track 已停止。** 目標「解我們自己做的圖」達成：收尾當天用全新生成的 6 張＋held-out 4 張再驗一次，**10/10**（[收尾報告](reports/2026-09-19_project-wrap-up.md) §2、§7）。模型權重（9.1 GB）**不在版控、尚未發佈**，提案與安裝步驟見 [`model-weights.md`](model-weights.md)——含一個坑：匯出的文字塔 GGUF 與 Ollama blob 雜湊不同，但 426 個張量逐位元組相同（Ollama 匯入時重排順序）。Ollama 已釘在驗證過的 **0.32.13**。
+
 > **接手這條 track 的 agent／developer 從這一份開始讀，讀完就能動手。**
 > 最後更新：2026-08-29（Asia/Taipei）｜分支 `feat/vlm-parser`｜worktree `zip-vlm`｜對應 roadmap 第 2 項
 > 其他文件是延伸閱讀，本檔會標明什麼時候該去翻哪一份。

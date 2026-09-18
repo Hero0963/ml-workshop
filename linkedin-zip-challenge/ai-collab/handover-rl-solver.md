@@ -1,5 +1,7 @@
 # 交接文件 — RL Track（一筆畫 solver）
 
+> 🛑 **2026-09-19 專案收尾，這條 track 已停止。** 收尾時的總結——為什麼到不了 100%、「只准走一次」這條規則對不對、AlphaZero 對照、依優先序的後續路線——在 [`reports/2026-09-19_rl-where-next.md`](reports/2026-09-19_rl-where-next.md)。下面 §0.3 的「接手第一件事」是**想重啟時**的第一件事，不是待辦。服務中的權重沒有進版控，取得方式見 [`model-weights.md`](model-weights.md)。
+
 > **接手這條 track 從這一份開始讀。這裡只寫「開工前必須知道的」。**
 > 細節一律不重複——量過的數字與踩過的坑在 [`rl-traps-and-facts.md`](rl-traps-and-facts.md)，
 > 其餘去哪查看 **§6 總目錄**。

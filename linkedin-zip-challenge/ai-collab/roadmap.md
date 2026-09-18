@@ -2,9 +2,25 @@
 
 > **新 session 的第一站。** 每次工作告一段落就更新這裡（現況一句話、下一步順序、進度日誌加一列）。
 > 架構與啟動方式看 [project_guide.md](project_guide.md)、完整開發歷程看 [dev_log.md](dev_log.md)、規範看 [../AGENTS.md](../AGENTS.md)。
-> 最後更新：2026-09-05
+> 最後更新：2026-09-19（**專案收尾**）
 
-## 現況（2026-08-08）
+## ★ 2026-09-19：專案收尾（先讀這一段）
+
+**這個 side project 在 2026-09-19 告一段落：停止開發與實驗，只做修正與收尾。** 總帳在
+[收尾報告](reports/2026-09-19_project-wrap-up.md)；下面各節保留為歷程紀錄。
+
+| | 收尾時的狀態 |
+|---|---|
+| 出題、編輯盤面、9 種 solver | ✅ 全新 clone ＋ `python start.py` 直接可用（2026-09-19 全新 clone 實測）|
+| VLM 讀截圖 | ✅ 目標「解我們自己做的圖」達成（全新生成 6 張＋held-out 4 張 10/10）；⚠ **權重 9.1 GB 未發佈** |
+| RL solver | ✅ 門檻達成（best-of-32：4×4 0.9953、6×6 0.9465）；⚠ **權重 14 MB 未發佈**；單次嘗試到不了 100%，原因與後續路線見 [RL 收尾報告](reports/2026-09-19_rl-where-next.md) |
+| Docker | ✅ 修掉六個陌生人會撞到的問題（Python 3.9、沒有 GPU、ARM、lockfile、浮動標籤、模型缺席提示），見 [deployment-guide](deployment-guide.md) §10 |
+| 權重怎麼提供 | 📋 提案：RL → GitHub Release、VLM → Hugging Face（[model-weights.md](model-weights.md)）；**要本人帳號，未上傳** |
+| 沒做完的 | 收尾報告 §10：權重上傳、主機端埠轉發兩項驗收（本機 WSL mirrored 模式測不到）、RL 半截的對照、評分腳本不在版控、ARM 未實測 |
+
+GPT-6 等級 computer-use agent 會怎麼解 Zip：[survey](reports/2026-09-19_computer-use-agents-and-zip.md)。
+
+## 現況（2026-08-08 起的歷程；收尾狀態見上一節）
 
 核心功能**已完成且可跑**：9 種 solver、FastAPI 後端、Gradio 主控台、Svelte WYSIWYG 編輯器、程序化出題、GIF／PNG 視覺化、Docker 雙環境。
 
@@ -27,11 +43,13 @@
 | **全部 solver 上 API** | ✅ **2026-09-12 十種全部上線**（Track C；**2026-09-19 本人定案 PSO 不開放、保留實作，現為九種**）：API、截圖端點、Gradio 下拉都從 `registry.py` 拿。六種啟發式包一層「重跑到通過 `verify.py`、每請求固定 5 秒」——**實測六題 21/36 解出，不包的話 91% 的回應會是被畫成答案的半成品**（[報告](reports/2026-09-12_heuristic-solvers-on-the-api.md)）。**2026-09-19 Svelte 編輯器也改成向 `GET /api/solver/list` 要清單**——四個前端入口都是同一份（見下一步 #1）|
 | Swagger `/docs` 的 Echo 端點重複兩份 | ✅ **2026-09-19 修掉**（拿掉 `echo.py` 自帶的 tag，`test_openapi.py` 釘住「每個端點只有一個 tag」）。原因：`main.py` 掛 router 時給 `tags=["Echo"]`，而 `echo.py` 的 router 自帶 `tags=["echo"]`，FastAPI 合併後產生兩個群組 |
 | Svelte UI 的 Instructions 顯示原始 Markdown | ✅ **2026-09-19 修掉**（改成 `<b>`，Chrome 截圖確認）。原本：`**middle**`／`**border**` 直接印出星號，該處沒有走 Markdown 渲染 |
-| RL solver（`src/core/rl/`） | 🚧 **重啟中**：A0／A1（2026-08-15）＋ **A2 兩輪訓練（2026-08-29）＋ 續訓加預算（2026-09-05）**。資料集加大 11 倍後「在背答案」已解掉（落差 +0.162／+0.250 → **+0.050／+0.009**）；續訓 3M 步後 6×6 held-out **0.344 → 0.409**、curriculum **k=27 → 30/36** ⇒「**加預算有效**」成立。**兩個 goal 仍未達門檻**。**★ 2026-09-05 量到 seed 雜訊地板（4×4 ±0.02–0.04）⇒ 0.877 其實是 0.854 ± 0.038**，且 `shaping_lambda` 對照是 null（規格偏離結案）。**優先序已重排回原本的 goal**。**★ P0「連通性特徵」已於 2026-09-05 做完：null 且方向為負**（兩臂 0.8537 vs 0.8275、差 −0.0263 未達 ±0.04；但逐 seed 配對差三個全負、死路率三個全升），**不進 6×6**；機制診斷顯示**策略根本沒在用這個訊號**（亮燈失敗佔失敗的比例 62.1% → 64.6% 幾乎不變）⇒ 下一個有機制的候選是**動作條件版**（決策前就知道「這一步會不會造成分裂」）。GNN 仍不做，理由已從「還沒證偽」升級為「它算的也是當前狀態的圖性質，繼承同一個限制」。**★★ 2026-09-05 再用 oracle 上界把整條線收掉**：強制執行完美的一步前瞻（分裂 ＋ 走進死巷，這是一步內可偵測必敗狀態的全部）只值 **+0.0156（4×4）／+0.0285（6×6）**，跨不過 ±0.04 ⇒ **動作條件版不做、割點不做、GNN 主要論據結案**。原因是 6×6 有 **59% 的窄化決策是「四個動作全部必敗」**——錯誤在好幾步前就犯下了，**缺的是長程規劃不是一步感知**。**★ 同時補上 6×6 的 best-of-N**（§7.20 缺的那半）：deterministic 0.4095 → **best-of-16 0.649（+0.240）**，4×4 則在 **best-of-4 就過 0.90**（0.9238，平均 1.33 次嘗試）⇒ **推論期搜尋是目前唯一買到 0.1 量級的槓桿**。**★★ 同日把「policy 排序 `dfs.py` 分支」也做完了（節點預算軸、五個臂）**：**先驗的價值第一次被單獨量到，而且很大**——不准回溯的預算下 4×4 policy **0.8771** vs 隨機排序 **0.0902**、6×6 **0.4205 vs 0.0005**（隨機排序在 500 節點內從沒到過 0.40）；解出時的中位節點數**正好等於路長** ⇒ 一半以上的題一次走到底不用回溯。**但「結構化搜尋比較好」不成立**：4×4 每個預算都贏 best-of-N，6×6 卻在 100 節點以上輸給它（0.5760 vs 0.6260 @175）**⇒ 我自己上一節的推薦被數據否掉一半**，機制與 oracle 同源（錯誤發生在很早，回溯只改尾巴、重抽會重擲早期決策）。確定性混淆已用 `dfs_policy_sampled` 排除（兩盤面都略差不是略好）。⚠ 4×4 的 1.0000 是**搜尋**解掉的不是策略（隨機排序也有 0.9990）⇒ 誠實說法是「省約 5 倍搜尋」。**★★ 同日又做完兩件事**：**帶重啟的 DFS 兩個設定都輸**（k1／k2 在每個預算都輸給 best-of-N *和* policy-DFS）⇒ 「回溯↔重啟」這條軸的極值在**完全不回溯**端點，這一族結案；**以及新增行為克隆（BC）**——資料集一直帶著 `solution_path` 卻**從沒被當成訓練目標**（只用來設 curriculum 起點），而 6×6 有約 56 萬組完美標籤。結果 **BC 在兩個盤面、每一個推論設定都不輸 PPO，訓練成本 1/3 與 1/9**：4×4 det **0.8947**／best-of-2 **0.9248 ✅**；6×6 det **0.4620**／best-of-16 **0.800**（PPO 是 0.4095／0.649）⇒ **6×6 離門檻只剩 0.05**。⚠ 單 seed、6×6 雜訊沒量過 ⇒「有動但未確證」，站得住的是**成本**。**★ 概念上 BC 不是 RL**（監督式模仿學習，無獎勵／無探索／無信用分配），定位是**暖啟動**、下一步接 PPO 微調；但誠實地說，這個問題**獎勵極稀疏＋示範免費＋解可驗證＋mask 後分支只有 1.5**⇒ **RL 的三個典型優勢全部用不到，我們可能正在證明「這題本來就不該用 RL」**——這是做中學最扎實的產出。**★ 資料集完整性已複驗**：現行包三個 split 內部重複 0、兩兩交集 0、digest 全過（4×4 15,419／1,927／1,928、6×6 16,000／2,000／2,000）；舊包 `main_n1700_456` 有 train 內部 4 筆重複 ＋ train∩val 1 筆（train∩test 仍為 0，不影響已發表數字）。**★ handover 已重整**：864 → 246 行，goal 提到最前面，量測與陷阱拆到 `rl-traps-and-facts.md` |
+| RL solver（`src/core/rl/`） | ✅ **目標達成並上線**（2026-09-12 起服務 `bc_multi_456_e6`：best-of-32 4×4 **0.9953**、6×6 **0.9465**；一個模型吃 4／5／6×6）。最好的模型是**行為克隆**，PPO 微調在 best-of-32 是淨損失；2026-09-19 ExIt 第一輪 6×6 deterministic +0.125（單 seed，未上線）。**2026-09-19 收尾**：為什麼到不了 100%、「只准走一次」對不對、AlphaZero 對照與後續路線見 [RL 收尾報告](reports/2026-09-19_rl-where-next.md)。逐步歷程在下方「下一步 #3」與 [handover-rl-solver.md](handover-rl-solver.md) |
 | VL 圖片解析（`src/core/vl_models/`） | ✅✅ **已完成並接進產品（2026-08-29 P4d/P5/P6）**：微調模型由本機 Ollama 服務（`zip-qwen35-4b-p4c:f16`），`POST /api/vision/solve` ＋ Gradio `Solve from Screenshot` 分頁。合成 held-out 重現 **200/200**（與 Colab 逐位元組相同、快 6.5 倍）；**六張真實截圖端到端 5/6、牆 F1 0.972**。操作見 [vlm-operating-guide.md](vlm-operating-guide.md) |
 | 環境復原驗證（9 個月未動） | ✅ **2026-08-08 完成**：46 tests passed、ruff 全綠 |
+| **全新 clone 驗收** | ✅ **2026-09-19**：冷建置 88 秒、容器內 331 passed、9 種 solver 經 HTTP 驗收、讀圖 10/10、無 GPU 故障注入不中止（[收尾報告](reports/2026-09-19_project-wrap-up.md) §2）。⚠ 主機端埠轉發兩項在本機測不到（WSL mirrored）|
+| **模型權重發佈** | ❌ **未做**（要本人帳號）。提案與步驟：[model-weights.md](model-weights.md) |
 
-## 下一步
+## 下一步（歷程紀錄；2026-09-19 起停止開發，未來工作見[收尾報告](reports/2026-09-19_project-wrap-up.md) §10）
 
 > **★ 2026-08-08 本人定案的執行順序：先做 #2（VLM），再做 #3（RL），之後才換 `board-game-rl`。**
 > 本專案已被指定為當前的 side project 主菜（取代原排的 Transformer 0→1 教材）。
@@ -385,7 +403,7 @@
      與本專案鎖的 `torch==2.4.1+cu121` 衝突。三個選項（升 torch／找舊版 contrib／自寫 masked PPO）見報告 §5.2。
    - 先讀 `../more_simple_reinforcement_learning/` 的 DQN 與 PPO 章節，再看 AlphaGo／AlphaZero 架構。
 
-4. **測試報告目錄整理**（雜務）
+4. **測試報告目錄整理**（雜務；2026-09-19 收尾時仍未做，列為 future work）
    - `run_tests.bat` 會把報告寫進 `src/core/tests/reports/`，堆久了會亂。決定要不要納入 `.gitignore`。
 
 ## 已定案，不要再重開的決策
@@ -467,3 +485,5 @@
 | 2026-09-12 | **Track C：十種 solver 全部上 API，關鍵是多了一個裁判**。六種啟發式不管有沒有解出來都回「看過最好的那條」，預設參數 180 次只有 16 次是真解 ⇒ registry 加 `_until_verified()`（重跑到通過獨立的 `verify.py`、每請求固定 5 秒），六題解出率 **8.9% → 58.3%**、最慢請求 5.04s；API 往返兩題各 10/10 回 200、畫出圖的 100% 通過驗證。`solvable` 改三態。預算刻意不開成參數（單位不可共量）。2026-09-19 收尾；接手讀 [handover-solvers.md](handover-solvers.md) |
 | 2026-09-19 | **Track C2：Svelte 編輯器也拿到十種**。新增 `GET /api/solver/list`（由 registry 產生），編輯器向它要清單，不再寫死三種；放棄改成獨立的「No solution found」框。真實 Chrome 端到端十種 10/10 通過驗證、無解盤面三類都正確顯示放棄。順手修掉 roadmap 列著的兩個小 bug（Instructions 印出 `**`、Swagger Echo 群組重複）。測試 309 → **312 passed** |
 | 2026-09-19 | **本人定案：`budget_seconds` 不做、PSO 下架但保留**。PSO 從 registry 拿掉（程式／測試／量測不動），上線剩九種；`test_registry.py` 釘住決定。在 RL 同一批 test split 上量 PSO：單次呼叫 **4×4 0.590、6×6 0.000**（RL best-of-32 是 0.9953／0.9465）；包 5 秒預算（抽 200 題）**4×4 1.000、6×6 0.030** ⇒ 不開放的理由全在 6×6。報告 `reports/2026-09-19_pso-not-served.md` |
+| 2026-09-19 | **RL：掃完 epoch、ExIt 第一輪、判定器改嚴格**（分支 `feat/rl-exit`）。6×6 best-of-32 在 e2–e5 是平台（0.9595–0.967）；訓練題多解比例 4×4 54%／5×5 75%／6×6 87.5%；ExIt 第一輪 6×6 deterministic 0.6455 vs BC 0.5205（單 seed）；所有判定器改成「路必須停在最大數字」。嚴格尺的完整對照與 seed 雜訊沒做完。報告 `reports/2026-09-19_rl-epoch-sweep-and-exit.md` |
+| 2026-09-19 | **專案收尾**。所有 worktree 的進度收進 `main`（含 `zip-solvers`／`zip-infra` 沒 commit 的量測紀錄）；全新 clone 冷建置＋容器內驗收；修掉 `start.py` 在 Python 3.9 崩潰、沒有 GPU 就中止、模型缺席不提示，app 釘 amd64、`uv sync --locked`、釘 Node／Ollama 版本；權重提案、RL 收尾分析、computer-use survey、README 重寫。本機 WSL mirrored 模式讓 Docker 埠轉發失效，主機端兩項驗收未做。報告 `reports/2026-09-19_project-wrap-up.md` |

@@ -1,13 +1,13 @@
 # 專案指南 (Project Guide) — linkedin-zip-challenge
 
 > 架構、模組職責、資料流、啟動方式。**現況與下一步看 [roadmap.md](roadmap.md)**，規範看 [../AGENTS.md](../AGENTS.md)。
-> Last Updated: 2026-09-05
+> Last Updated: 2026-09-19（專案收尾；現況與驗收見 [reports/2026-09-19_project-wrap-up.md](reports/2026-09-19_project-wrap-up.md)）
 > ⚠ **兩條 track 的現況不在本檔**：RL 看 [handover-rl-solver.md](handover-rl-solver.md)、VL 看 [handover-vlm-parser.md](handover-vlm-parser.md)。本檔只描述架構。
 
 ## 這個專案在解什麼
 
 LinkedIn 的 **Zip** 解謎遊戲：在格盤上畫**一條連續路徑**，經過每個可走格子恰好一次，
-並依序串起所有編號格（1 → 2 → 3 …），且不能穿牆。
+並依序串起所有編號格（1 → 2 → 3 …）、停在最大的編號上，且不能穿牆（「停在最大編號」自 2026-09-19 起所有判定器都檢查）。
 本專案做的是「用各種演算法解它、程序化出題、並包成可互動的網頁服務」。
 
 數學上這是**帶順序約束的 Hamiltonian path 問題**——所以既有精確解（DFS／A\*／CP-SAT），也有啟發式解（SA／GA／Tabu／PSO／ACO），
@@ -104,18 +104,24 @@ linkedin-zip-challenge/
 | 啟發式 | `particle_swarm_optimization.py` | 離散化 PSO：位置＝路徑、速度＝交換操作序列。**不上線**（2026-09-19 本人定案，實作保留；見 `reports/2026-09-19_pso-not-served.md`）|
 | 啟發式 | `ant_colony_optimization.py` | 蟻群 |
 
-> ⚠ **API 目前只暴露 3 種**（`src/app/routers/solver.py` 的 `SOLVERS`：DFS／A\*(heapq)／CP-SAT）。補齊是 roadmap 下一步 #2。
+| 共用 | `registry.py` | **上線清單的唯一正本**（`SOLVER_ENTRIES`）：API、截圖端點、Gradio、Svelte 都從這裡拿；啟發式包 `_until_verified()`（重跑到通過裁判、每請求 5 秒）|
+| 共用 | `verify.py` | `is_solution()`：**獨立裁判**，不共用任何 solver 的程式碼 |
 
-### `src/core/rl/` — RL solver（🚧 訓練中，**細節看 [handover-rl-solver.md](handover-rl-solver.md)**）
+> 上線的是 9 種（PSO 以外全部，含 RL）。設計與量測見 [handover-solvers.md](handover-solvers.md)。
 
-**還沒掛上 API**，是獨立的訓練／評估流程。只列進入點，不重複交接文件的內容：
+### `src/core/rl/` — RL solver（✅ 已上線；**細節看 [handover-rl-solver.md](handover-rl-solver.md)**）
+
+服務端只有 `solver_service.py`（載 checkpoint、best-of-N rollout，缺權重回 503、尺寸不支援回 400）；其餘是訓練／評估流程。只列進入點：
 
 | 檔案 | 職責 |
 |---|---|
 | `rl_env_v2.py` | ★ 主角。`PuzzleEnvV2`：一筆畫 env、`action_masks()`、反向 curriculum、死路終止 |
 | `train_config.py` | ★ **改設定只改這裡**：`GOALS`（盤面／牆策略／步數預算／done 門檻）＋ PPO／網路／curriculum／資源上限 |
 | `train_maskable_ppo.py` | 執行一個 goal：`uv run python -m src.core.rl.train_maskable_ppo --goal goal2_6x6` |
-| `generate_dataset_v2.py` | 決定性資料集產生器（**保留 solution path**，反向 curriculum 需要） |
+| `train_behaviour_cloning.py` | ★ **服務中的模型就是它訓的**（行為克隆；`--checkpoint-every-epoch`、`--extra-solutions` 給 ExIt 用）|
+| `collect_solutions.py` | ExIt 的收集步驟：用現有策略抽樣、驗證、收集別條解 |
+| `solver_service.py` | 唯一的服務端檔案；`RUN_ID_BY_SIZE` 指定服務哪個 checkpoint |
+| `generate_dataset_v2.py` | 決定性資料集產生器（**保留 solution path**，反向 curriculum 與行為克隆需要） |
 | `baselines.py` | masked random ／ greedy 兩個對照組與共用評估器 |
 | `rl_env.py`、`dqn_agent.py`、`train*.py` | ⚠ **2025-10 的 v1，已知有缺陷、刻意保留當對照**。不要續訓、不要拿它的數字 |
 

@@ -1,5 +1,7 @@
 # Handover — solvers track（把 solver 掛上 API：九種上線，PSO 保留實作不開放）
 
+> 🛑 **2026-09-19 專案收尾，這條 track 已停止。** 收尾時用全新 clone 經 HTTP 驗收過全部 9 種 solver（答案用 `verify.is_solution` 判），腳本在 [`reports/artifacts/wrap-up-acceptance/acceptance.py`](reports/artifacts/wrap-up-acceptance/acceptance.py)；結果見[收尾報告](reports/2026-09-19_project-wrap-up.md) §2。PSO 包預算的分數（§5.2）已在收尾時併進 `main`。
+
 > **接手這條線只要讀這一份。** Track C 的程式碼於 **2026-09-12** 完成，**2026-09-19** 收尾（文件校正、rebase 到 `main`）；
 > **2026-09-19 已 `--ff-only` 合併進 `main` 並 push**（`a8c3626..78c36c6`，含 Svelte 編輯器，見 §5.1）。
 > 完整的量測與設計理由在 [`reports/2026-09-12_heuristic-solvers-on-the-api.md`](reports/2026-09-12_heuristic-solvers-on-the-api.md)。
