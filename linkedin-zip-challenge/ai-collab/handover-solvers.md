@@ -55,6 +55,7 @@ src/core/solvers/verify.py       ← is_solution(puzzle, path)：唯一的裁判
 | 最慢的單次啟發式呼叫 | 0.128s | 報告 §2 |
 | 最慢的整個請求 | **5.04s**（Gradio timeout 是 120s） | 報告 §3 |
 | API 往返 | 兩題各 **10/10 回 200**，畫出圖的 100% 通過驗證 | 報告 §9 |
+| PSO 單次呼叫（RL test split，決定性） | 4×4 **0.590**（1,139／1,931）、6×6 **0.000**（0／2,000） | [PSO 報告](reports/2026-09-19_pso-not-served.md) §1 |
 
 **難度的指標不是盤面大小，是「數字密度高 ＋ 牆少」**：`puzzle_04`（7×7、14 道牆）四種解得出來，
 `puzzle_06`（7×7、21 個數字、**0 道牆**）六種全滅。牆砍掉合法後繼步，反而讓隨機走法更好走。
@@ -90,7 +91,17 @@ Svelte 編輯器現在開啟時打 `GET /api/solver/list`（直接由 `SOLVER_EN
   都顯示「No solution found」（啟發式 5.07s，用滿預算）。
 - ⚠ 改 `Index.svelte` 後要 `npm ci`（第一次）＋ `npm run build` 才會反映到 `/svelte-ui`；`dist/` 不進版控。
 
-### 5.2 可以做但沒有人要求的
+### 5.2 PSO「包 5 秒預算」的分數待補 ⏳
+
+PSO 報告 §1 的第三欄（4×4／6×6 各抽 200 題、用 API 當時的 `_until_verified` 包裝）還沒量：
+2026-09-19 要量的時候 `.agent-heavy-job` 是 `busy rl`，而這個預算是牆鐘，別人佔著 CPU 時量出來會被壓低、不能用。
+**號誌是 `free` 時**：改成 `busy solvers <時間>` →
+`PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py served <dataset 目錄>`（8 個 worker）→ 改回 `free`，
+再把 `pso-served.json` 的數字填進報告 §1、`dev_log.md` 的 2026-09-19 PSO 小節、`roadmap.md` 的 2026-09-19 日誌列。
+資料集只在跑過 RL 的 worktree 裡（例如 `zip-rl` 的 `datasets/rl_datasets_v2/seed20300000_n20000_456`）。
+PSO 已經不上線，所以這個數字**只影響紀錄，不影響服務**。
+
+### 5.3 可以做但沒有人要求的
 
 - **同尺度的 solver 比較表進 README**：現在上線的九種在同一個 registry 下可比了，
   但 README 只說「CP-SAT 每一項都贏」，沒有把表放上去。報告 §2/§3 的數字可以直接用。
