@@ -19,9 +19,11 @@ Nothing here loads a pickled dataset: `datasets/` is not in version control.
 """
 
 import random
+from dataclasses import replace
 
 import numpy as np
 import pytest
+import torch as th
 
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.baselines import make_eval_env
@@ -30,8 +32,12 @@ from src.core.rl.train_behaviour_cloning import (
     MIN_LEGAL_ACTIONS_FOR_A_CHOICE,
     _batches,
     _stack,
+    epoch_checkpoint_name,
     iter_supervised_pairs,
+    train_epoch,
 )
+from src.core.rl.train_config import GOALS
+from src.core.rl.train_maskable_ppo import build_model, make_vec_env
 
 GENERATOR_SEED = 20260815
 BOARD_SIZE = 4
@@ -172,3 +178,41 @@ def test_shaping_shows_up_in_the_value_target(sample: PuzzleSample) -> None:
 
     assert [p.action for p in plain] == [p.action for p in shaped]
     assert shaped[0].value_target > plain[0].value_target
+
+
+def _train_two_epochs(sample: PuzzleSample, run_dir, save_between: bool):
+    run_dir.mkdir()
+    base = GOALS["goal1_4x4"]
+    goal = replace(base, ppo=replace(base.ppo, n_envs=1))
+    vec_env = make_vec_env(
+        [sample], goal, seed=GENERATOR_SEED, curriculum_k=None, vec="dummy"
+    )
+    model = build_model(goal, vec_env, run_dir, seed=GENERATOR_SEED, device="cpu")
+    losses = []
+    for epoch in (1, 2):
+        pairs = iter_supervised_pairs([sample], connectivity_features=False)
+        losses.append(train_epoch(model, pairs, batch_size=4, value_coef=0.5)[0])
+        if save_between:
+            model.save(run_dir / epoch_checkpoint_name(epoch))
+    return model, losses
+
+
+def test_saving_every_epoch_leaves_the_training_trajectory_alone(
+    sample: PuzzleSample, tmp_path
+) -> None:
+    """An epoch sweep reads every point off one run, which is only valid if saving is inert.
+
+    The sweep's own guard is replaying the published `bc_progress.jsonl` rows digit for
+    digit; this pins the same property where it is cheap to check.
+    """
+    plain_model, plain_losses = _train_two_epochs(
+        sample, tmp_path / "plain", save_between=False
+    )
+    saved_model, saved_losses = _train_two_epochs(
+        sample, tmp_path / "saved", save_between=True
+    )
+
+    assert (tmp_path / "saved" / f"{epoch_checkpoint_name(1)}.zip").exists()
+    assert saved_losses == plain_losses
+    for name, tensor in plain_model.policy.state_dict().items():
+        assert th.equal(saved_model.policy.state_dict()[name], tensor), name

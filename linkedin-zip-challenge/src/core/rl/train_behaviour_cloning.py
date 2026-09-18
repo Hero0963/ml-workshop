@@ -46,6 +46,7 @@ from loguru import logger
 
 from src.core.rl.action_space import path_to_actions
 from src.core.rl.baselines import make_eval_env
+from src.core.rl.collect_solutions import sample_key
 from src.core.rl.rl_env_v2 import DEFAULT_GAMMA, PuzzleSample
 from src.core.rl.train_config import GOALS, Goal
 from src.core.rl.train_maskable_ppo import (
@@ -70,6 +71,9 @@ VAL_PUZZLES_PER_EPOCH = 300
 # Below this the mask leaves no decision to make, so the state says nothing about the policy.
 MIN_LEGAL_ACTIONS_FOR_A_CHOICE = 2
 PROGRESS_FILENAME = "bc_progress.jsonl"
+# Same `model_<something>.zip` layout as PPO's step checkpoints, so every probe that takes
+# a checkpoint path reads these without a special case.
+EPOCH_CHECKPOINT_PREFIX = "model_epoch"
 # Matches PPO's own `vf_coef`, so the critic is weighted the same way here as in the
 # fine-tune that consumes these weights.
 DEFAULT_VALUE_COEF = 0.5
@@ -246,6 +250,45 @@ def train_epoch(
     return {key: value / divisor for key, value in totals.items()}, steps
 
 
+def epoch_checkpoint_name(epoch: int) -> str:
+    return f"{EPOCH_CHECKPOINT_PREFIX}_{epoch}"
+
+
+ExtraSolutions = dict[str, list[list[tuple[int, int]]]]
+
+
+def load_extra_solutions(path: Path) -> ExtraSolutions:
+    """Reads a `collect_solutions` bank: sample key -> solutions the dataset lacks."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        key: [[tuple(cell) for cell in walk] for walk in walks]
+        for key, walks in raw.items()
+    }
+
+
+def relabel(
+    samples: Sequence[PuzzleSample], extra: ExtraSolutions, rng: random.Random
+) -> list[PuzzleSample]:
+    """This epoch's label for each puzzle: one of its known solutions, uniformly.
+
+    Uniform over *distinct* solutions rather than over how often the policy found each,
+    so the target at a fork spreads across every valid continuation instead of echoing
+    the collector's own preferences back at it. Every solution of a puzzle has the same
+    length (it covers every cell), so the gradient step count per epoch is unchanged and
+    the only difference from plain cloning is which valid path supplies the label.
+    """
+    relabelled: list[PuzzleSample] = []
+    for sample in samples:
+        alternatives = extra.get(sample_key(sample), [])
+        pick = rng.randrange(len(alternatives) + 1)
+        relabelled.append(
+            sample
+            if pick == 0
+            else sample._replace(solution_path=alternatives[pick - 1])
+        )
+    return relabelled
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--goal", required=True, choices=sorted(GOALS))
@@ -266,6 +309,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="Cap the training split, for a quick pilot.",
+    )
+    parser.add_argument(
+        "--checkpoint-every-epoch",
+        action="store_true",
+        help=(
+            "Also save model_epoch_<N>.zip after every epoch. The run is deterministic "
+            "for a seed, so one run yields every point of an epoch sweep."
+        ),
+    )
+    parser.add_argument(
+        "--extra-solutions",
+        type=Path,
+        default=None,
+        help=(
+            "A collect_solutions.py solutions.json. Each epoch, every puzzle is labelled "
+            "with one of its known solutions, chosen uniformly (Expert Iteration)."
+        ),
     )
     return parser
 
@@ -288,6 +348,28 @@ def main() -> None:
         train_samples = train_samples[: args.train_puzzles]
     val_samples = select_samples(goal, "val")[:VAL_PUZZLES_PER_EPOCH]
 
+    extra_solutions: ExtraSolutions | None = None
+    extra_summary: dict[str, Any] | None = None
+    # Its own generator, so the shuffle below draws exactly what a plain run draws and the
+    # two runs differ only in labels.
+    label_rng = random.Random(args.seed)
+    if args.extra_solutions is not None:
+        extra_solutions = load_extra_solutions(args.extra_solutions)
+        covered = [
+            len(extra_solutions.get(sample_key(sample), [])) for sample in train_samples
+        ]
+        extra_summary = {
+            "path": str(args.extra_solutions),
+            "puzzles_with_alternatives": sum(1 for count in covered if count),
+            "alternatives": sum(covered),
+        }
+        if not extra_summary["puzzles_with_alternatives"]:
+            raise ValueError(
+                f"{args.extra_solutions} matches none of the {len(train_samples)} "
+                "training puzzles; it was collected on a different split or dataset"
+            )
+        logger.info(f"Extra solutions: {extra_summary}")
+
     # The vec env is only here because `build_model` needs the spaces; behaviour cloning
     # never steps it. Building the model this way is what keeps the result a drop-in.
     vec_env = make_vec_env(train_samples, goal, args.seed, None, goal.resources.vec_env)
@@ -303,6 +385,8 @@ def main() -> None:
     for epoch in range(1, args.epochs + 1):
         order = list(train_samples)
         random.shuffle(order)
+        if extra_solutions is not None:
+            order = relabel(order, extra_solutions, label_rng)
         epoch_started = time.perf_counter()
         losses, steps = train_epoch(
             model,
@@ -328,6 +412,8 @@ def main() -> None:
         history.append(row)
         with progress_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(row) + "\n")
+        if args.checkpoint_every_epoch:
+            model.save(checkpoint_dir / epoch_checkpoint_name(epoch))
         logger.info(
             f"epoch {epoch}/{args.epochs} policy_loss={losses['policy_loss']:.4f} "
             f"value_loss={losses['value_loss']:.4f} "
@@ -364,6 +450,7 @@ def main() -> None:
             "batch_size": goal.ppo.batch_size,
             "learning_rate": goal.ppo.learning_rate,
             "train_puzzles": len(train_samples),
+            "extra_solutions": extra_summary,
             "split_counts": split_counts,
             "seed": args.seed,
             "resource_limits": limits,
