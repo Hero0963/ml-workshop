@@ -3,18 +3,80 @@
 > **接手這條 track 從這一份開始讀。這裡只寫「開工前必須知道的」。**
 > 細節一律不重複——量過的數字與踩過的坑在 [`rl-traps-and-facts.md`](rl-traps-and-facts.md)，
 > 其餘去哪查看 **§6 總目錄**。
-> 最後更新：2026-09-12（Asia/Taipei）｜分支 `feat/rl-ppo-finetune`（Track A，**已合進 `main`**）｜worktree `zip-rl`｜roadmap 第 3 項
+> 最後更新：2026-09-19（Asia/Taipei）｜分支 `feat/rl-exit`（**已合進 `main`**）｜worktree `zip-rl`｜roadmap 第 3 項
 >
-> 🚧 **2026-09-19 重啟**（本人當次授權「交給你規劃、直接開工」，分支 `feat/rl-exit`）：正在做 §3 的掃 epoch ＋ ExIt 第一輪，
-> 進度在 `dev_log.md` 的 2026-09-19 RL 小節；做完會改寫本檔。下面這段是 2026-09-12 的狀態。
->
-> ★★ **這條 track 現在是「收尾停在這裡」的狀態**（2026-09-12 本人定案）：兩個 goal 都達標且有餘裕，
-> **不要自己開訓練**——掃 epoch、ExIt、任何批次評估都一樣，§3 已經把成本與作法算好，但**開跑前要拿本人當次授權**。
-> 不用問就能做的是唯讀的事：讀程式、讀既有產物（`logs/rl_probes/`、`logs/rl_a2/*/bc_progress.jsonl`）、寫文件、跑 `pytest`／`ruff`。
+> ★★ **2026-09-19 session 在「實驗做一半」時收尾**（本人要求收尾交接）。**先讀 §0，它就是接手要做的事。**
+> 訓練與批次評估**開跑前仍要拿本人當次授權**；唯讀的事（讀程式、讀 `logs/`、寫文件、`pytest`／`ruff`）不用問。
 >
 > ⚠ **要讀就讀 `zip-rl` 這份**：本檔在每個 worktree 都有一份，別的 worktree 拿到的是那條分支
 > 上次 commit 的版本（`zip-vlm` 的副本停在 2026-08-15，還在說「A2 尚未開始」）。
 > 姊妹 track：[`handover-vlm-parser.md`](handover-vlm-parser.md)
+
+---
+
+## 0. ★ 2026-09-19：做了什麼、停在哪、接手第一件事
+
+完整數字與推理在 [報告](reports/2026-09-19_rl-epoch-sweep-and-exit.md)，流水帳在 `dev_log.md` 的 2026-09-19 RL 小節。
+
+### 一句話
+
+**掃完 epoch、ExIt 第一輪訓練完成、判定器全面改嚴格**（路必須停在最大數字）。
+**ExIt 在單次嘗試（deterministic）上大贏**（6×6 0.6455 vs 同 epoch 的 BC 0.5205），但那是**單 seed、舊的寬鬆尺**；
+**嚴格尺下的 BC vs ExIt 對照只量完 e4 一對**（det +0.059、bo32 +0.015），seed 雜訊沒量完 ⇒ **接手第一件事是把 §0.3 的 1、2 跑完**。
+
+### 0.1 ⚠ 量尺換了（最容易踩的坑）
+
+2026-09-19 起，**「解開」的定義多了一條：路必須停在最大數字上**（本人定案）。7 個判定器一起改：
+`rl_env_v2._is_solved`、`dfs.py`、`a_star.py`（兩版）、`cp.py`、`utils.calculate_fitness_score`、`solvers/verify.py`、`vl_models/score_predictions.path_is_legal`，
+由 `src/core/tests/test_end_on_last_number.py` 一次釘住。
+⇒ **2026-09-19 以前的所有 RL 數字（含本檔 §1 的 0.9953／0.9465，也含今天 sweep 的 e1–e6）都是寬鬆尺**。
+兩把尺的差距實測約 **−0.005**（6×6 bo32，`bc_multi_456_e6`：0.948 → 0.9435，用收集器的抽樣量的），在評估雜訊內，
+**但比較兩個方法時兩邊必須同一把尺**。嚴格尺的產物一律帶 `strict_` 前綴。
+服務中的 RL solver 走的是同一個 env ⇒ **現在只會回傳停在最大數字的路**。
+
+### 0.2 已完成（都有產物）
+
+| 項目 | 結果 | 產物 |
+|---|---|---|
+| 掃 epoch（寬鬆尺，6×6 bo32）| e1 0.884、**e2–e5 平台 0.9595–0.967**（彼此差 <0.01，分不出贏家）、e6 0.9465、e10 0.8535；det 在 **e5 最高 0.5915**；bo1 隨 epoch 單調上升 | `logs/rl_probes/cross_size_bc_multi_456_sweep_e{1..6}_6x6_test.json`；權重 `models/rl_a2/bc_multi_456_sweep/checkpoints/model_epoch_{1..10}.zip` |
+| 決定性與量尺對照 | sweep 十個 epoch 的紀錄與 `bc_multi_456` **逐位相同**；sweep e6 重評**完全復現** 0.9465 | 同上 |
+| **多解實測** | 訓練題有別條解的比例（嚴格）：**4×4 54.1%／5×5 75.1%／6×6 87.5%**（下界，只數得到模型抽得到的）| `logs/rl_exit/exit_r1_e6_k32/summary.json`、`logs/rl_exit/endpoints_exit_r1_e6_k32.json` |
+| ExIt 收集 | 收集者 `bc_multi_456_e6`、訓練集 47,435 題 × 32 次、1,927 秒（CPU）⇒ **135,818 條停在最大數字的別條解、34,364 題** | `logs/rl_exit/exit_r1_e6_k32/solutions_strict.json` |
+| ExIt 第一輪訓練 | `exit_r1_e6k32`：與 sweep **同 seed、同順序、同步數**，唯一差別是標籤。**loss 地板 0.0709 vs 0.0337**（多解 ⇒ 最佳預測本來就該分散）| `models/rl_a2/exit_r1_e6k32/checkpoints/model_epoch_{1..10}.zip`、`logs/rl_a2/exit_r1_e6k32/` |
+| **ExIt e10 deterministic**（寬鬆尺、單 seed）| **4×4 0.9555／5×5 0.8451／6×6 0.6455**，對照 BC e10 0.9404／0.7496／0.5205（**+0.015／+0.095／+0.125**）| `logs/rl_a2/exit_r1_e6k32/eval_test.json` |
+| **嚴格尺 e4 對照**（6×6）| BC det 0.5495／bo32 0.9605／4.97 次 vs **ExIt det 0.6085／bo32 0.9755／4.57 次** ⇒ det **+0.059**、bo32 +0.015（<0.02、單 seed ⇒ 有動但未確證）；ExIt 兩頭都沒輸（PPO 微調是 det 升、bo32 降）| `logs/rl_probes/cross_size_strict_*_e4_6x6_test.json` |
+
+### 0.3 沒做完——接手依序做（都要先拿授權）
+
+GPU 預算：**同時只能跑 1 個 probe**（一個 probe 約佔 40% GPU 時間；2 個就 85%，超過 75% 上限）。
+`../hi-collab/scratch/probe_queue.ps1` 會自動排隊（也會等正在跑的 BC 訓練）。
+
+1. **嚴格尺的 BC vs ExIt 對照**（最重要，約 8.5 分鐘／點，10 點約 85 分鐘）：
+   ```powershell
+   cd linkedin-zip-challenge
+   powershell -NoProfile -ExecutionPolicy Bypass -Command "& ../hi-collab/scratch/probe_queue.ps1 -Jobs bc_multi_456_sweep:6,exit_r1_e6k32:6,exit_r1_e6k32:10,bc_multi_456_sweep:2,exit_r1_e6k32:2,bc_multi_456_sweep:5,exit_r1_e6k32:5,exit_r1_e6k32:8,bc_multi_456_sweep:10 -LabelPrefix strict"
+   uv run python ../hi-collab/scratch/summarise_probes.py strict_bc_multi_456_sweep_e4 strict_exit_r1_e6k32_e4 ...
+   ```
+   ⚠ 一定要用 `-Command "& ..."`，**不要用 `-File`**：`-File` 會把 `a:4,b:6` 當成一個字串。
+2. **seed 雜訊**（6×6 從來沒量過）：BC 與 ExIt 各多 2 個 seed（27182818、31415926），每次訓練約 10 分鐘 ＋ probe 贏家 epoch 約 8.5 分鐘，合計約 75 分鐘：
+   ```powershell
+   uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi --run-id bc_multi_456_sweep_s27182818 --seed 27182818 --epochs 10 --eval-episodes 0 --checkpoint-every-epoch
+   uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi --run-id exit_r1_e6k32_s27182818 --seed 27182818 --epochs 10 --eval-episodes 0 --checkpoint-every-epoch --extra-solutions logs/rl_exit/exit_r1_e6_k32/solutions_strict.json
+   ```
+   ⚠ 2026-09-19 收尾時這組是**中途停掉**的（BC s27182818 跑到 4 個 epoch，另兩個剛開始）。三個不完整的 run 目錄
+   （`logs/rl_a2/` 與 `models/rl_a2/` 各三個）**已軟刪除**到 `zip-rl/soft-delete/20260919-024456/linkedin-zip-challenge/…`
+   ⇒ 直接用同名 run id 重跑即可。（`bc_progress.jsonl` 是附加寫入，留著舊目錄會把新紀錄接在舊的後面。）
+3. **贏家補 4×4／5×5 的嚴格 best-of-32** ＋ 多樣性 probe（`../hi-collab/scratch/probe_diversity.py run_id:model_epoch_N`）做機制對照。
+4. **要不要把服務模型換成 ExIt 版由本人決定**（`solver_service.py` 的 `RUN_ID_BY_SIZE` 不屬於本 track）。
+5. **ExIt 第二輪**：用第一輪的贏家當收集者重跑 `collect_solutions.py`，再訓練一次——這才是真正的「迭代」。
+
+### 0.4 判讀時要記得
+
+- **ExIt 的 deterministic 大進步有兩個可能機制，還沒分開**：(a) 岔路口的多標籤讓策略把機率分給**所有合法走法**；
+  (b) 別條解走過**資料集沒有的局面**，等於更多樣的訓練狀態（像沒付專家成本的 DAgger）。要分開得另設一臂
+  （例如只在「資料集路徑上的局面」用多標籤）。
+- **寬鬆 vs 嚴格的數字不能混比**（§0.1）。
+- 6×6 的 seed 雜訊沒量過之前，0.0x 的差異一律標「有動但未確證」；+0.125 大概率是真的，但仍是單 seed。
 
 ---
 
@@ -41,7 +103,7 @@
 - ⚠ **但 deterministic 仍是比較「訓練設定」的唯一公平尺**（它沒有預算這個變數）。
   **拿 best-of-N 比兩種訓練方法＝拿「多花計算」冒充「變聰明」。**
 
-### 現況（2026-09-12）
+### 現況（2026-09-12；⚠ 下表是寬鬆尺，2026-09-19 的更新見 §0）
 
 **判定基準是 best-of-32**（2026-09-11 本人定案：練習用專案，不在 N=32 vs 64 上著墨）。
 
@@ -178,14 +240,14 @@ BC 的 val 選擇準確率 **epoch 6 就到頂**、epoch 10 反而退。
 | 順位 | 做什麼 | 修的是什麼 | 成本 | 正牌 RL？ |
 |---|---|---|---|---|
 | ~~1~~ | ~~**BC → PPO 微調**~~ | **✅ 2026-09-12 完成**（上一節）：單次準度升、多樣性降，best-of-32 淨損失 | 已花約 1.5h GPU | ✅ |
-| **1** | **ExIt／拒絕抽樣微調** | 用「搜尋」而不是「獎勵」：拿 best-of-N **解開的軌跡**當新標籤重訓。**現在它是最對題的**——微調輸在多樣性，而 ExIt 加進資料集的是「**同一題的其他解**」，直接對準 BC「只會資料集那一條解」的天花板 | 半天 | 介於 |
-| **2** | **掃 BC 的 epoch 找最佳點** | 早停已經證明「少訓練」是對的方向（`--epochs 6`：6×6 **best-of-32 0.8535 → 0.9465**、每題嘗試 7.76 → 5.24，同 seed 配對比較），**但只量過 6 與 10 兩點，最佳點可能更早**。作法與成本見下一節 | **約 1 小時 20 分**（不是每點 17 分鐘）| ❌ 監督式 |
+| **1** | **ExIt／拒絕抽樣微調** | **2026-09-19 第一輪訓練完成，嚴格尺對照與 seed 還沒做完 ⇒ 見 §0.3** | 剩約 2.5 小時 GPU | 介於 |
+| ~~2~~ | ~~**掃 BC 的 epoch 找最佳點**~~ | **✅ 2026-09-19 完成（寬鬆尺）**：e2–e5 是平台（bo32 0.9595–0.967），e6 開始下滑 ⇒ 見 §0.2 | 已花約 1 小時 | ❌ 監督式 |
 | 3 | **DAgger** | 走偏後沒訊號（專家＝CP-SAT，現成免費）| 半天 | ❌ 仍是監督式 |
 | 4 | **AlphaZero 式** | 長程規劃本身 | 1–2 天 | ✅ |
 
 **名詞不懂就去 [`notes/01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)**，那裡有白話對照與「為什麼這題 RL 的優勢用不到」。
 
-### ★ 掃 epoch 的現成配方（2026-09-12 算好成本與作法，**沒有開跑**）
+### 掃 epoch 的配方（2026-09-12 寫好、**2026-09-19 照做完**；留著是因為設計理由還有效，結果見 §0.2）
 
 **為什麼它比之前估的便宜**：BC 的訓練軌跡對同一個 seed 是**決定性**的——`bc_multi_456`（10 epochs）與
 `bc_multi_456_e6`（6 epochs）是兩次獨立執行，`bc_progress.jsonl` 的**前六行逐位相同**
@@ -297,7 +359,7 @@ uv sync
 
 ```powershell
 cd D:\it_project\github_sync\zip-rl\linkedin-zip-challenge
-uv run pytest        # 2026-09-12 分支尾端實測 280 passed, 8 xfailed（同日較早的 commit 是 276）
+uv run pytest        # 2026-09-19 feat/rl-exit 尾端（含 main 的 Track C）實測 331 passed, 8 xfailed
 uv run ruff check .  # 期待 All checks passed!
 ```
 
@@ -327,7 +389,8 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/rl/rl_env_v2.py` | **主角**。一筆畫 env、`action_masks()`、反向 curriculum、死路終止 |
 | `src/core/rl/train_config.py` | **改設定只改這裡**：goal（盤面／牆／步數／門檻）、PPO、網路、curriculum、資源上限 |
 | `src/core/rl/train_maskable_ppo.py` | PPO 訓練：`GridScalarExtractor`、curriculum callback、checkpoint、評估 |
-| `src/core/rl/train_behaviour_cloning.py` | **2026-09-05 新增**。監督式暖啟動，產出與 PPO **同架構、可互換**的 checkpoint（BC 是**第三個** env 建構點，見陷阱 #24）|
+| `src/core/rl/train_behaviour_cloning.py` | **2026-09-05 新增**。監督式暖啟動，產出與 PPO **同架構、可互換**的 checkpoint（BC 是**第三個** env 建構點，見陷阱 #24）。2026-09-19 加了 `--checkpoint-every-epoch`、`--extra-solutions`（ExIt 的重標籤：每題每 epoch 從已知合法解均勻抽一條，用獨立亂數，不動打亂順序）、`--eval-episodes 0`（跳過結尾約 10 分鐘的評估）|
+| `src/core/rl/collect_solutions.py` | **2026-09-19 新增**。ExIt 的收集步驟：批次抽樣（1,024 局並行、一次前向）、每條解再用 `calculate_fitness_score` 獨立驗一次、寫出「≠ 資料集那條」的別條解 |
 | `src/core/rl/solver_service.py` | **2026-09-12 新增。唯一的服務端**：checkpoint 載入（lazy＋快取）、`puzzle` → env、best-of-N rollout。缺模型 503、尺寸不支援 400 |
 | `src/core/solvers/registry.py` | **solver 清單的唯一正本**（API／截圖端點／Gradio 都 import 它）|
 | `src/core/rl/baselines.py` | masked random／greedy 對照組 ＋ `evaluate()`。**評估 env 只能從 `make_eval_env()` 建** |
@@ -358,10 +421,10 @@ mask = env.action_masks()        # (4,) bool —— MaskablePPO 直接吃這個�
 
 | 想知道什麼 | 去哪 |
 |---|---|
-| **量過的數字、踩過的坑**（30 個陷阱 ＋ 28 條已驗證事實 ＋ 已定案的設計決策 ＋ 實驗編年史） | [`rl-traps-and-facts.md`](rl-traps-and-facts.md) ← **動手前掃一遍標題** |
+| **量過的數字、踩過的坑**（30 個陷阱 ＋ 35 條已驗證事實 ＋ 已定案的設計決策 ＋ 實驗編年史；2026-09-19 新增事實 #32–35、陷阱 #27–30） | [`rl-traps-and-facts.md`](rl-traps-and-facts.md) ← **動手前掃一遍標題** |
 | **名詞看不懂、判讀規則、推論怎麼跑**（做中學筆記）| [`notes/`](notes/)：[概念](notes/01-rl-methods-explained.md)、[判讀紀律](notes/02-reading-the-numbers.md)、[推論與上線](notes/03-inference-and-serving.md)、[決策紀錄](notes/2026-09-11-decisions-rl-track.md) |
 | **怎麼把服務起起來** | [`deployment-guide.md`](deployment-guide.md)（Docker 一鍵、驗收指令、常見失敗）|
-| 某個實驗**怎麼做、為什麼是那個結論** | [`reports/`](reports/)：**[收尾報告](reports/2026-09-12_rl-wrap-up.md)（最新，多尺寸／value-coef／A5／Docker）**、[A0 env 診斷](reports/2026-08-15_a0-env-v1-findings.md)、[預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md)（**§5 是 AlphaGo 對照與設計理由**）、[連通性特徵](reports/2026-09-05_rl-connectivity-feature.md)、[oracle 上界／best-of-N／搜尋](reports/2026-09-05_rl-lookahead-oracle.md)、**[行為克隆](reports/2026-09-05_rl-behaviour-cloning.md)**（**§4 是「BC 還算不算 RL」的完整論證**、§5 資料集複驗、§6 PPO 能不能成功）|
+| 某個實驗**怎麼做、為什麼是那個結論** | [`reports/`](reports/)：**[掃 epoch ＋ ExIt 第一輪 ＋ 判定器改嚴格](reports/2026-09-19_rl-epoch-sweep-and-exit.md)（最新）**、[收尾報告](reports/2026-09-12_rl-wrap-up.md)（多尺寸／value-coef／A5／Docker）、[A0 env 診斷](reports/2026-08-15_a0-env-v1-findings.md)、[預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md)（**§5 是 AlphaGo 對照與設計理由**）、[連通性特徵](reports/2026-09-05_rl-connectivity-feature.md)、[oracle 上界／best-of-N／搜尋](reports/2026-09-05_rl-lookahead-oracle.md)、**[行為克隆](reports/2026-09-05_rl-behaviour-cloning.md)**（**§4 是「BC 還算不算 RL」的完整論證**、§5 資料集複驗、§6 PPO 能不能成功）|
 | **某天做了什麼、量到什麼**（逆時序全記錄，1,900+ 行） | [`dev_log.md`](dev_log.md) ⚠ **不要整份讀**，用日期或關鍵字搜 |
 | 專案整體現況、兩條 track 的優先序 | [`roadmap.md`](roadmap.md) |
 | 原始作戰計畫、分階段 done 條件、A0–A6 路線 | [`plans/2026-08-15_track-rl-solver.md`](plans/2026-08-15_track-rl-solver.md) ＋ [restart plan（HTML，瀏覽器開）](reports/2026-08-15_rl-restart-plan.html) |

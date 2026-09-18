@@ -182,6 +182,16 @@
     **e6 0.8999**（頂）／e7 0.8970／e8 0.8863／e9 0.8891／e10 0.8891。
     ⚠ 它是 **pass@1 型訊號**，6 vs 10 那組已經證明它與 best-of-32 會分歧（e6 的 bo32 高 0.093、bo1 卻低 0.055）
     ⇒ **只能用來排除明顯太弱的 epoch，不能用來選 best-of-N 的贏家。**
+    **2026-09-19 再證一次**：val 準確率在 e4 是低點（0.8798），而 e4 是 bo32 最高的點（0.967，寬鬆尺）。
+32. **★★ BC 的 epoch 曲線（寬鬆尺，6×6 bo32）：e1 0.884、e2–e5 平台 0.9595–0.967、e6 0.9465、e10 0.8535。**
+    平台內相鄰差距 <0.01（評估雜訊內）⇒ **分不出贏家**；det 在 e5 最高（0.5915）、bo1 隨 epoch 單調上升。
+    （`logs/rl_probes/cross_size_bc_multi_456_sweep_e{1..6}_6x6_test.json`）
+33. **★★ 自家題大多多解**（嚴格規則、下界，`logs/rl_exit/exit_r1_e6_k32/summary.json`）：訓練題有別條解的比例
+    **4×4 54.1%／5×5 75.1%／6×6 87.5%**，解開的題平均相異解 2.37／4.06／5.34。出題器不檢查唯一解。
+34. **★★ ExIt 第一輪（10 epochs、同 seed）deterministic：4×4 0.9555／5×5 0.8451／6×6 0.6455**，
+    對照 BC 0.9404／0.7496／0.5205（寬鬆尺、**單 seed**）。訓練 loss 的地板 0.0709 vs BC 0.0337（多標籤的條件熵）。
+35. **★★ 2026-09-19 起判定規則多一條：路必須停在最大數字**（7 個判定器，`src/core/tests/test_end_on_last_number.py`）。
+    寬鬆 → 嚴格：sweep e4 的 bo32 0.967 → 0.9605、**det 0.576 → 0.5495**。**之前的數字全部是寬鬆尺，不能和之後的混比。**
 
 ---
 
@@ -337,6 +347,13 @@
     `warning: VIRTUAL_ENV=... does not match the project environment path .venv and will be ignored`。
     **`uv run` 會忽略它、用對的 venv，所以測試數字沒問題；但直接叫 `python` 就會跑進別條 track 的環境。**
     一律 `uv run`（陷阱 #2 的第二個理由）。
+27. **★★ GPU 預算卡的是 probe 並行數：同時只能 1 個。** probe 一次只餵一個觀測，一個約佔 40% GPU 時間（`nvidia-smi pmon`）；
+    2 個 = 84–88%、5 個 ＋ 訓練 = 98%（2026-09-19 實測，兩次都先停再修）。CPU 從來不是瓶頸。
+    用 `../hi-collab/scratch/probe_queue.ps1` 排隊（它也會等正在跑的 BC 訓練）。
+28. **★ `powershell -File x.ps1 -Epochs 6,2,3` 會把 `6,2,3` 當成一個字串**（`[int[]]` 讀成 623）⇒ 用 `-Command "& x.ps1 ..."`。
+29. **★ 停掉背景的「依序訓練」迴圈要先殺父 shell**：只殺子行程，迴圈會直接開下一個 run（2026-09-19 連開了兩次）。
+    用子行程的 `ParentProcessId` 找到那個 `powershell.exe`。
+30. **★ `bc_progress.jsonl` 是附加寫入**：同名 run id 重跑會把新紀錄接在舊的後面 ⇒ 不完整的 run 目錄先軟刪除再重跑。
 
 ---
 

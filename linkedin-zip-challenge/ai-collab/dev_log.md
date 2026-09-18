@@ -6,7 +6,7 @@
 
 ## 2026-09-19
 
-### RL Track — 掃 BC 的 epoch ＋ ExIt 第一輪（branch `feat/rl-exit`, worktree `zip-rl`）🚧 進行中
+### RL Track — 掃 BC 的 epoch ＋ ExIt 第一輪 ＋ 判定器改嚴格（branch `feat/rl-exit`, worktree `zip-rl`；實驗做一半時收尾）
 
 **本人當次授權**：「交給你規劃再來要幹嘛，然後就開工」⇒ 依 handover §3 的優先序自己排、直接開跑（不含 commit）。
 分支從 `a8c3626`（= `main` = `origin/main`）長出 `feat/rl-exit`。
@@ -39,10 +39,11 @@
 - 另踩到一個小坑：`powershell -File x.ps1 -Epochs 6,2,3` 會把 `6,2,3` 當成**一個字串**，`[int[]]` 讀成 `623`
   ⇒ probe 找不到 `model_epoch_6235781.zip` 當場失敗（沒產生任何數字）。改用 `-Command "& x.ps1 ..."`。
 
-**階段 1 數字（6×6 held-out 2,000 題，best-of-32，陸續補）**：
+**階段 1 數字（6×6 held-out 2,000 題，best-of-32；⚠ 這張是改判定器之前的「寬鬆尺」，嚴格尺的數字見下方）**：
 
 | epoch | det | bo1 | bo4 | bo16 | **bo32** | 次／題 @32 | val 選擇準確率 |
 |---|---|---|---|---|---|---|---|
+| 1 | 0.3860 | 0.1655 | 0.4545 | 0.7870 | 0.8840 | 9.97 | 0.8698 |
 | 2 | 0.5440 | 0.2905 | 0.6445 | 0.9165 | 0.9665 | 5.73 | 0.8856 |
 | 3 | 0.5600 | 0.3330 | 0.6995 | 0.9185 | 0.9605 | 5.39 | 0.8884 |
 | 4 | 0.5760 | 0.3755 | 0.7350 | **0.9350** | **0.9670** | 4.82 | 0.8798 |
@@ -50,8 +51,9 @@
 | 6（已發表）| 0.5430 | 0.4265 | 0.7375 | 0.9100 | 0.9465 | 5.24 | 0.8999 |
 | 10（已發表，= sweep e10）| 0.5205 | 0.4810 | 0.6935 | 0.8075 | 0.8535 | 7.76 | 0.8891 |
 
-⇒ **e4 比 e6 再高 +0.0205（bo32）**，而且 **det 也更高**（0.576 vs 0.543）——val 選擇準確率在 e4 反而是低點（0.8798），
-再次證明 val 準確率不能拿來挑 epoch。
+⇒ **e2–e5 是一段平台**（bo32 0.9595–0.967，彼此差距都在 ±0.01 評估雜訊內，分不出贏家），**e6 開始往下**（0.9465），e10 掉到 0.8535；
+e1 明顯訓練不足（0.884）。**det 在 e5 最高**（0.5915）、**每題嘗試次數也在 e5 最少**（4.64）；bo1 則隨 epoch 單調上升——
+「訓練越久越尖」再一次成立。val 選擇準確率在 e4 反而是低點（0.8798），再次證明 val 準確率不能拿來挑 epoch。
 **✅ 量尺對照通過**：sweep 的 e6 重評 det／bo1／bo2／bo4／bo8／bo16／bo32／次數 **全部與已發表的逐位相同**
 （0.543／0.4265／0.595／0.7375／0.84／0.91／0.9465／5.24；`logs/rl_probes/cross_size_bc_multi_456_sweep_e6_6x6_test.json`）
 ⇒ 改過的 probe 沒換尺，這張表的數字可以採信。
@@ -98,6 +100,45 @@ env 的 `_is_solved`、`dfs.py`、`calculate_fitness_score` **三個判定器都
 **階段 2b：ExIt 第一輪訓練**（2026-09-19 02:24 開跑 `exit_r1_e6k32`，34,364 題有別條解、全部對得上訓練集的 key）：與 `bc_multi_456_sweep` **同 seed、同 10 epochs、同打亂順序**
 （選標籤用獨立的 `random.Random(seed)`，全域 `random` 的抽取與 sweep 完全相同），**唯一差別是每題每個 epoch 從「資料集那條 ＋ 嚴格別條解」均勻抽一條當標籤**。
 同一題所有解長度相同（都走滿所有格），所以每個 epoch 的梯度步數也相同。
+02:34 訓練完成。**機制先看到了**：訓練 loss 在 e10 停在 **0.0709**（sweep 是 0.0337）——
+同一個局面有好幾個合法答案時，最好的預測就是把機率分給它們，loss 有一個**降不下去的地板**（標籤分布的條件熵），
+模型不能再靠「押死一條路」把 loss 壓到 0。這正是 ExIt 想要的「保住多樣性，而且是分給合法的走法」。
+e1 的 loss 幾乎一樣（0.165142 vs 0.16514），符合「前期標籤差異影響小」。
+
+**★ 判定器全面改嚴格（本人當次授權：「7 處全改」＋ commit／merge，不含 push）**：
+1. 先 commit 目前工作：`c01d5e6`（程式）、`464c389`（文件）；再把 `main`（Track C 已合入，含新的 `verify.py`）merge 進來：`f7f2c18`，
+   唯一衝突是 `dev_log.md`（兩邊都保留）；merge 後 **322 passed, 8 xfailed**。
+2. 七處改成同一條規則「**路必須停在最大數字上**」：`rl_env_v2._is_solved`、`dfs.py`、`a_star.py`（兩個版本）、
+   `cp.py`（加 `rank[最後一個數字] == 最後一格`）、`utils.calculate_fitness_score`（jackpot 條件）、`solvers/verify.py`（API 的判定器）、
+   `vl_models/score_predictions.path_is_legal`。判定器**刻意各自獨立**（`verify.py` 就是為了不讓啟發式被自己優化的分數評分），
+   所以沒有抽共用函式，改在一支測試裡**一次釘住七個**：`src/core/tests/test_end_on_last_number.py`（9 個）。
+   用的是 2×2 盤面：DFS 先試「往右」，**舊版 DFS 真的會回傳那條走過最大數字還繼續走的路**、舊版 `verify` 也接受它（用 git 裡的舊檔實跑確認過）
+   ⇒ 這個測試分得出兩種規則。
+3. `collect_solutions.py` 前一小時加的終點過濾**變成多餘**（env 與評分器都已嚴格）⇒ 拿掉，不留死程式碼。
+4. 全體 **331 passed, 8 xfailed**、ruff 全綠 ⇒ 沒有任何既有測試依賴寬鬆規則（出題器本來就只出「停在最大數字」的題）。
+- ⚠ **量尺換了**：RL 所有 best-of-N 數字都要用嚴格尺重量。已發表的數字（包括今天 sweep 的 e1–e6）都是**寬鬆尺**，
+  兩把尺的差距實測約 −0.005（6×6 bo32）。02:37 起用嚴格尺重跑 sweep 與 ExIt 的主要 epoch（產物前綴 `strict_`）。
+- ⚠ VLM 的端到端指標（`solution_valid_on_truth`）也用 `path_is_legal`＋`cp.py`，兩邊都變嚴格；**沒有重跑 VLM 的評估**
+  （CP-SAT 現在只回傳停在最大數字的路，而真實盤面的標準答案也停在那裡，預期不變，但未驗證）。
+
+**收尾（本人 02:43 要求「先把這個 session 收尾，交接文件好好寫，main 要是最新進度」）**：
+- 嚴格尺只量完 **e4 一對**（6×6，`logs/rl_probes/cross_size_strict_*_e4_6x6_test.json`）：
+
+  | 6×6 嚴格尺 | det | bo1 | bo4 | bo16 | bo32 | 次／題 @32 |
+  |---|---|---|---|---|---|---|
+  | BC e4 | 0.5495 | 0.3800 | 0.7225 | 0.9245 | 0.9605 | 4.97 |
+  | **ExIt e4** | **0.6085** | 0.3775 | **0.7485** | **0.9370** | **0.9755** | **4.57** |
+
+  ⇒ det **+0.059**、bo32 +0.015（<0.02、單 seed ⇒ 有動但未確證）、每題少試 0.4 次；ExIt **兩頭都沒輸**（PPO 微調是 det 升、bo32 降）。
+
+- **停掉的**：seed 訓練（BC s27182818 跑到 4 個 epoch、另兩個剛開始）與後續 10 個嚴格尺 probe。
+  三個不完整的 run 目錄（`logs/rl_a2/` 與 `models/rl_a2/` 各三個：`bc_multi_456_sweep_s27182818`、`exit_r1_e6k32_s27182818`、`bc_multi_456_sweep_s31415926`）
+  **軟刪除**到 `zip-rl/soft-delete/20260919-024456/linkedin-zip-challenge/…`（保留原相對路徑；還原＝搬回原位）。
+- 新增的評分小工具（不進版控）：`../hi-collab/scratch/probe_queue.ps1`（依 GPU 預算排隊）、`summarise_probes.py`（從產物印表，不手抄）、
+  `analyse_endpoints.py`、`filter_strict_solutions.py`；`probe_cross_size.py` 加 `--checkpoint`／`--label`，`probe_diversity.py` 接受 `run_id:checkpoint`。
+- `train_behaviour_cloning.py` 另加 `--eval-episodes 0`（跳過結尾約 10 分鐘的單觀測評估；seed 跑只需要 probe）。
+- 接手要做的事（嚴格尺對照、seed、服務模型要不要換、ExIt 第二輪）連指令與成本寫在
+  [`handover-rl-solver.md`](handover-rl-solver.md) §0.3；報告 [`reports/2026-09-19_rl-epoch-sweep-and-exit.md`](reports/2026-09-19_rl-epoch-sweep-and-exit.md)。
 
 ### Solvers Track — 兩個定案：`budget_seconds` 不做、PSO 下架但保留，並量出 PSO 在 4×4／6×6 的分數（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
 

@@ -43,7 +43,10 @@ src/core/solvers/verify.py       ← is_solution(puzzle, path)：唯一的裁判
 第一步之後不再檢查 blocked cell；負座標會從網格另一側繞回去索引而不是報錯。
 
 `verify.py` 用的是精確 solver 的停止條件（`dfs.py` 的 base case，`rl_env_v2._is_solved` 同源）：
-每個開放格恰好走一次、每步相鄰且不穿牆、從 1 出發、數字依序收集，**不要求結束在最後一個數字上**。
+每個開放格恰好走一次、每步相鄰且不穿牆、從 1 出發、數字依序收集、**結束在最後一個數字上**。
+⚠ 最後這條是 **2026-09-19 本人定案後才加的**（RL track 的 `feat/rl-exit`）：之前全專案 7 個判定器（env、`dfs.py`、A* 兩版、`cp.py`、
+fitness jackpot、本檔、VLM 的 `path_is_legal`）都接受「收完最大數字還繼續走」的路；現在一律要求停在最大數字，
+由 `src/core/tests/test_end_on_last_number.py` 一次釘住。細節見 `dev_log.md` 2026-09-19 RL 小節。
 
 ## 3. 已驗證的事實（都是一手實測，不是估計）
 
