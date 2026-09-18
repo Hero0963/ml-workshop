@@ -4,7 +4,7 @@
 > `CLAUDE.md` 只用 `@AGENTS.md` 載入本檔，不另外維護內容。
 > **子專案有自己的正本**：進某個子專案工作，以該子專案的 `AGENTS.md` 為準（見 §8）。
 > 適用對象：AI coding agent（Claude Code／Codex／Gemini CLI…）與本人。
-> Last Updated: 2026-08-29
+> Last Updated: 2026-09-19
 
 ---
 
@@ -303,5 +303,9 @@ git push origin main
 
 - 每條 track **自己 commit 自己的分支**（commit 需當次授權，單獨說 commit **不含** push）。
 - 合併前該 track 要自己跑過 `uv run pytest` ＋ repo 根 `uv run pre-commit run --all-files`。
+  ⚠ **worktree 根目錄不一定有 devtools 的 `.venv`**（2026-09-19：`zip-infra`／`zip-rl` 有，`zip-vlm`／`zip-solvers` 沒有）。
+  沒有的話不必另建：git 的 pre-commit hook 本來就指向主 checkout 的 `ml-workshop\.venv\Scripts\python.exe`，
+  在 worktree 根目錄用同一個直譯器跑即可（2026-09-19 在 `zip-solvers` 實測）：
+  `..\ml-workshop\.venv\Scripts\python.exe -m pre_commit run --all-files`
 - track 結束時更新自己的 `handover-<track>.md`，**下一個接手的人只讀那一份就要能開工**。
 - **一次合併一條**進 `main`，合完再合下一條。

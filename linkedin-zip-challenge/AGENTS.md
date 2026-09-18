@@ -3,7 +3,7 @@
 > **本檔是這個子專案的操作規範正本。** `CLAUDE.md` 只用 `@AGENTS.md` 載入本檔。
 > repo 級規範（monorepo 地圖、venv 分工、紅線）在 [`../AGENTS.md`](../AGENTS.md)；Python 程式碼風格在 [`../rules.md`](../rules.md)。
 > **衝突時以本檔為準**（較具體者優先）。
-> Last Updated: 2026-08-29
+> Last Updated: 2026-09-19
 
 ---
 
@@ -21,7 +21,8 @@
 
 1. 看 SessionStart 簡報（分支／最近 commit／工作區狀態／下一步）。
 2. **接手進行中的 track → 先讀該 track 的交接文件**，那一份是自足的：環境建置、已驗證事實、下一步、
-   陷阱清單、該讀哪些延伸文件都在裡面。目前有兩條並行的 track：
+   陷阱清單、該讀哪些延伸文件都在裡面。目前有三條 track 各有一份：
+   - 全部 solver 上 API／Gradio／Svelte（roadmap 第 1 項）→ [`ai-collab/handover-solvers.md`](ai-collab/handover-solvers.md)
    - VLM 圖片解析（roadmap 第 2 項）→ [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)
    - RL solver（roadmap 第 3 項）→ [`ai-collab/handover-rl-solver.md`](ai-collab/handover-rl-solver.md)
 3. 讀 [`ai-collab/roadmap.md`](ai-collab/roadmap.md)——**現況、下一步、已定案不要再重開的決策**。
@@ -38,7 +39,7 @@
 |------|------|
 | `AGENTS.md`（本檔） | 操作規範正本：流程、環境、驗證、任務地圖、紅線 |
 | `CLAUDE.md` | 只有一行 `@AGENTS.md` |
-| `ai-collab/handover-<track>.md` | **各 track 的交接文件**：接手該 track 的第一站，自足到讀完就能動手（現有 `handover-vlm-parser.md`、`handover-rl-solver.md`）。track 告一段落就更新 |
+| `ai-collab/handover-<track>.md` | **各 track 的交接文件**：接手該 track 的第一站，自足到讀完就能動手（現有 `handover-solvers.md`、`handover-vlm-parser.md`、`handover-rl-solver.md`）。track 告一段落就更新 |
 | `ai-collab/roadmap.md` | **現況與下一步**。新 session 第一站；每次做完事要更新 |
 | `ai-collab/project_guide.md` | 架構、模組職責、資料流、啟動方式 |
 | `ai-collab/dev_log.md` | 開發日誌（逆時序，最新在上）。做完一段就加一則 |
