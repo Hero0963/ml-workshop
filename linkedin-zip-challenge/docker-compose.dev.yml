@@ -25,6 +25,8 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile.dev  # <--- Points to the .dev Dockerfile
+    # x86_64 only, because torch 2.4.1+cu121 is: see docker-compose.yml.
+    platform: linux/amd64
     ports:
       - "${APP_PORT:-7440}:${APP_PORT:-7440}"
     env_file:

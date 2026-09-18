@@ -34,8 +34,9 @@ WORKDIR /app
 # Copy dependency description files
 COPY pyproject.toml uv.lock pytest.ini ./
 
-# Install all dependencies
-RUN uv sync
+# Install all dependencies. `--locked` fails the build if uv.lock no longer matches
+# pyproject.toml, instead of quietly re-resolving to versions nobody tested.
+RUN uv sync --locked
 
 # Copy the application source code
 COPY src ./src

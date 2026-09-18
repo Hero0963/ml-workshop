@@ -23,6 +23,11 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
+    # torch 2.4.1+cu121 has Linux wheels for x86_64 only (uv.lock), so a native build on
+    # an ARM host (Apple Silicon, ARM Linux) fails in `uv sync`. Pinning the platform makes
+    # such a host build and run the x86_64 image under emulation: slower, but it works.
+    # On an x86_64 host this changes nothing.
+    platform: linux/amd64
     ports:
       - "${APP_PORT:-7440}:${APP_PORT:-7440}"
     env_file:

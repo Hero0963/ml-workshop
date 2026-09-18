@@ -80,4 +80,18 @@ Docker：`zip-app-zip-infra` 在 7440 跑舊程式（`babc1cb`）；`zip_ollama_
 
 ## 4. 各階段筆記（邊做邊記）
 
-（空）
+### S3 修 issue（進行中）
+
+**已確認並修掉**（commit 見 git log）：
+
+| # | 問題 | 證據 | 修法 | 已驗 |
+|---|---|---|---|---|
+| A | `start.py` 在 Python 3.9 直接崩潰（macOS 內建 `python3` 是 3.9） | `TypeError: unsupported operand type(s) for \|` @ `start.py:123` | `from __future__ import annotations` | py3.9 `--help`／`--status` ✅、py3.11 ✅、ruff ✅ |
+| B | 無 NVIDIA GPU 的機器，`start.py` 起 ollama 失敗就 `sys.exit`，app 根本不起 | Docker 錯誤 `could not select device driver "nvidia" with capabilities: [[gpu]]`（ragflow#9573） | `ensure_ollama()` 改非致命、回傳 bool；失敗就跳過等 ollama 的 60 秒 | 待故障注入實測 |
+| C | Ollama 起來 ≠ 視覺模型在；陌生人只會在上傳時才看到 503 | `report_ollama` 只列模型不比對 | 比對 `.env` 的 `OLLAMA_MODEL_NAME`，缺就明說並指向 README「Model weights」 | 待實測 |
+| D | torch 只有 `linux_x86_64`／`win_amd64` wheel ⇒ ARM 主機（Apple Silicon）原生建置 `uv sync` 失敗 | `uv.lock` 只列兩個 wheel | 兩份 app compose 加 `platform: linux/amd64`（x86 主機無差別） | compose config ✅；**ARM 無法實測** |
+| E | Dockerfile `uv sync` 沒鎖 lockfile | uv 官方 Docker 指南建議 `uv sync --locked` | 兩份 Dockerfile 改 `--locked` | 待冷建置實測 |
+
+**實測計畫**：本機 `git clone` 本分支到 scratchpad（ASCII 路徑）→ `docker compose build --no-cache --pull` →
+停掉佔 7440 的 `zip-app-zip-infra`（`docker stop`，可 `docker start` 還原）→ `python start.py` →
+API 各 solver、RL 503、放入 14 MB checkpoint 後 RL 200、視覺模型缺席訊息、無 GPU 故障注入。

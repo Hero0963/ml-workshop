@@ -12,7 +12,8 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock pytest.ini ./
 
-RUN uv sync
+# `--locked`: fail on a stale uv.lock rather than re-resolve. See .devcontainer/Dockerfile.
+RUN uv sync --locked
 
 COPY src ./src
 

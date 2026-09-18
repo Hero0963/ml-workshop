@@ -20,7 +20,13 @@ Two kinds of service, two kinds of identity:
   checkout: its compose project is named after the checkout directory. It used to take
   the default -- the name of this directory, which is `linkedin-zip-challenge` in every
   worktree -- so `up` in one worktree silently replaced the stack another was running.
+
+It runs on the host's own Python, not the project's 3.11 venv, so it has to work on
+whatever `python3` a newcomer has: macOS still ships 3.9, where `str | None` in a
+signature is a TypeError unless annotations are deferred.
 """
+
+from __future__ import annotations
 
 import argparse
 import json
@@ -61,6 +67,8 @@ RL_CHECKPOINT = (
     / "checkpoints"
     / "model_final.zip"
 )
+# Where a newcomer learns how to get both models. Neither is in version control.
+WEIGHTS_DOC = "README.md, section 'Model weights'"
 
 
 def say(message: str) -> None:
@@ -142,19 +150,29 @@ def ollama_running() -> bool:
     return probe.stdout.strip() == "true"
 
 
-def ensure_ollama() -> None:
+def ensure_ollama() -> bool:
     """Starts the machine's Ollama when it is not running; never touches a running one.
 
     `up` on a running one is not a no-op: its `./models` mount is a path inside whichever
     checkout started it, so from any other checkout compose sees a changed service and
     recreates it -- unloading the model under whoever is using it.
+
+    A failure is not fatal. The container reserves an NVIDIA GPU, so on a machine without
+    one `up` fails -- and only screenshot reading needs it, not the app.
     """
     if ollama_running():
         say(
             f"Ollama ({OLLAMA_CONTAINER}) is already running; it is shared, left as is."
         )
-        return
-    compose(["up", "-d"], OLLAMA_COMPOSE)
+        return True
+    if compose(["up", "-d"], OLLAMA_COMPOSE, check=False) == 0:
+        return True
+    say(
+        "Ollama did not start. It reserves an NVIDIA GPU, so this is expected on a machine "
+        "without one (or without the NVIDIA container toolkit). `Solve from Screenshot` "
+        "will be unavailable; the app and every solver still start."
+    )
+    return False
 
 
 def wait_for_health(port: str) -> bool:
@@ -174,9 +192,14 @@ def wait_for_health(port: str) -> bool:
     return False
 
 
-def report_ollama(port: str) -> None:
-    """Reports the vision model's availability. Never fatal: only /api/vision needs it."""
+def report_ollama(port: str, model: str) -> None:
+    """Reports the vision model's availability. Never fatal: only /api/vision needs it.
+
+    Ollama being up is not the same as the model being there: the fine-tuned tag is
+    imported by hand, so on a fresh machine Ollama answers and the model is missing.
+    """
     url = f"http://127.0.0.1:{port}/api/tags"
+    wanted = model if ":" in model or not model else f"{model}:latest"
     deadline = time.time() + OLLAMA_TIMEOUT_SECONDS
     while time.time() < deadline:
         try:
@@ -185,6 +208,12 @@ def report_ollama(port: str) -> None:
                     m["name"] for m in json.loads(response.read()).get("models", [])
                 ]
                 say(f"Ollama is up. Models: {names or '(none pulled yet)'}")
+                if wanted and wanted not in names:
+                    say(
+                        f"The vision model {wanted} is not in this Ollama, so "
+                        "`Solve from Screenshot` will answer 503 until it is imported. "
+                        f"See {WEIGHTS_DOC}."
+                    )
                 return
         except Exception:
             time.sleep(HEALTH_POLL_SECONDS)
@@ -200,7 +229,7 @@ def report_rl_weights() -> None:
     else:
         say(
             "No RL checkpoint under models/ -- the `RL (behaviour cloning)` solver will "
-            "answer 503. Every other solver works. See ai-collab/deployment-guide.md."
+            f"answer 503. Every other solver works. See {WEIGHTS_DOC}."
         )
 
 
@@ -257,7 +286,7 @@ def main() -> None:
 
     ensure_env_file()
     env = read_env()
-    ensure_ollama()
+    ollama_started = ensure_ollama()
 
     # Prod and dev of one checkout publish the same host port, so they are alternatives:
     # starting one stops the other.
@@ -279,7 +308,11 @@ def main() -> None:
         )
 
     healthy = wait_for_health(env.get("APP_PORT", DEFAULT_APP_PORT))
-    report_ollama(env.get("OLLAMA_HOST_PORT", DEFAULT_OLLAMA_PORT))
+    if ollama_started:
+        report_ollama(
+            env.get("OLLAMA_HOST_PORT", DEFAULT_OLLAMA_PORT),
+            env.get("OLLAMA_MODEL_NAME", ""),
+        )
     report_rl_weights()
     if not healthy:
         say(f"Look at the logs:  docker compose -p {project} logs -f {APP_SERVICE}")
