@@ -218,7 +218,7 @@ puzzle_06.png 7x7  0  True  0
 
 ```powershell
 "007811","007817","007841","007807" | ForEach-Object {
-  $img  = (Get-ChildItem "datasetsl\main_6x6\images\$_.*").FullName
+  $img  = (Get-ChildItem "datasets\vl\main_6x6\images\$_.*").FullName
   $json = curl.exe -s -X POST http://localhost:7440/api/vision/solve -F "image=@$img" | ConvertFrom-Json
   [pscustomobject]@{ 檔案 = Split-Path $img -Leaf; 牆 = $json.walls.Count; 有解 = $json.solvable }
 } | Format-Table -AutoSize
@@ -431,7 +431,7 @@ logs/vision/
 所以你**手動幫某幾行補上 `label`**，現成的 scorer 就能直接算：
 
 ```powershell
-uv run python -m src.core.vl_models.score_predictions logsision\metadata.jsonl
+uv run python -m src.core.vl_models.score_predictions logs\vision\metadata.jsonl
 ```
 
 `label` 的格式就是模型該吐的那個 JSON 字串。最省事的做法是：

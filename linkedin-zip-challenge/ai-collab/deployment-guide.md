@@ -1,5 +1,7 @@
 # 部署指南 — 用 Docker 起整個服務
 
+> ★ **2026-09-19 專案收尾**：用全新 clone 重新驗收一次，並修掉陌生人會撞到的六個問題（Python 3.9、沒有 GPU、ARM、lockfile、浮動標籤、模型缺席提示），見新增的 [§10](#10-2026-09-19-收尾全新-clone-驗收與修正)。兩個模型的權重不在版控，怎麼取得見 [`model-weights.md`](model-weights.md)。
+>
 > 2026-09-12 實測寫成（分支 `feat/rl-a2-training`），同日在分支 `feat/infra-slim-image` 做了兩件事並整份重新驗收：
 > **app image 瘦身**（22.9 GB → 5.86 GB）與**根治 worktree 撞名**（app 每個 checkout 一組、ollama 整台機器一個）。
 > 每一條指令與輸出都跑過，沒跑過的會標「未驗」。
@@ -35,7 +37,7 @@ image 建好之後，`start.py` 從 `up` 到 health 200 約 **10 秒**（dev 約
 
 | 容器 | compose 專案 | 是什麼 | 埠 | 要 GPU 嗎 |
 |---|---|---|---|---|
-| `zip-app-<checkout>-zip-challenge-app-1` | `zip-app-<checkout>`（**每個 checkout 一個**）| FastAPI ＋ Gradio ＋ 已建好的 Svelte 編輯器 ＋ **4 種 solver（含 RL）** | `APP_PORT`（預設 `7440`）| ❌ 不用 |
+| `zip-app-<checkout>-zip-challenge-app-1` | `zip-app-<checkout>`（**每個 checkout 一個**）| FastAPI ＋ Gradio ＋ 已建好的 Svelte 編輯器 ＋ **9 種 solver（含 RL）**（2026-09-12 時是 4 種，Track C 之後全部上線、PSO 下架） | `APP_PORT`（預設 `7440`）| ❌ 不用 |
 | `zip_ollama_server` | `zip-ollama`（**整台機器一個**）| 服務微調過的視覺語言模型，`/api/vision/solve` 靠它讀截圖 | `11435`（對外）→ `11434`（容器內）| ✅ 要 |
 
 `<checkout>` 是 `linkedin-zip-challenge` 的**上一層目錄名**：主 checkout 是 `ml-workshop`，worktree 是 `zip-infra`、`zip-rl`……
@@ -157,7 +159,7 @@ RL solver 需要訓練好的 checkpoint，而 **`models/` 有 9.7 GB 且不進�
 所以它是**唯讀掛載**進容器的（`./models:/app/models:ro`），不是烤進 image：
 
 - image 因此不會膨脹，`.dockerignore` 也把 `models/`、`datasets/`、`logs/` 全排除；
-- 沒有 checkpoint 的機器**照樣起得來**——RL solver 回 **503**，其他三種 solver 正常。
+- 沒有 checkpoint 的機器**照樣起得來**——RL solver 回 **503**，其他 solver 正常。
 - 掛的是**這個 checkout 的** `models/`。新 worktree 沒有它（不進版控），要測 RL 就從別的 worktree 複製
   `models/rl_a2/bc_multi_456_e6`（14 MB）過來。
 
@@ -169,8 +171,10 @@ uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi \
     --run-id bc_multi_456_e6 --epochs 6 --eval-split test --eval-episodes 1
 ```
 
-權重刻意不進版控、也不對外託管：資料是程序化生成的、訓練 5 分鐘、CPU 也跑得動
-⇒ **權重是「一個指令的產物」，不是要分發的檔案**。
+~~權重刻意不進版控、也不對外託管：權重是「一個指令的產物」，不是要分發的檔案。~~
+**2026-09-19 更正**：上面那個指令讀的資料集 `datasets/` 不進版控，而出題器用牆鐘逾時、重生是**另一包題目** ⇒
+陌生人照做得到的是「同配方的另一個模型」，數字不會逐位相同。**要重現已發表的數字只能拿同一個檔**，
+所以改成建議放 GitHub Release（14 MB）——提案與安裝步驟見 [`model-weights.md`](model-weights.md)。
 
 目前服務的 checkpoint（`src/core/rl/solver_service.py` 的 `RUN_ID_BY_SIZE`）：
 
@@ -326,3 +330,60 @@ uv run python -m src.app.main       # http://127.0.0.1:7440/ui
 
 這條路不會有 ollama，`/api/vision/solve` 需要另外自己跑一個：`docker compose -f docker-compose.ollama.yml up -d`
 （`.env` 的 `OLLAMA_PROVIDER_URL` 預設指向 `http://127.0.0.1:11435/v1`，也就是它對外開的那個埠）。
+
+---
+
+## 10. 2026-09-19 收尾：全新 clone 驗收與修正
+
+**做法**：把收尾分支 `git clone` 到一個全新目錄（沒有 `.env`、沒有 `models/`、CRLF 換行），`--no-cache --pull` 冷建置，再用 Python 3.9 跑 `start.py`。
+完整數字與原始 JSON：[收尾報告](reports/2026-09-19_project-wrap-up.md) §2、[`reports/artifacts/wrap-up-acceptance/`](reports/artifacts/wrap-up-acceptance/)。
+
+### 10.1 修掉的六件事
+
+| 問題 | 修法 |
+|---|---|
+| `start.py` 在 Python 3.9（macOS 內建）`TypeError` | `from __future__ import annotations` |
+| 沒有 NVIDIA GPU ⇒ ollama `up` 失敗 ⇒ `start.py` 中止、app 不起 | ollama 改非致命：印出原因，照常起 app，並跳過等 ollama 的 60 秒 |
+| Ollama 在跑 ≠ 視覺模型在 | `start.py` 比對 `.env` 的 `OLLAMA_MODEL_NAME`，缺就說並指向 README 的「Model weights」 |
+| torch 只有 x86_64 的 Linux wheel ⇒ ARM 主機原生建置失敗 | 兩份 app compose 加 `platform: linux/amd64`（**ARM 未實測**）|
+| `uv sync` 沒鎖 lockfile | 兩份 Dockerfile 改 `uv sync --locked` |
+| 浮動標籤 `node:lts-alpine`、`ollama/ollama:latest` | 釘 `node:24-alpine`、`ollama/ollama:0.32.13`（實測過的版本）|
+
+⚠ ollama 換成釘版本的標籤後，**下一次 `up` 會重建 `zip_ollama_server` 容器**（volume 與模型都在，不會重下載模型）。
+
+### 10.2 驗收結果（摘要）
+
+| 項目 | 結果 |
+|---|---|
+| 冷建置 | 88 秒（`uv sync --locked` 73.8 秒）、image 5.86 GB |
+| 容器內 `pytest` | 331 passed, 8 xfailed |
+| 9 種 solver（HTTP、答案用 `verify.is_solution` 判）| 精確解 5 盤全解；RL 無權重 503、7×7 400；放入權重不重啟即可解 |
+| 讀圖（有權重）| 全新合成 6/6、held-out 4/4、真實截圖 6 張與 §3.5 預期表逐列相同；模型缺席回 503 |
+| 無 GPU（故障注入）| `start.py` 沒中止、app 照常起 |
+| 開發版 | app healthy、`--reload`、vite 5173 回 200 |
+
+### 10.3 ⚠ 新坑：WSL mirrored networking 讓埠轉發失效
+
+症狀：容器都 healthy（容器內打 health 200），但主機連 `127.0.0.1:7440`、`:11435` 都失敗，`netstat` 看不到有人在聽；
+**跟本專案無關的最小容器（`python -m http.server`）也一樣**，重啟 Docker Desktop 無效。
+原因：`%USERPROFILE%\.wslconfig` 的 `networkingMode=mirrored` 與 Docker Desktop 的埠轉發衝突
+（[microsoft/WSL#10494](https://github.com/microsoft/WSL/issues/10494)）。app 連 ollama 走的也是主機埠，所以讀圖也會一起壞。
+處理：註解掉那一行 → `wsl --shutdown` → 重開 Docker Desktop。
+
+⚠ **重啟 Docker Desktop 前先看有沒有 `restart=always` 的容器**：守護程序重啟時，它們即使原本是停止的也會被拉起來
+（2026-09-19 實際發生：四個別專案的容器被拉起，其中一個吃掉約 50% CPU）。
+`docker ps` 沒有 restart-policy 這個 filter（實測回 `invalid filter`），要用
+`docker inspect -f '{{.Name}} {{.HostConfig.RestartPolicy.Name}}' $(docker ps -aq)` 查。
+
+### 10.4 自己重跑驗收
+
+```bash
+# 服務起來之後，在 app 容器裡跑（主機埠壞掉時也能用）
+APP=zip-app-<checkout>-zip-challenge-app-1
+docker cp ai-collab/reports/artifacts/wrap-up-acceptance/acceptance.py $APP:/tmp/acceptance.py
+docker exec -w /app -e PYTHONPATH=/app $APP uv run python /tmp/acceptance.py --out /tmp/result.json
+# 讀圖：先出幾張新圖（標準答案在 metadata.jsonl），再用 vision_check.py 比對
+uv run python -m src.core.vl_models.dataset_builder --count 6 --name mytest --seed 919000000
+```
+
+**未驗**：主機端 `start.py` 輪詢 health、瀏覽器裡的 Svelte 端到端（本機 mirrored 模式下測不到，見 10.3）；ARM 主機；沒有 GPU 時的 CPU 讀圖。

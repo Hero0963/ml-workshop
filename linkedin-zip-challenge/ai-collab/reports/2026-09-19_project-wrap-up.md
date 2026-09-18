@@ -51,7 +51,7 @@
 | # | 問題 | 誰會撞到 | 修法 | 驗證 |
 |---|---|---|---|---|
 | A | `start.py` 在 **Python 3.9** 直接 `TypeError` | macOS 內建的 `python3` 就是 3.9；README 卻說「只要 Python 3」| `from __future__ import annotations` | 3.9 與 3.11 都實跑 |
-| B | **沒有 NVIDIA GPU** 時 Ollama 起不來，`start.py` 就整個中止，app 根本不起 | 所有 Mac、沒獨顯的電腦 | Ollama 改成非致命：印出原因、照常起 app | **故障注入實測**（見 §2.2）|
+| B | **沒有 NVIDIA GPU** 時 Ollama 起不來，`start.py` 就整個中止，app 根本不起 | 所有 Mac、沒獨顯的電腦 | Ollama 改成非致命：印出原因、照常起 app | **故障注入實測**（見 §2.1）|
 | C | Ollama 起來不代表視覺模型在；陌生人要到上傳圖才看到 503 | 所有新機器 | `start.py` 比對 `.env` 指定的模型，缺就明說並指路 | 假 Ollama 四種情境全過 |
 | D | torch 2.4.1+cu121 **只有 x86_64 的 Linux wheel** ⇒ ARM 主機原生建置失敗 | Apple Silicon、ARM Linux | app 的兩份 compose 加 `platform: linux/amd64`（在 ARM 上走模擬，x86 無差別）| compose 解析 ✅；**ARM 無機器可測** |
 | E | Dockerfile 的 `uv sync` 沒鎖 lockfile，lock 過期時會安靜地重新解析 | 未來改相依的人 | `uv sync --locked`（uv 官方 Docker 指南的建議）| 冷建置通過 |
