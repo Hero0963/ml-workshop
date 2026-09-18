@@ -146,6 +146,36 @@ RL 推論是 `device="cpu"`）。
   Gradio 那邊 `timeout=120`——預設值要挑得讓一題在那之內跑完。
 - ⚠ **不要動 `src/core/utils.py`**（`calculate_fitness_score` 牽動全部啟發式）。
 
+### C2 — Svelte 編輯器也拿到十種（2026-09-19 追加，本人授權 Track C 自行規劃）
+
+**狀態**：上面的 done 條件 2026-09-12 已全部達成（見 [`../handover-solvers.md`](../handover-solvers.md)）。
+剩下的功能缺口只有一個：**Svelte 下拉寫死 `DFS`／`A* (heapq)`／`CP-SAT`**，三個前端裡只有它不從 registry 拿。
+
+**擁有權擴充**：`src/custom_components/puzzle_editor/frontend/Index.svelte`（原本不屬於任何 track；
+2026-09-19 查過其他 worktree，沒有人在動 `src/custom_components/` 或 `src/app/`）。
+
+**要做的事**
+
+1. 後端 `GET /api/solver/list` 回 `[{name, kind, note}]`，**直接由 `SOLVER_ENTRIES` 產生**，不寫第四份清單。
+2. `Index.svelte` 開啟時向它要清單；下拉依 `kind` 分組、顯示所選 solver 的 `note`；
+   拿不到清單就顯示錯誤並停用 Solve（**不退回寫死的清單**——那就是第四份）。
+   非精確 solver 放棄時顯示「放棄」而不是放在「Solution」底下。
+3. 順手修兩個 roadmap 列著、剛好在擁有範圍內的小 bug（各自獨立 commit）：
+   Svelte 的 Instructions 直接印出 `**`；Swagger 的 Echo 群組出現兩份（`main.py` 與 `echo.py` 各給一次 tag）。
+
+**done 條件**
+
+- [x] `GET /api/solver/list` 有測試，**斷言它等於 `SOLVER_ENTRIES`**（名稱、順序、kind、note）
+- [x] `Index.svelte` 裡搜不到任何 solver 名稱字串（`test_registry.py` 守門）
+- [x] `npm run build` 成功；**真實瀏覽器（Chrome）端到端**：下拉 10 種、啟發式解出來有 GIF、PSO 放棄顯示為放棄
+- [x] `/openapi.json` 的 Echo 端點只有一個 tag
+- [x] `uv run pytest` 全綠（312 passed, 8 xfailed）、`ruff`、repo 根 pre-commit 通過
+- [x] handover §5.1 結案、roadmap／dev_log／project_guide 更新
+
+**結果（2026-09-19）**：全部達成。紀錄在 `dev_log.md` 的 2026-09-19 節與 `reports/artifacts/svelte-solver-list/`。
+
+**資源**：不吃 GPU，不用搶號誌（`npm run build` 與起一個本機服務不算重工作）。
+
 ---
 
 ## ~~Track D — 把視覺評估集變難~~（未排程）

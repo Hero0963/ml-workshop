@@ -32,6 +32,7 @@ src/core/solvers/verify.py       ← is_solution(puzzle, path)：唯一的裁判
 
 三個入口（**不要再各抄一份清單**，2026-09-12 前正是因為抄了三份才會加一處另外兩處不動）：
 `src/app/routers/solver.py`、`src/app/routers/vision.py`、`src/ui/gradio_app.py`。
+第四個前端 Svelte 編輯器不 import Python，所以它**透過 `GET /api/solver/list` 問**（2026-09-19 起）。
 
 ### 為什麼裁判要獨立一個模組
 
@@ -69,24 +70,26 @@ src/core/solvers/verify.py       ← is_solution(puzzle, path)：唯一的裁判
 
 ## 5. 還沒做的事（給下一個人）
 
-### 5.1 Svelte 下拉還寫死三種 ★ 唯一的功能缺口
+### 5.1 ~~Svelte 下拉還寫死三種~~ ✅ 2026-09-19 已解（計畫書 C2）
 
-`src/custom_components/puzzle_editor/frontend/Index.svelte` 裡的選項是寫死的
-`DFS`／`A* (heapq)`／`CP-SAT`——**連 RL 都沒有**，更不用說六種啟發式。
-Gradio 那邊是從 registry 動態拿的，所以兩個前端現在不一致。
+Svelte 編輯器現在開啟時打 `GET /api/solver/list`（直接由 `SOLVER_ENTRIES` 產生），下拉依 `kind` 分組、
+顯示所選 solver 的 `note`；拿不到清單就顯示錯誤並停用 Solve——**刻意不退回寫死的清單**，那就是第四份。
+放棄的回應（API 沒附 GIF）改成獨立的「No solution found」框，不再放在「Solution」底下配兩張破圖。
 
-- 正確做法是**讓前端去問後端**，不要再寫死第四份清單。
-  後端已經有現成的資料：`registry.SOLVER_ENTRIES` 帶 `name`／`kind`／`note`，
-  缺的只是一個回傳它的端點（目前沒有）。
-- ⚠ 改完要 `npm run build` 才會反映到 `/svelte-ui`。
-- ⚠ 這個檔不在 Track C 的檔案範圍內，所以刻意沒動。
+- **守門**：`test_registry.py::test_the_svelte_editor_keeps_no_copy_of_the_list` 讀 `Index.svelte`，
+  裡面出現任何一個 registry 裡的名稱就失敗（改之前實測會抓到 `DFS`／`A* (heapq)`／`CP-SAT`）。
+- **端到端**：[`reports/artifacts/svelte-solver-list/`](reports/artifacts/svelte-solver-list/) 用 headless Chrome 操作建置版：
+  4×4 可解盤面上**十種全部畫出答案、10/10 通過 `is_solution`**；把一格用牆隔開之後，精確／學習／啟發式各一種
+  都顯示「No solution found」（啟發式 5.07s，用滿預算）。
+- ⚠ 改 `Index.svelte` 後要 `npm ci`（第一次）＋ `npm run build` 才會反映到 `/svelte-ui`；`dist/` 不進版控。
 
 ### 5.2 可以做但沒有人要求的
 
 - **`budget_seconds` 請求欄位**（見 §4.1）。做之前先想清楚上限，否則是 DoS 面。
 - **同尺度的 solver 比較表進 README**：現在十種在同一個 registry 下可比了，
   但 README 只說「CP-SAT 每一項都贏」，沒有把表放上去。報告 §2/§3 的數字可以直接用。
-- **PSO 要不要留著**：它 0/180、0/6，是唯一一個從沒解出過任何一題的。
+- **PSO 要不要留著**：它 0/180、0/6，是唯一一個在六題上從沒解出過任何一題的。
+  （但 2026-09-19 的 Svelte 端到端裡，它在 **4×4** 蛇形盤面上兩次都解出來且通過驗證 ⇒ 不是完全不能解，是盤面一大就失效。）
   留著的理由是「它示範了一個 move 設計錯誤會怎麼樣」——交換兩格會把相鄰路徑拆散，
   它探索的空間裡合法路徑幾乎是零測度集。**這是教材價值，不是功能價值**，要砍要留是取捨不是 bug。
 
@@ -108,12 +111,17 @@ Gradio 那邊是從 registry 動態拿的，所以兩個前端現在不一致。
 
 ```powershell
 cd linkedin-zip-challenge
-uv run pytest                    # 2026-09-19 基線（rebase 到 main 後、有 models/）：309 passed, 8 xfailed
+uv run pytest                    # 2026-09-19 基線（C2 之後、有 models/）：312 passed, 8 xfailed
                                  # 沒有 models/ 時 RL 端到端測試會變 skip（見 §6）
 uv run ruff check .
 
 # 重跑預算量測（約 4 分鐘，seed 已固定在腳本裡）
 PYTHONPATH=. uv run python ai-collab/reports/artifacts/heuristic-api-budget/measure_budget.py
+
+# Svelte 編輯器端到端（約 15 秒）：先 build、起服務，再用 headless Chrome 操作建置版
+cd src/custom_components/puzzle_editor/frontend; npm ci; npm run build; cd ../../../..
+uv run uvicorn src.app.main:app --port 7452          # 另一個終端機
+PYTHONPATH=. uv run python ai-collab/reports/artifacts/svelte-solver-list/drive_editor.py <repo 外的暫存目錄>
 ```
 
 `src/core/tests/solvers/test_registry.py` 是這條線的守門員：它釘住「三個入口共用一份 registry」、

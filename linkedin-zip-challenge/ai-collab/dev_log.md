@@ -4,6 +4,58 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-09-19
+
+### Solvers Track C2 — Svelte 編輯器也拿到十種，外加兩個小 bug（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
+
+計畫在 [`plans/2026-09-12_next-tracks.md`](plans/2026-09-12_next-tracks.md) 的 C2 節（本人授權 Track C 自行規劃）；接手讀 [`handover-solvers.md`](handover-solvers.md)。
+
+**做了什麼**：Svelte 編輯器原本寫死 `DFS`／`A* (heapq)`／`CP-SAT`——十種只給三種、連 RL 都沒有，是前端裡唯一不從 registry 拿的。
+新增 `GET /api/solver/list`（直接由 `SOLVER_ENTRIES` 產生），編輯器開啟時去問它；下拉依 `kind` 分組（Exact／Learned／Heuristic）、顯示所選 solver 的 `note`。
+拿不到清單就顯示錯誤並停用 Solve，**刻意不退回寫死的清單**——退回的那份就是第四份拷貝。
+
+**順帶修掉的顯示錯誤**：API 對「放棄」回 200、沒有 GIF、訊息放在 `solution_path`。編輯器以前照樣把它放在「Solution」標題底下，
+還配兩張 `src=null` 的破圖。精確 solver 很少放棄所以沒人注意到；**啟發式一上來這就是常態**（PSO 在六題標準盤面上 0/6）。
+現在沒有 GIF 就顯示「No solution found」框並附上該 solver 的 note：精確 solver 的 note 說它是精確的，啟發式的 note 說「放棄 ≠ 無解」。
+判準與 Gradio 相同（有 GIF 才畫圖）。
+
+**守門**：`test_registry.py::test_the_svelte_editor_keeps_no_copy_of_the_list` 讀 `Index.svelte`，出現任何 registry 裡的名稱就失敗；
+改之前先跑過，確實抓到 `['DFS', 'A* (heapq)', 'CP-SAT']`（先紅後綠）。
+
+**端到端（真實 Chrome，不是 mock）**：[`reports/artifacts/svelte-solver-list/drive_editor.py`](reports/artifacts/svelte-solver-list/drive_editor.py)
+用 CDP 操作建置版——改尺寸、點格子填數字、點邊框加牆、選 solver、按 Solve，再把頁面上的路徑解析回座標送進 `is_solution`。
+solver 清單從頁面讀，腳本裡不寫。結果在 `editor-e2e.json`：
+
+| 盤面 | 結果 |
+|---|---|
+| 4×4 可解（1→2→3→4 蛇形） | 十種全部顯示 Solution 並畫出 GIF，**10/10 通過 `is_solution`** |
+| 同一盤面用兩道牆把 (3,3) 隔開（無解） | 精確／學習／啟發式各取第一種（DFS、RL、ACO）都顯示 No solution found、沒有畫圖；ACO 用了 5.07s（滿預算） |
+
+**一個修正舊說法的觀察**：handover 寫 PSO「從沒解出過任何一題」（六題 0/180、0/6）。
+但在這個 4×4 盤面上它兩次執行都解出來且通過驗證 ⇒ **不是不能解，是盤面一大就失效**。handover §5.2 已改寫。
+
+**兩個 roadmap 列著的小 bug**（都在這條 track 的檔案範圍，各自獨立 commit）：
+
+- Svelte Instructions 直接印出 `**middle**`／`**border**` → 改成 `<b>`；Chrome 截圖與 `--dump-dom` 確認（DOM 裡 0 個 `**`）。
+- Swagger 的 Echo 群組出現兩次：`main.py` 掛 router 時給 `tags=["Echo"]`，`echo.py` 自己又給 `tags=["echo"]`，FastAPI 合併成兩個 tag。
+  先寫 `test_openapi.py`（每個端點只能有一個 tag）確認它失敗，拿掉 `echo.py` 那個之後轉綠；重啟服務後 live `/openapi.json` 與 Chrome 截的 `/docs` 都只剩一組。
+
+**驗證**：`uv run pytest` 309 → **312 passed, 8 xfailed**（多的 3 條就是上面三個新測試）、`ruff` 全綠、repo 根 pre-commit 通過。
+
+**踩到的坑**：`dist/` 與 `node_modules/` 不進版控，git 看不到——改 `Index.svelte` 後**一定要 `npm run build` 才看得到**。
+`/svelte-ui` 是 FastAPI 每次請求讀磁碟上的 `dist/`，所以重新 build 不必重啟服務；改 Python 就要（沒開 `--reload` 時）。
+
+**2026-09-19 收尾**：handover 原本寫「已合併進 `main`」，實際上兩個 commit 都還在 branch 上 ⇒ 改成「待本人合併」；
+`roadmap.md` 裡「108 次只有 8 次是真解」與報告不符，用 `budget-measurements.json` 重算是 **180 次 16 次**，已校正；
+handover 的「這個 worktree 沒有 `models/`」也過期了（做 API 往返前就複製了，RL 才解得出 `puzzle_02`）。
+`main` 在這條 branch 之後多了 `a8c3626`（RL 文件，同樣動了 `dev_log.md`／`roadmap.md`），所以先 rebase 才能 `--ff-only`。
+rebase 沒有衝突（兩邊改的是不同段落），驗過 `roadmap.md` 相對 `main` 只動了 Track C 那一項與它的日誌列。
+rebase 後：`uv run pytest` **309 passed, 8 xfailed**、`ruff check` 全綠、repo 根 pre-commit 兩項 Passed。
+handover 舊基線「304 passed, 1 skipped」差的那 1 個是 RL 端到端測試（有 `models/` 就跑、沒有就 skip），
+另外 4 個差距沒追到來源——同一份程式碼現在收得到 317 個測試，已用實測數字取代舊基線。
+⚠ 新開的 worktree 根目錄沒有 devtools 的 `.venv`，但 git hook 本來就用主 checkout 的
+`ml-workshop/.venv` 跑 pre-commit，所以用那個直譯器 `-m pre_commit run --all-files` 就好，不必在 worktree 另建環境。
+
 ## 2026-09-12
 
 ### RL Track — 收尾：不再訓練，把「掃 epoch」變成一份現成配方交出去（branch `feat/rl-ppo-finetune`, worktree `zip-rl`）
@@ -197,17 +249,6 @@ blocked cell、負座標會從網格另一側繞回去索引。**優化目標不
 都還寫著服務中的模型是 `bc_multi_456`，但 `solver_service.RUN_ID_BY_SIZE` 早在同日就換成 `bc_multi_456_e6` 了。
 （這三處不在 Track C 的檔案範圍：README 只有 solver 表格歸 C、`deployment-guide.md` 歸 Track B。
 Track B 已全數合併、沒有人在動，而且是事實錯誤，所以保留。`roadmap.md` RL 項的同一個錯誤 `main` 的 `a8c3626` 已經修了，這邊的版本丟掉。）
-
-**2026-09-19 收尾**：handover 原本寫「已合併進 `main`」，實際上兩個 commit 都還在 branch 上 ⇒ 改成「待本人合併」；
-`roadmap.md` 裡「108 次只有 8 次是真解」與報告不符，用 `budget-measurements.json` 重算是 **180 次 16 次**，已校正；
-handover 的「這個 worktree 沒有 `models/`」也過期了（做 API 往返前就複製了，RL 才解得出 `puzzle_02`）。
-`main` 在這條 branch 之後多了 `a8c3626`（RL 文件，同樣動了 `dev_log.md`／`roadmap.md`），所以先 rebase 才能 `--ff-only`。
-rebase 沒有衝突（兩邊改的是不同段落），驗過 `roadmap.md` 相對 `main` 只動了 Track C 那一項與它的日誌列。
-rebase 後：`uv run pytest` **309 passed, 8 xfailed**、`ruff check` 全綠、repo 根 pre-commit 兩項 Passed。
-handover 舊基線「304 passed, 1 skipped」差的那 1 個是 RL 端到端測試（有 `models/` 就跑、沒有就 skip），
-另外 4 個差距沒追到來源——同一份程式碼現在收得到 317 個測試，已用實測數字取代舊基線。
-⚠ 新開的 worktree 根目錄沒有 devtools 的 `.venv`，但 git hook 本來就用主 checkout 的
-`ml-workshop/.venv` 跑 pre-commit，所以用那個直譯器 `-m pre_commit run --all-files` 就好，不必在 worktree 另建環境。
 
 ### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
 

@@ -108,8 +108,9 @@ two fields are how you notice it. See [The two models](#the-two-models).
 ## The solvers
 
 Every solver lives in `src/core/solvers/` and shares one puzzle representation
-(`src/core/utils.py`). The list served by the API, the screenshot endpoint and the Gradio
-dropdown comes from a single registry (`src/core/solvers/registry.py`).
+(`src/core/utils.py`). The list served by the API, the screenshot endpoint, the Gradio
+dropdown and the Svelte editor comes from a single registry (`src/core/solvers/registry.py`);
+the editor reads it from `GET /api/solver/list`.
 
 | Solver | Kind | Served today | Notes |
 |---|---|---|---|

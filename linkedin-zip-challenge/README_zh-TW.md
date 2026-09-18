@@ -100,7 +100,8 @@ Gradio 主控台、Svelte 編輯器，以及決定性的資料集產生器
 ## Solver 清單
 
 所有 solver 都在 `src/core/solvers/`，共用同一套題目表示法（`src/core/utils.py`）。
-API、截圖端點與 Gradio 下拉選單的清單來自**同一份 registry**（`src/core/solvers/registry.py`）。
+API、截圖端點、Gradio 下拉選單與 Svelte 編輯器的清單來自**同一份 registry**（`src/core/solvers/registry.py`）；
+編輯器透過 `GET /api/solver/list` 取得。
 
 | Solver | 類型 | 已上線 | 說明 |
 |---|---|---|---|

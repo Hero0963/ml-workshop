@@ -123,6 +123,7 @@ linkedin-zip-challenge/
 
 ### `src/app/` — API 契約
 
+- `GET /api/solver/list` — 回 `list[SolverInfo]`（`name`／`kind`／`note`），**直接由 `registry.SOLVER_ENTRIES` 產生**；Svelte 編輯器的下拉就是它（2026-09-19）
 - `POST /api/solver/solve` — 收 `SolverRequest`（`puzzle_layout_str`、`walls_str`、`solver_name`），回 `SolverResponse`（`solution_path` ＋ Base64 GIF ＋ Base64 PNG）
 - `POST /api/echo` — 連通性測試
 - `GET /docs` — Swagger
