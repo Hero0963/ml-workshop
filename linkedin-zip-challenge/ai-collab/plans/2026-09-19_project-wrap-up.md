@@ -73,7 +73,7 @@ Docker：`zip-app-zip-infra` 在 7440 跑舊程式（`babc1cb`）；`zip_ollama_
 - [x] S2 收攏散落改動（`git apply --3way`；五個檔的 hunk 與原 worktree 逐行相同、`pso-served.json` `cmp` 相同；原 worktree 未動）
 - [x] S3 修 issue（A–F 已修並實測；主機埠相關兩項待本人決定是否暫切 WSL NAT）
 - [x] S4 Survey（筆記在 §4；寫成文件在 S5/S6）
-- 文件產出順序（每寫完一份就是一個檢查點）：`model-weights.md` → `reports/2026-09-19_rl-where-next.md` → `reports/2026-09-19_computer-use-agents-and-zip.md`
+- 文件產出（✅＝已 commit）：✅ `model-weights.md`（53f7e5f）✅ `rl-where-next`（7b21025）✅ `computer-use-agents-and-zip`；待寫：`model-weights.md` → `reports/2026-09-19_rl-where-next.md` → `reports/2026-09-19_computer-use-agents-and-zip.md`
   → `reports/2026-09-19_project-wrap-up.md`（主報告）→ README ×2 → roadmap／handover ×3／deployment-guide／vlm-operating-guide／project_guide／AGENTS ×2／notes/01／dev_log
 - [ ] S5 文件
 - [ ] S6 最終報告
