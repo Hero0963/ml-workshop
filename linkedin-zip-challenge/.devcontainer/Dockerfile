@@ -1,8 +1,10 @@
 # .devcontainer/Dockerfile
 
 # --- Stage 1: Build the Svelte Frontend ---
-# Use the same base image as the original frontend Dockerfile for consistency
-FROM node:lts-alpine AS frontend-builder
+# Use the same base image as the original frontend Dockerfile for consistency.
+# A major version, not `lts`: `lts` moves to the next Node release on its own, and this
+# is the one the build was last verified on (Node 24.21.0, npm 11.19.0, 2026-09-19).
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 

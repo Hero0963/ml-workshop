@@ -1,7 +1,7 @@
 # src/custom_components/puzzle_editor/frontend/Dockerfile
 
-# 步驟 1: 選擇基礎映像
-FROM node:lts-alpine
+# 步驟 1: 選擇基礎映像（釘主版本，理由見 .devcontainer/Dockerfile）
+FROM node:24-alpine
 
 # 步驟 2: 設定工作目錄
 WORKDIR /app

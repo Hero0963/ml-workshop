@@ -17,7 +17,9 @@ name: zip-ollama
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    # Pinned, not `latest`: the fine-tuned model was exported and verified against this
+    # release (2026-08-29), and `latest` changes under a project that is no longer watched.
+    image: ollama/ollama:0.32.13
     # NOTE: deliberately NOT named `ollama_server` - that name is taken by another
     # project on this machine. The fixed name is also what keeps this a singleton: a
     # second copy fails loudly instead of quietly running beside the first.

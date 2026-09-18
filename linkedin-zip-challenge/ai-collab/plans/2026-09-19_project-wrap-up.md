@@ -92,6 +92,24 @@ Docker：`zip-app-zip-infra` 在 7440 跑舊程式（`babc1cb`）；`zip_ollama_
 | D | torch 只有 `linux_x86_64`／`win_amd64` wheel ⇒ ARM 主機（Apple Silicon）原生建置 `uv sync` 失敗 | `uv.lock` 只列兩個 wheel | 兩份 app compose 加 `platform: linux/amd64`（x86 主機無差別） | compose config ✅；**ARM 無法實測** |
 | E | Dockerfile `uv sync` 沒鎖 lockfile | uv 官方 Docker 指南建議 `uv sync --locked` | 兩份 Dockerfile 改 `--locked` | 待冷建置實測 |
 
+| F | 浮動標籤：`node:lts-alpine`（Node 下一個 LTS 約 2026-10 接手）、`ollama/ollama:latest` | 實測版本 Node v24.21.0／npm 11.19.0、Ollama 0.32.13（Hub 上 `0.32.13` 與本機 `latest` 同日 2026-08-14） | 釘 `node:24-alpine`（兩份 Dockerfile）、`ollama/ollama:0.32.13`；Hub API 兩個標籤都 200 | 待重建實測 |
+
+**冷建置實測（修 A–E 後，`--no-cache --pull`）**：88 秒，`uv sync --locked` 73.8 秒（容器內 uv 0.12.17，lock 沒被判過期）、
+`npm install` 8.8 秒、`vite build` 成功（`dist/` 在），image 5.86 GB。npm 11 警告 4 個套件的 install script 未放行（esbuild 等），**目前無害**。
+log：scratchpad `fresh/cold-build.log`。
+
 **實測計畫**：本機 `git clone` 本分支到 scratchpad（ASCII 路徑）→ `docker compose build --no-cache --pull` →
 停掉佔 7440 的 `zip-app-zip-infra`（`docker stop`，可 `docker start` 還原）→ `python start.py` →
 API 各 solver、RL 503、放入 14 MB checkpoint 後 RL 200、視覺模型缺席訊息、無 GPU 故障注入。
+
+### S4 Survey 筆記（進行中）
+
+**GPT-6 computer use（2026-09-19 查證）**
+- 一手：OpenAI〈GPT-6 Astra〉https://openai.com/index/gpt-6-astra/ （WebFetch 403，改用 Chrome headless dump；zh-TW 版頁面）。
+  2026-09-03 發布。電腦操作：OSWorld 2.0（v2026.08.08 offline, partial）**72.6%**（GPT-5.6 Sol 65.7%、Claude Opus 5 70.2%）、
+  ScreenSpot-Pro（no tools）92.7%、Agents' Last Exam 59.3%；OSWorld 延遲模擬每題約 40 分鐘。示範：KiCad 佈 PCB、Excel、遊戲開發、1040 表單、前端 QA。
+  Codex harness 更新，Mind2Web 1.9× 快。API $10／$50 per M tokens。
+- **官方頁沒有「小畫家」「2048」**。小畫家畫肖像是**社群示範**（happycapy.ai、magiccreator.ai 整理）；
+  「2048」搜到的是**用 Astra 做出來的 2048 類遊戲 CityMaker**，不是它去玩 2048 ⇒ 本人說的「會玩 2048」**查無一手出處**，報告要照實寫。
+  另有 Tom's Hardware：Astra 自主玩通 Portal（24 小時、token 成本 $571）——待讀原文確認。
+- 搜尋關鍵字：`GPT-6 computer use OpenAI`、`OpenAI GPT-6 release announcement 2026`、`GPT-6 Astra Microsoft Paint drawing 2048 game computer use demo`、`"Astra" OpenAI "2048" game computer use`
