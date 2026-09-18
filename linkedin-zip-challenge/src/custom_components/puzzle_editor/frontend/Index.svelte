@@ -365,8 +365,8 @@
        <div class="control-group">
         <h2>Instructions</h2>
         <ul>
-            <li>Click in the **middle** of a cell to set its value (number or 'x').</li>
-            <li>Click on a **border** between cells to toggle a wall.</li>
+            <li>Click in the <b>middle</b> of a cell to set its value (number or 'x').</li>
+            <li>Click on a <b>border</b> between cells to toggle a wall.</li>
             <li>Use the controls above to resize or reset the grid.</li>
         </ul>
       </div>
