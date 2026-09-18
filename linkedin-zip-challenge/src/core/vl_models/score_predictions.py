@@ -96,7 +96,8 @@ def path_is_legal(puzzle: Puzzle, path: list[tuple[int, int]]) -> bool:
 
     The rules mirror ``dfs.py``'s ``_backtrack``: single steps between orthogonal
     neighbours, no cell twice, no blocked cell, no crossing a wall, every visitable
-    cell covered, and numbered cells entered in ascending order.
+    cell covered, numbered cells entered in ascending order, and the path ending on the
+    highest number (added 2026-09-19 with the other judges).
 
     This is what makes the pipeline's real success criterion measurable. Solving the
     *predicted* board and checking the answer against the *true* board is a weaker
@@ -133,7 +134,9 @@ def path_is_legal(puzzle: Puzzle, path: list[tuple[int, int]]) -> bool:
             expected += 1
         previous = cell
 
-    return not num_map or expected > max(num_map)
+    return not num_map or (
+        expected > max(num_map) and path[-1] == num_map[max(num_map)]
+    )
 
 
 def score_record(record: dict[str, Any], solve: bool = True) -> dict[str, Any]:

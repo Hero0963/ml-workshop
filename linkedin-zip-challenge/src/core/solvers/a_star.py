@@ -82,7 +82,10 @@ def solve_puzzle_a_star(puzzle: Puzzle) -> list[tuple[int, int]] | None:
         )
 
         if len(current_path) == visitable_cells:
-            if not num_map or current_waypoint_num > max(num_map.keys()):
+            if not num_map or (
+                current_waypoint_num > max(num_map.keys())
+                and last_pos == num_map[max(num_map)]
+            ):
                 logger.debug("A* SUCCESS: Found a full path.")
                 return current_path
             else:
@@ -193,7 +196,10 @@ def solve_puzzle_a_star_sortedlist(puzzle: Puzzle) -> list[tuple[int, int]] | No
         )
 
         if len(current_path) == visitable_cells:
-            if not num_map or current_waypoint_num > max(num_map.keys()):
+            if not num_map or (
+                current_waypoint_num > max(num_map.keys())
+                and last_pos == num_map[max(num_map)]
+            ):
                 logger.debug("A* (SortedList) SUCCESS: Found a full path.")
                 return current_path
             else:

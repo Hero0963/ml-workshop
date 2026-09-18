@@ -94,8 +94,10 @@ def _backtrack(
 
     # Base case: if all visitable cells have been visited
     if len(path) == visitable_cells:
-        # And all waypoints have been collected in order
-        if not num_map or next_waypoint > max(num_map.keys()):
+        # And all waypoints have been collected in order, ending on the last one
+        if not num_map or (
+            next_waypoint > max(num_map.keys()) and path[-1] == num_map[max(num_map)]
+        ):
             logger.debug("SUCCESS: Path is full and all waypoints visited.")
             return path
         else:

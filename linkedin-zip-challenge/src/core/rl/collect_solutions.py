@@ -81,20 +81,6 @@ def is_valid_solution(sample: PuzzleSample, walk: Sequence[Cell]) -> bool:
     return score == perfect
 
 
-def ends_on_last_number(sample: PuzzleSample, walk: Sequence[Cell]) -> bool:
-    """The stricter reading of the rules: the path finishes on the highest number.
-
-    None of the project's judges check this (env, `dfs.py`, the fitness score all accept
-    a walk that passes the last number and keeps going). LinkedIn's help page does not
-    say either way; several rule write-ups say the path ends there, and the generator
-    always builds puzzles that way. Labels are what the network is taught, so collection
-    keeps only walks that are solutions under both readings. Measured 2026-09-19: 3.6-5.5%
-    of collected alternatives end elsewhere.
-    """
-    num_map = sample.puzzle["num_map"]
-    return tuple(walk[-1]) == tuple(num_map[max(num_map)])
-
-
 def sample_actions(
     probs: np.ndarray, masks: np.ndarray, rng: np.random.Generator
 ) -> np.ndarray:
@@ -120,8 +106,6 @@ class PuzzleOutcome:
     solved_attempts: int = 0
     walks: set[Walk] = field(default_factory=set)
     rejected_by_checker: int = 0
-    # Distinct walks the env and the scorer accept but that end off the last number.
-    off_last_number: set[Walk] = field(default_factory=set)
 
 
 @dataclass
@@ -199,15 +183,12 @@ def sample_policy_walks(
             outcome = outcomes[episode.index]
             outcome.solved_attempts += 1
             walk = tuple(episode.walk)
-            if walk in outcome.walks or walk in outcome.off_last_number:
+            if walk in outcome.walks:
                 continue
-            sample = samples[episode.index]
-            if not is_valid_solution(sample, walk):
-                outcome.rejected_by_checker += 1
-            elif ends_on_last_number(sample, walk):
+            if is_valid_solution(samples[episode.index], walk):
                 outcome.walks.add(walk)
             else:
-                outcome.off_last_number.add(walk)
+                outcome.rejected_by_checker += 1
         active = still_running
     return outcomes
 
@@ -257,11 +238,6 @@ def summarise(
             ),
             "dataset_solution_among_walks_when_solved": (
                 dataset_walk_found / len(solved_any) if solved_any else None
-            ),
-            "solved_strictly_by_any_attempt": sum(1 for _, o in rows if o.walks)
-            / len(rows),
-            "distinct_walks_off_last_number": sum(
-                len(o.off_last_number) for _, o in rows
             ),
             "alternatives_total": sum(alternatives),
             "alternatives_histogram": {

@@ -146,6 +146,9 @@ class PuzzleEnvV2(gym.Env):
         self.blocked_cells = puzzle.get("blocked_cells", set())
         self.num_map: dict[int, tuple[int, int]] = puzzle["num_map"]
         self.max_waypoint_number = max(self.num_map) if self.num_map else 0
+        self.last_waypoint_cell = (
+            self.num_map[self.max_waypoint_number] if self.num_map else None
+        )
         self.waypoint_number_at: dict[tuple[int, int], int] = {
             pos: number for number, pos in self.num_map.items()
         }
@@ -269,10 +272,18 @@ class PuzzleEnvV2(gym.Env):
         return components
 
     def _is_solved(self) -> bool:
-        """Matches `dfs.py:96-105`: full coverage plus every number collected in order."""
+        """Matches `dfs.py`'s base case: every cell, every number in order, ending on the last.
+
+        The end-cell condition is the stricter reading of the rules (2026-09-19): a walk that
+        collects the highest number and keeps going is not a solution.
+        """
         return (
             len(self._visited) == self.visitable_cells
             and self._next_waypoint > self.max_waypoint_number
+            and (
+                self.last_waypoint_cell is None
+                or self._agent_location == self.last_waypoint_cell
+            )
         )
 
     def step(

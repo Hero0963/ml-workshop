@@ -193,7 +193,10 @@ def calculate_fitness_score(
                 score -= 5000
 
     # --- Jackpot for a complete, valid solution ---
-    all_waypoints_visited = not num_map or next_waypoint_num > max(num_map.keys())
+    # A solution also has to end on the highest number, not just collect it on the way.
+    all_waypoints_visited = not num_map or (
+        next_waypoint_num > max(num_map.keys()) and path[-1] == num_map[max(num_map)]
+    )
     if len(path) == visitable_cells and all_waypoints_visited and score > 0:
         score += 1_000_000
 

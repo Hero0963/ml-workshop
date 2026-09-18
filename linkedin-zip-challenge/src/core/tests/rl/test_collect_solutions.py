@@ -19,7 +19,6 @@ import pytest
 from src.core.puzzle_generation.puzzle_generator import generate_puzzle
 from src.core.rl.collect_solutions import (
     alternative_walks,
-    ends_on_last_number,
     is_valid_solution,
     sample_actions,
     sample_key,
@@ -112,18 +111,15 @@ def test_every_collected_walk_really_solves_the_puzzle(
 def test_kept_walks_end_on_the_highest_number(
     sample: PuzzleSample, untrained_model
 ) -> None:
-    """The judges accept walks that pass the last number and keep going; labels must not."""
+    """A walk that collects the last number and keeps going must never become a label."""
     rng = np.random.default_rng(GENERATOR_SEED)
     [outcome] = sample_policy_walks(
         untrained_model, [sample], ATTEMPTS, rng, parallel=16
     )
+    num_map = sample.puzzle["num_map"]
 
-    assert all(ends_on_last_number(sample, walk) for walk in outcome.walks)
-    assert not any(
-        ends_on_last_number(sample, walk) for walk in outcome.off_last_number
-    )
-    assert ends_on_last_number(sample, sample.solution_path)
-    assert not ends_on_last_number(sample, sample.solution_path[:-1])
+    assert outcome.walks
+    assert all(walk[-1] == num_map[max(num_map)] for walk in outcome.walks)
 
 
 def test_alternatives_exclude_the_dataset_solution(

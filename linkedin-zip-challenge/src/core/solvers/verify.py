@@ -8,8 +8,10 @@ the grid from the far side instead of failing).
 
 The rule is the one the exact solvers stop on -- `dfs.py`'s base case, which
 `rl_env_v2._is_solved` mirrors: every open cell exactly once, each step to a neighbour
-without crossing a wall, starting on 1 and collecting the numbers in order. Like those two,
-it does not require the path to end on the last number.
+without crossing a wall, starting on 1, collecting the numbers in order and ending on the
+highest one. The end-cell condition was added on 2026-09-19: before that every judge in the
+project accepted a walk that passed the last number and kept going, which LinkedIn's help
+page leaves open but the generator never produces and rule write-ups exclude.
 """
 
 from src.core.utils import Puzzle
@@ -38,6 +40,8 @@ def is_solution(puzzle: Puzzle, path: list[tuple[int, int]] | None) -> bool:
             return False
 
     if 1 in num_map and path[0] != num_map[1]:
+        return False
+    if num_map and path[-1] != num_map[max(num_map)]:
         return False
     numbers_in_path_order = [grid[row][col] for row, col in path if grid[row][col] > 0]
     return numbers_in_path_order == sorted(num_map)

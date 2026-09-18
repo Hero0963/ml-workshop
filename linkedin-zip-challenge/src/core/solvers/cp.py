@@ -100,6 +100,11 @@ def solve_puzzle_cp(puzzle: dict) -> list[tuple[int, int]] | None:
         if 1 in num_map and num_map[1] in node_map:
             model.Add(ranks[node_map[num_map[1]]] == 0)
 
+        # The path ends on the highest number, not merely after collecting it.
+        last_waypoint = num_map[max(num_map)]
+        if last_waypoint in node_map:
+            model.Add(ranks[node_map[last_waypoint]] == num_real_nodes - 1)
+
     # --- 3. Solve the model ---
     solver = cp_model.CpSolver()
     status = solver.Solve(model)
