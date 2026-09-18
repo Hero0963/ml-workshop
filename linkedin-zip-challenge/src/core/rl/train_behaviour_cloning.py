@@ -297,7 +297,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--eval-split", default="test")
-    parser.add_argument("--eval-episodes", type=int, default=20)
+    parser.add_argument(
+        "--eval-episodes",
+        type=int,
+        default=20,
+        help="Episodes per puzzle in the closing evaluation; 0 skips it.",
+    )
     parser.add_argument(
         "--value-coef",
         type=float,
@@ -425,6 +430,35 @@ def main() -> None:
     model.save(checkpoint_dir / FINAL_CHECKPOINT_NAME)
     logger.success(f"Saved {checkpoint_dir / FINAL_CHECKPOINT_NAME}.zip")
 
+    config = {
+        "goal": {
+            "key": goal.key,
+            "sizes": list(goal.sizes),
+            "dataset": goal.dataset,
+            "target_solve_rate": goal.target_solve_rate,
+            "connectivity_features": goal.connectivity_features,
+        },
+        "epochs": args.epochs,
+        "value_coef": args.value_coef,
+        "batch_size": goal.ppo.batch_size,
+        "learning_rate": goal.ppo.learning_rate,
+        "train_puzzles": len(train_samples),
+        "extra_solutions": extra_summary,
+        "split_counts": split_counts,
+        "seed": args.seed,
+        "resource_limits": limits,
+    }
+    state_path = run_dir / STATE_FILENAME
+    if args.eval_episodes == 0:
+        # The closing evaluation is one observation at a time and costs ~10 minutes of
+        # GPU; a run that is scored by a probe afterwards does not need it.
+        state_path.write_text(
+            json.dumps({"config": config, "history": history}, indent=2),
+            encoding="utf-8",
+        )
+        logger.success(f"{args.run_id}: trained in {training_seconds}s, no evaluation")
+        return
+
     eval_samples = select_samples(goal, args.eval_split)
     scores = score(
         model,
@@ -437,24 +471,7 @@ def main() -> None:
     report = {
         "run_id": args.run_id,
         "method": "behaviour_cloning",
-        "config": {
-            "goal": {
-                "key": goal.key,
-                "sizes": list(goal.sizes),
-                "dataset": goal.dataset,
-                "target_solve_rate": goal.target_solve_rate,
-                "connectivity_features": goal.connectivity_features,
-            },
-            "epochs": args.epochs,
-            "value_coef": args.value_coef,
-            "batch_size": goal.ppo.batch_size,
-            "learning_rate": goal.ppo.learning_rate,
-            "train_puzzles": len(train_samples),
-            "extra_solutions": extra_summary,
-            "split_counts": split_counts,
-            "seed": args.seed,
-            "resource_limits": limits,
-        },
+        "config": config,
         "training_seconds": training_seconds,
         "history": history,
         "eval_split": args.eval_split,
@@ -469,8 +486,8 @@ def main() -> None:
     (run_dir / f"eval_{args.eval_split}.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8"
     )
-    Path(run_dir / STATE_FILENAME).write_text(
-        json.dumps({"config": report["config"], "history": history}, indent=2),
+    state_path.write_text(
+        json.dumps({"config": config, "history": history}, indent=2),
         encoding="utf-8",
     )
     overall = scores["model"]["overall"]
