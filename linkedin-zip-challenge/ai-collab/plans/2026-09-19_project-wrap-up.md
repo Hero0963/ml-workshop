@@ -76,7 +76,8 @@ Docker：`zip-app-zip-infra` 在 7440 跑舊程式（`babc1cb`）；`zip_ollama_
 - [x] S5 文件：`model-weights.md`、README ×2、roadmap、handover ×3、deployment-guide §10、vlm-operating-guide（兩處 `` 控制字元）、project_guide、AGENTS ×2、CLAUDE.md、`notes/01`、dev_log
 - [x] S6 報告：`reports/2026-09-19_project-wrap-up.md`（主）、`2026-09-19_rl-where-next.md`、`2026-09-19_computer-use-agents-and-zip.md`
 - [x] S7 驗證（主機）：`pytest` 330 passed／1 skipped／8 xfailed；`ruff check`、`ruff format --check`、repo 根 `pre-commit run --all-files` 全過；本分支改過的 20 份 Markdown 共 289 個相對連結 0 壞；新增 1,164 行的粗體定界符 0 問題。GitHub 實際渲染待 push 後驗
-- [ ] S8 git 收尾
+- [x] S8 git 收尾：ff 進 `main` 並 push（`b72d371..07a78dc`，再補一次收尾紀錄）；`main`＝`origin/main`；從 GitHub 重新 clone 建置與容器內驗收一致；GitHub 實際渲染 0 個殘留 `**`（roadmap 既有 1 處已修）
+- [ ] 待本人決定：暫切 WSL NAT 補測主機端 `start.py` 輪詢與 Svelte 瀏覽器 e2e（見報告 §10）
 
 ## 4. 各階段筆記（邊做邊記）
 

@@ -38,6 +38,8 @@
 **文件**：新增 `model-weights.md`、三份報告（收尾總帳、RL 收尾分析、computer-use survey）；README 兩份重寫；
 roadmap 開頭加收尾一節；三份 handover 加停止橫幅；deployment-guide §10；project_guide、兩份 AGENTS、`notes/01`（「加深網路」不是已證偽）更正。
 
+**合併與 push 後的驗證**：ff 進 `main`、push `b72d371..07a78dc`（無 force）；從 GitHub 重新 clone，自實測版本 `34f4617` 之後沒有任何程式變動，建置命中快取、容器內驗收一致；Chrome 讀 github.com 的實際渲染：9 份文件殘留 `**` 0 個（roadmap 既有一處 `**3,828 / 6,467（59%）**的` 失效，已修），README 與報告整頁截圖目視正常。收尾時所有測試容器與 `zip_ollama_server` 都已停止（開工時 ollama 也是停止的）。
+
 ### RL Track — 掃 BC 的 epoch ＋ ExIt 第一輪 ＋ 判定器改嚴格（branch `feat/rl-exit`, worktree `zip-rl`；實驗做一半時收尾）
 
 **本人當次授權**：「交給你規劃再來要幹嘛，然後就開工」⇒ 依 handover §3 的優先序自己排、直接開跑（不含 commit）。

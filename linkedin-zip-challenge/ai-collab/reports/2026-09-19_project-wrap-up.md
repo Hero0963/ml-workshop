@@ -107,13 +107,17 @@
 
 **我沒有改 `.wslconfig`**（全域設定、昨天才改，可能有別的用途）。要補測的話見 §10。
 
-### 2.3 程式碼品質與 git（收尾最後一步回填）
+### 2.3 程式碼品質、git、GitHub 上的實際樣子
 
 | 項目 | 結果 |
 |---|---|
-| `uv run pytest`（主機）| 見 dev_log 2026-09-19 收尾小節 |
-| `ruff check`／`pre-commit run --all-files` | 同上 |
-| `main` 本機 ＝ `origin/main` | 同上 |
+| `uv run pytest`（主機）| **330 passed, 1 skipped, 8 xfailed**（skip＝`test_solver_service.py:98` 缺 RL checkpoint，屬預期）|
+| `ruff check`、`ruff format --check` | All checks passed、114 files already formatted |
+| repo 根 `pre-commit run --all-files` | ruff format ／ ruff check 全過 |
+| 文件連結 | 本次改過的 20 份 Markdown、289 個相對連結，0 個失效 |
+| 合併與 push | 收尾分支 fast-forward 進 `main`、push（`b72d371..07a78dc`，之後再補一次收尾紀錄）；**本機 `main` ＝ `origin/main`**，無 force push |
+| 從 **GitHub** 重新 clone | HEAD 相同；自實測版本 `34f4617` 之後**沒有任何程式或設定變動**（只有文件與驗收產物）；建置命中快取、healthy，容器內驗收與先前一致（5 頁 200、9 種 solver、RL 無權重 503／7×7 400）|
+| GitHub **實際渲染**（Chrome headless 讀 github.com 頁面）| README、README_zh-TW、本報告、RL 報告、survey、model-weights、deployment-guide、roadmap、dev_log：**殘留 `**` 0 個**（roadmap 原有 1 處粗體失效，已修）、README 的錨點都存在；README 與本報告另做整頁截圖目視檢查，表格與程式碼區塊正常 |
 
 ---
 
@@ -267,8 +271,8 @@
 | `docker stop` 了 `zip-app-zip-infra-zip-challenge-app-1` | 它佔著 7440（跑的是舊程式 `babc1cb`）| `docker start zip-app-zip-infra-zip-challenge-app-1`（或在 `ml-workshop` 跑 `python start.py` 起最新版）|
 | **重啟過一次 Docker Desktop** | 診斷埠轉發 | —（無效，根因是 `.wslconfig`）|
 | ⚠ 重啟的副作用：4 個別專案容器被自動拉起 | 它們是 `restart=always`，守護程序重啟時即使原本停著也會起來（`omni_parser` 吃約 50% CPU、`ai_translator_app` 重啟迴圈）| **已 `docker stop` 回原本的停止狀態**（`ai_translator_app`、`pdf2zh_server`、`omni_parser`、`speech_motion_aligner`）|
-| `zip_ollama_server` 被重建過（測試用過另一個 checkout 的 compose）| 全新 clone 的實測 | 收尾最後從 `ml-workshop` 重建回來（見 dev_log）|
-| 在 scratchpad 建了全新 clone 與測試容器、image | 驗收 | 都在 scratchpad 與 `zip-app-fresh-clone`／`zip-dev-fresh-clone` 專案名下；`docker compose -p zip-app-fresh-clone down` 可收掉（我沒有刪 image）|
+| `zip_ollama_server` 被重建過（改用釘版本的 `ollama/ollama:0.32.13`，最後一次由 `zip-vlm` 的 compose 建）| 全新 clone 的實測與權重比對 | **收尾時已停止**，與開工時同為停止狀態；模型都在 volume 裡。下次在任何 checkout 跑 `python start.py` 會依該 checkout 的 compose 重建並啟動 |
+| 建了測試用的 clone、容器、image | 驗收 | 全部**已停止**：`zip-app-fresh-clone`、`zip-dev-fresh-clone`、`zip-app-gh-clone` 三個 compose 專案與 `zip-vision-probe` 容器；image 與正式版共用 5.86 GB 的層，額外佔用很小。要清掉：`docker compose -p <專案名> down`、`docker rm zip-vision-probe`（我沒有刪任何容器或 image）|
 | **沒有動** `.wslconfig`、其他 worktree 的檔案、任何 `models/`／`datasets/` | — | — |
 
 **可以整理的 worktree 與分支**（全部已併進 `main`；要不要刪由你決定，我沒有動）：
