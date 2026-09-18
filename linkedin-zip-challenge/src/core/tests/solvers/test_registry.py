@@ -7,6 +7,7 @@ others. These tests fail if a copy comes back.
 """
 
 import time
+from pathlib import Path
 
 from src.app.routers import solver as solver_router
 from src.app.routers import vision as vision_router
@@ -25,12 +26,26 @@ HEURISTIC_NAMES = {
 SHORT_BUDGET_SECONDS = 0.05
 #: Slack over the budget for the one run that may start just before it runs out.
 BUDGET_SLACK_SECONDS = 1.0
+SVELTE_EDITOR = (
+    Path(__file__).resolve().parents[3]
+    / "custom_components"
+    / "puzzle_editor"
+    / "frontend"
+    / "Index.svelte"
+)
 
 
 def test_every_entry_point_shares_one_registry() -> None:
     assert solver_router.SOLVERS is registry.SOLVERS
     assert vision_router.SOLVERS is registry.SOLVERS
     assert gradio_app.SOLVERS is registry.SOLVERS
+
+
+def test_the_svelte_editor_keeps_no_copy_of_the_list() -> None:
+    """It asks `GET /api/solver/list` instead; a hardcoded name is the list coming back."""
+    source = SVELTE_EDITOR.read_text(encoding="utf-8")
+    copied = [entry.name for entry in registry.SOLVER_ENTRIES if entry.name in source]
+    assert copied == []
 
 
 def test_the_registry_has_no_duplicate_names() -> None:

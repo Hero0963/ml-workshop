@@ -26,6 +26,17 @@ def _payload(solver_name: str) -> dict:
     }
 
 
+def test_the_solver_list_is_the_registry():
+    """The Svelte editor's dropdown is built from this, so it must not be a copy."""
+    response = client.get("/api/solver/list")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == [
+        {"name": entry.name, "kind": entry.kind, "note": entry.note}
+        for entry in registry.SOLVER_ENTRIES
+    ]
+
+
 def test_solve_puzzle_happy_path():
     """Test the /api/solver/solve endpoint with a valid request."""
     # Arrange

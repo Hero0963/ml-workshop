@@ -8,9 +8,9 @@ import pprint
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
-from src.app.schemas.solver import SolverRequest, SolverResponse
+from src.app.schemas.solver import SolverInfo, SolverRequest, SolverResponse
 from src.core.rl.solver_service import ModelUnavailableError, UnsupportedBoardError
-from src.core.solvers.registry import SOLVERS
+from src.core.solvers.registry import SOLVER_ENTRIES, SOLVERS
 from src.core.utils import (
     parse_puzzle_layout,
     save_detailed_animation_as_gif,
@@ -22,6 +22,19 @@ from src.core.utils import (
 # be written out here, in the vision router and in the Gradio app, so a new solver
 # reached all three only if someone remembered all three.
 router = APIRouter()
+
+
+@router.get("/list", response_model=list[SolverInfo])
+def list_solvers() -> list[SolverInfo]:
+    """The solvers `/solve` accepts, in the registry's order, with what each guarantees.
+
+    The Svelte editor builds its dropdown from this, so a solver added to the registry
+    reaches it without a fourth copy of the list.
+    """
+    return [
+        SolverInfo(name=entry.name, kind=entry.kind, note=entry.note)
+        for entry in SOLVER_ENTRIES
+    ]
 
 
 @router.post("/solve", response_model=SolverResponse)

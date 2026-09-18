@@ -14,6 +14,20 @@ class SolverRequest(BaseModel):
     solver_name: str = Field(..., description="The name of the solver to use.")
 
 
+class SolverInfo(BaseModel):
+    """One solver `/solve` accepts, as `src.core.solvers.registry` describes it."""
+
+    name: str = Field(..., description="The value to send as `solver_name`.")
+    kind: str = Field(
+        ...,
+        description=(
+            "'exact' always answers or proves there is no solution; 'learned' and "
+            "'heuristic' may give up, which says nothing about the board."
+        ),
+    )
+    note: str = Field(..., description="The trade-off, in a sentence or two.")
+
+
 class SolverResponse(BaseModel):
     """Schema for the puzzle solver response body."""
 
