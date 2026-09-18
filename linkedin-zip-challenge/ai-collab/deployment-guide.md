@@ -146,6 +146,7 @@ dev 的編輯器頁面在 5173，瀏覽器直接跨來源打 app（後端 CORS �
 已驗到的是：正式版 image 的 `dist/` 裡搜不到 `127.0.0.1:7440`、`/svelte-ui/` 200；dev 的 svelte 容器裡
 `VITE_API_URL=http://127.0.0.1:7440`（`docker exec` 實測）。⚠ **未驗**：在瀏覽器裡實際按下解題按鈕。
 Vite 在 dev 是**執行期**注入 `import.meta.env`，不開瀏覽器量不到最終值——這一段要靠人工點一次才算數。
+**2026-09-12 本人定案不補測**——所以這是留著的已知缺口，不是待辦。
 
 ---
 
@@ -239,6 +240,7 @@ ollama：切到 dev、再切回正式版，容器 ID 與啟動時間都沒變
 ```
 
 ⚠ **未驗**：hot reload 實際被觸發（要改 `src/` 才測得到）。上面只證明 reloader 有起來、盯的是對的目錄。
+**2026-09-12 本人定案不補測**——所以這是留著的已知缺口，不是待辦。
 
 ---
 
@@ -298,9 +300,16 @@ linkedin-zip-challenge-zip-challenge-app:latest  22.9GB     # 換基底前
 順帶一提，uv 現在直接用 image 內建的 CPython 3.11.16，不再另外下載一份（舊 image 多了 96 MB）。
 
 **剩下的 5.66 GB 幾乎全是 `uv sync`**：`.venv` 5.5 GB 裡 `nvidia/` 佔 **2.7 GB**、`torch/` **1.6 GB**、`triton/` **0.55 GB**，
-都是 `torch 2.4.1+cu121` 帶進來的。換成 CPU 版 torch 才能再砍一大截，但那要改 `pyproject.toml`／`uv.lock`
-（整個專案共用的相依設定，訓練一定要 CUDA 版）⇒ **不是 Docker 層能單獨決定的事，沒有做**。要做的話得另外設計
-「服務用 CPU torch、訓練用 CUDA torch」的相依分組。
+都是 `torch 2.4.1+cu121` 帶進來的。**2026-09-12 本人定案：不再砍，就停在 5.86 GB**（見 [roadmap.md](roadmap.md) 的已定案表）。
+
+以下是當時查到的東西，留著是為了讓想重開這題的人不必重查——**沒有實作，也沒有量過**。
+技術上做得到，而且不必改任何一句 `uv sync`：`[tool.uv.sources]` 可以用平台 marker 把同一個套件導到不同 index
+（[uv 文件](https://docs.astral.sh/uv/concepts/projects/dependencies/)，它的範例正好就是 torch），而這個專案的分工剛好貼著平台——
+訓練在 Windows host（`.venv` 裡**一個 `nvidia-*` 都沒有**，CUDA 包在 torch 的 win wheel 內，`cuda.is_available()` 是 `True`），
+服務在 Linux 容器（`solver_service.py` 寫死 `device="cpu"`，容器內 `cuda_available False`）；CPU 版三個 wheel 在
+`download.pytorch.org/whl/cpu` 都有 `cp311-linux_x86_64`。**不做的理由**：大頭已經砍完，再砍要把「平台決定 torch 版本」
+這條規則放進共用的 `pyproject.toml`／`uv.lock`，代價是往後誰改在 Linux／WSL 上訓練，都會**安靜地**拿到 CPU torch。
+估計省 3.5–3.9 GB（**未量**）換這個暗雷，不划算。
 
 **Q：`Found orphan containers`。**
 同一個專案裡有現在的 compose 檔沒定義的容器（例如舊布局留下的）。`python start.py --down` 會帶 `--remove-orphans` 清掉。

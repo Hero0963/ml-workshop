@@ -59,6 +59,7 @@ fitness jackpot、本檔、VLM 的 `path_is_legal`）都接受「收完最大數
 | 最慢的整個請求 | **5.04s**（Gradio timeout 是 120s） | 報告 §3 |
 | API 往返 | 兩題各 **10/10 回 200**，畫出圖的 100% 通過驗證 | 報告 §9 |
 | PSO 單次呼叫（RL test split，決定性） | 4×4 **0.590**（1,139／1,931）、6×6 **0.000**（0／2,000） | [PSO 報告](reports/2026-09-19_pso-not-served.md) §1 |
+| PSO 包 5 秒預算（各抽 200 題） | 4×4 **1.000**（200／200）、6×6 **0.030**（6／200）——不開放的理由是 6×6 | [PSO 報告](reports/2026-09-19_pso-not-served.md) §1 |
 
 **難度的指標不是盤面大小，是「數字密度高 ＋ 牆少」**：`puzzle_04`（7×7、14 道牆）四種解得出來，
 `puzzle_06`（7×7、21 個數字、**0 道牆**）六種全滅。牆砍掉合法後繼步，反而讓隨機走法更好走。
@@ -94,13 +95,12 @@ Svelte 編輯器現在開啟時打 `GET /api/solver/list`（直接由 `SOLVER_EN
   都顯示「No solution found」（啟發式 5.07s，用滿預算）。
 - ⚠ 改 `Index.svelte` 後要 `npm ci`（第一次）＋ `npm run build` 才會反映到 `/svelte-ui`；`dist/` 不進版控。
 
-### 5.2 PSO「包 5 秒預算」的分數待補 ⏳
+### 5.2 ~~PSO「包 5 秒預算」的分數待補~~ ✅ 2026-09-19 02:53 量完
 
-PSO 報告 §1 的第三欄（4×4／6×6 各抽 200 題、用 API 當時的 `_until_verified` 包裝）還沒量：
-2026-09-19 要量的時候 `.agent-heavy-job` 是 `busy rl`，而這個預算是牆鐘，別人佔著 CPU 時量出來會被壓低、不能用。
-**號誌是 `free` 時**：改成 `busy solvers <時間>` →
+4×4 **1.000**、6×6 **0.030**（各抽 200 題），數字與解讀在 PSO 報告 §1、§4。要重量的話照下面的步驟
+（這個預算是牆鐘，別人佔著 CPU 時量出來會被壓低）——**號誌是 `free` 時**：改成 `busy solvers <時間>` →
 `PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py served <dataset 目錄>`（8 個 worker）→ 改回 `free`，
-再把 `pso-served.json` 的數字填進報告 §1、`dev_log.md` 的 2026-09-19 PSO 小節、`roadmap.md` 的 2026-09-19 日誌列。
+結果寫進 `pso-served.json`。
 資料集只在跑過 RL 的 worktree 裡（例如 `zip-rl` 的 `datasets/rl_datasets_v2/seed20300000_n20000_456`）。
 PSO 已經不上線，所以這個數字**只影響紀錄，不影響服務**。
 

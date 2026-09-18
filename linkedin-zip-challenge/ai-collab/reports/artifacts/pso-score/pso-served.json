@@ -1,0 +1,3652 @@
+{
+  "measured_at": "2026-09-19T02:55:54+08:00",
+  "mode": "served",
+  "dataset": "seed20300000_n20000_456",
+  "split": "test",
+  "seed": 20260919,
+  "boards_per_size": {
+    "4": 1931,
+    "6": 2000
+  },
+  "budget_seconds": 5.0,
+  "workers": 8,
+  "wall_seconds": 127.0,
+  "per_size": {
+    "4": {
+      "boards": 200,
+      "solved": 200,
+      "solve_rate": 1.0,
+      "mean_seconds": 0.0407,
+      "solve_rate_by_wall_count": {
+        "0": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "sampled_indices": [
+        7,
+        8,
+        23,
+        27,
+        29,
+        32,
+        35,
+        46,
+        48,
+        51,
+        68,
+        74,
+        92,
+        94,
+        101,
+        102,
+        113,
+        128,
+        129,
+        130,
+        139,
+        162,
+        163,
+        165,
+        167,
+        169,
+        170,
+        190,
+        195,
+        201,
+        203,
+        207,
+        208,
+        244,
+        256,
+        285,
+        315,
+        317,
+        339,
+        370,
+        372,
+        375,
+        376,
+        377,
+        379,
+        394,
+        395,
+        403,
+        406,
+        410,
+        427,
+        448,
+        452,
+        459,
+        462,
+        471,
+        473,
+        482,
+        486,
+        520,
+        529,
+        532,
+        540,
+        547,
+        573,
+        587,
+        615,
+        629,
+        630,
+        638,
+        641,
+        647,
+        651,
+        665,
+        693,
+        695,
+        696,
+        718,
+        748,
+        752,
+        755,
+        773,
+        775,
+        776,
+        781,
+        785,
+        789,
+        805,
+        817,
+        823,
+        835,
+        847,
+        852,
+        865,
+        869,
+        876,
+        898,
+        905,
+        911,
+        932,
+        965,
+        974,
+        1011,
+        1021,
+        1023,
+        1043,
+        1056,
+        1089,
+        1095,
+        1099,
+        1100,
+        1101,
+        1103,
+        1108,
+        1125,
+        1127,
+        1129,
+        1141,
+        1145,
+        1147,
+        1162,
+        1167,
+        1171,
+        1179,
+        1206,
+        1224,
+        1234,
+        1239,
+        1260,
+        1264,
+        1283,
+        1285,
+        1297,
+        1316,
+        1323,
+        1341,
+        1348,
+        1349,
+        1361,
+        1373,
+        1375,
+        1380,
+        1383,
+        1396,
+        1400,
+        1405,
+        1416,
+        1418,
+        1431,
+        1436,
+        1439,
+        1471,
+        1472,
+        1473,
+        1475,
+        1483,
+        1493,
+        1530,
+        1532,
+        1534,
+        1540,
+        1544,
+        1562,
+        1569,
+        1571,
+        1572,
+        1573,
+        1578,
+        1579,
+        1613,
+        1614,
+        1623,
+        1625,
+        1631,
+        1640,
+        1647,
+        1651,
+        1669,
+        1681,
+        1683,
+        1689,
+        1701,
+        1704,
+        1707,
+        1721,
+        1722,
+        1735,
+        1750,
+        1755,
+        1764,
+        1768,
+        1772,
+        1786,
+        1792,
+        1817,
+        1827,
+        1850,
+        1864,
+        1925,
+        1928
+      ],
+      "median_runs_when_solved": 1,
+      "rows": [
+        {
+          "size": 4,
+          "index": 7,
+          "walls": 0,
+          "seconds": 0.19,
+          "runs": 9,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 8,
+          "walls": 4,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 23,
+          "walls": 0,
+          "seconds": 0.065,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 27,
+          "walls": 4,
+          "seconds": 0.04,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 29,
+          "walls": 3,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 32,
+          "walls": 3,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 35,
+          "walls": 2,
+          "seconds": 0.077,
+          "runs": 5,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 46,
+          "walls": 3,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 48,
+          "walls": 2,
+          "seconds": 0.095,
+          "runs": 5,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 51,
+          "walls": 0,
+          "seconds": 0.023,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 68,
+          "walls": 2,
+          "seconds": 0.052,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 74,
+          "walls": 4,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 92,
+          "walls": 0,
+          "seconds": 0.071,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 94,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 101,
+          "walls": 0,
+          "seconds": 0.036,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 102,
+          "walls": 2,
+          "seconds": 0.037,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 113,
+          "walls": 0,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 128,
+          "walls": 4,
+          "seconds": 0.023,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 129,
+          "walls": 4,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 130,
+          "walls": 5,
+          "seconds": 0.014,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 139,
+          "walls": 2,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 162,
+          "walls": 4,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 163,
+          "walls": 4,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 165,
+          "walls": 3,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 167,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 169,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 170,
+          "walls": 5,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 190,
+          "walls": 0,
+          "seconds": 0.055,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 195,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 201,
+          "walls": 5,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 203,
+          "walls": 0,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 207,
+          "walls": 3,
+          "seconds": 0.012,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 208,
+          "walls": 0,
+          "seconds": 0.014,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 244,
+          "walls": 4,
+          "seconds": 0.013,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 256,
+          "walls": 3,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 285,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 315,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 317,
+          "walls": 4,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 339,
+          "walls": 3,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 370,
+          "walls": 3,
+          "seconds": 0.026,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 372,
+          "walls": 2,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 375,
+          "walls": 0,
+          "seconds": 0.1,
+          "runs": 6,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 376,
+          "walls": 0,
+          "seconds": 0.066,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 377,
+          "walls": 0,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 379,
+          "walls": 0,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 394,
+          "walls": 5,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 395,
+          "walls": 3,
+          "seconds": 0.04,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 403,
+          "walls": 5,
+          "seconds": 0.013,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 406,
+          "walls": 2,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 410,
+          "walls": 4,
+          "seconds": 0.062,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 427,
+          "walls": 0,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 448,
+          "walls": 4,
+          "seconds": 0.038,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 452,
+          "walls": 2,
+          "seconds": 0.06,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 459,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 462,
+          "walls": 3,
+          "seconds": 0.032,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 471,
+          "walls": 0,
+          "seconds": 0.06,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 473,
+          "walls": 0,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 482,
+          "walls": 2,
+          "seconds": 0.204,
+          "runs": 10,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 486,
+          "walls": 5,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 520,
+          "walls": 5,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 529,
+          "walls": 2,
+          "seconds": 0.026,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 532,
+          "walls": 4,
+          "seconds": 0.024,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 540,
+          "walls": 0,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 547,
+          "walls": 2,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 573,
+          "walls": 4,
+          "seconds": 0.034,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 587,
+          "walls": 3,
+          "seconds": 0.068,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 615,
+          "walls": 0,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 629,
+          "walls": 2,
+          "seconds": 0.051,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 630,
+          "walls": 3,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 638,
+          "walls": 4,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 641,
+          "walls": 0,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 647,
+          "walls": 2,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 651,
+          "walls": 2,
+          "seconds": 0.097,
+          "runs": 5,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 665,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 693,
+          "walls": 3,
+          "seconds": 0.065,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 695,
+          "walls": 4,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 696,
+          "walls": 5,
+          "seconds": 0.032,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 718,
+          "walls": 4,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 748,
+          "walls": 5,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 752,
+          "walls": 5,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 755,
+          "walls": 5,
+          "seconds": 0.023,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 773,
+          "walls": 4,
+          "seconds": 0.025,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 775,
+          "walls": 5,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 776,
+          "walls": 0,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 781,
+          "walls": 3,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 785,
+          "walls": 0,
+          "seconds": 0.033,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 789,
+          "walls": 2,
+          "seconds": 0.027,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 805,
+          "walls": 5,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 817,
+          "walls": 0,
+          "seconds": 0.04,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 823,
+          "walls": 0,
+          "seconds": 0.045,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 835,
+          "walls": 0,
+          "seconds": 0.033,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 847,
+          "walls": 2,
+          "seconds": 0.014,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 852,
+          "walls": 3,
+          "seconds": 0.11,
+          "runs": 7,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 865,
+          "walls": 0,
+          "seconds": 0.026,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 869,
+          "walls": 0,
+          "seconds": 0.085,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 876,
+          "walls": 0,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 898,
+          "walls": 0,
+          "seconds": 0.063,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 905,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 911,
+          "walls": 2,
+          "seconds": 0.041,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 932,
+          "walls": 3,
+          "seconds": 0.041,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 965,
+          "walls": 5,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 974,
+          "walls": 4,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1011,
+          "walls": 3,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1021,
+          "walls": 4,
+          "seconds": 0.025,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1023,
+          "walls": 2,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1043,
+          "walls": 0,
+          "seconds": 0.043,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1056,
+          "walls": 0,
+          "seconds": 0.181,
+          "runs": 9,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1089,
+          "walls": 0,
+          "seconds": 0.169,
+          "runs": 9,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1095,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1099,
+          "walls": 4,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1100,
+          "walls": 0,
+          "seconds": 0.106,
+          "runs": 6,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1101,
+          "walls": 0,
+          "seconds": 0.069,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1103,
+          "walls": 4,
+          "seconds": 0.049,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1108,
+          "walls": 0,
+          "seconds": 0.211,
+          "runs": 10,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1125,
+          "walls": 0,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1127,
+          "walls": 2,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1129,
+          "walls": 0,
+          "seconds": 0.057,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1141,
+          "walls": 5,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1145,
+          "walls": 3,
+          "seconds": 0.032,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1147,
+          "walls": 4,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1162,
+          "walls": 0,
+          "seconds": 0.037,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1167,
+          "walls": 0,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1171,
+          "walls": 2,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1179,
+          "walls": 5,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1206,
+          "walls": 0,
+          "seconds": 0.072,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1224,
+          "walls": 0,
+          "seconds": 0.055,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1234,
+          "walls": 0,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1239,
+          "walls": 0,
+          "seconds": 0.043,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1260,
+          "walls": 3,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1264,
+          "walls": 0,
+          "seconds": 0.067,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1283,
+          "walls": 4,
+          "seconds": 0.03,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1285,
+          "walls": 0,
+          "seconds": 0.165,
+          "runs": 8,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1297,
+          "walls": 2,
+          "seconds": 0.058,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1316,
+          "walls": 0,
+          "seconds": 0.116,
+          "runs": 6,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1323,
+          "walls": 3,
+          "seconds": 0.072,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1341,
+          "walls": 5,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1348,
+          "walls": 3,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1349,
+          "walls": 0,
+          "seconds": 0.093,
+          "runs": 5,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1361,
+          "walls": 5,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1373,
+          "walls": 0,
+          "seconds": 0.238,
+          "runs": 13,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1375,
+          "walls": 0,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1380,
+          "walls": 4,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1383,
+          "walls": 0,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1396,
+          "walls": 0,
+          "seconds": 0.093,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1400,
+          "walls": 2,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1405,
+          "walls": 0,
+          "seconds": 0.044,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1416,
+          "walls": 4,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1418,
+          "walls": 0,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1431,
+          "walls": 0,
+          "seconds": 0.139,
+          "runs": 8,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1436,
+          "walls": 0,
+          "seconds": 0.073,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1439,
+          "walls": 2,
+          "seconds": 0.025,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1471,
+          "walls": 0,
+          "seconds": 0.069,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1472,
+          "walls": 0,
+          "seconds": 0.045,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1473,
+          "walls": 0,
+          "seconds": 0.098,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1475,
+          "walls": 2,
+          "seconds": 0.023,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1483,
+          "walls": 0,
+          "seconds": 0.057,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1493,
+          "walls": 5,
+          "seconds": 0.025,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1530,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1532,
+          "walls": 0,
+          "seconds": 0.024,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1534,
+          "walls": 2,
+          "seconds": 0.056,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1540,
+          "walls": 3,
+          "seconds": 0.025,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1544,
+          "walls": 2,
+          "seconds": 0.037,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1562,
+          "walls": 5,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1569,
+          "walls": 2,
+          "seconds": 0.024,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1571,
+          "walls": 0,
+          "seconds": 0.037,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1572,
+          "walls": 3,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1573,
+          "walls": 5,
+          "seconds": 0.021,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1578,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1579,
+          "walls": 2,
+          "seconds": 0.012,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1613,
+          "walls": 2,
+          "seconds": 0.06,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1614,
+          "walls": 3,
+          "seconds": 0.043,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1623,
+          "walls": 3,
+          "seconds": 0.042,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1625,
+          "walls": 5,
+          "seconds": 0.039,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1631,
+          "walls": 0,
+          "seconds": 0.022,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1640,
+          "walls": 4,
+          "seconds": 0.019,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1647,
+          "walls": 0,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1651,
+          "walls": 0,
+          "seconds": 0.039,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1669,
+          "walls": 2,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1681,
+          "walls": 3,
+          "seconds": 0.015,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1683,
+          "walls": 5,
+          "seconds": 0.024,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1689,
+          "walls": 4,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1701,
+          "walls": 0,
+          "seconds": 0.037,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1704,
+          "walls": 4,
+          "seconds": 0.027,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1707,
+          "walls": 2,
+          "seconds": 0.076,
+          "runs": 5,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1721,
+          "walls": 0,
+          "seconds": 0.02,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1722,
+          "walls": 2,
+          "seconds": 0.047,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1735,
+          "walls": 0,
+          "seconds": 0.063,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1750,
+          "walls": 0,
+          "seconds": 0.05,
+          "runs": 3,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1755,
+          "walls": 0,
+          "seconds": 0.137,
+          "runs": 8,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1764,
+          "walls": 3,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1768,
+          "walls": 3,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1772,
+          "walls": 0,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1786,
+          "walls": 3,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1792,
+          "walls": 4,
+          "seconds": 0.013,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1817,
+          "walls": 0,
+          "seconds": 0.11,
+          "runs": 6,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1827,
+          "walls": 0,
+          "seconds": 0.016,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1850,
+          "walls": 5,
+          "seconds": 0.017,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1864,
+          "walls": 0,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1925,
+          "walls": 0,
+          "seconds": 0.041,
+          "runs": 2,
+          "solved": true
+        },
+        {
+          "size": 4,
+          "index": 1928,
+          "walls": 0,
+          "seconds": 0.018,
+          "runs": 1,
+          "solved": true
+        }
+      ]
+    },
+    "6": {
+      "boards": 200,
+      "solved": 6,
+      "solve_rate": 0.03,
+      "mean_seconds": 4.92,
+      "solve_rate_by_wall_count": {
+        "0": 0.0225,
+        "2": 0.0294,
+        "3": 0.0,
+        "4": 0.0667,
+        "5": 0.0476
+      },
+      "sampled_indices": [
+        9,
+        14,
+        18,
+        47,
+        52,
+        57,
+        65,
+        74,
+        76,
+        85,
+        92,
+        94,
+        99,
+        109,
+        138,
+        143,
+        156,
+        165,
+        166,
+        167,
+        169,
+        176,
+        180,
+        184,
+        187,
+        195,
+        206,
+        218,
+        223,
+        224,
+        229,
+        243,
+        254,
+        255,
+        257,
+        259,
+        278,
+        283,
+        325,
+        329,
+        344,
+        353,
+        359,
+        365,
+        368,
+        378,
+        381,
+        385,
+        387,
+        392,
+        409,
+        411,
+        413,
+        446,
+        462,
+        466,
+        472,
+        481,
+        482,
+        487,
+        510,
+        533,
+        537,
+        542,
+        551,
+        565,
+        602,
+        609,
+        610,
+        612,
+        613,
+        634,
+        662,
+        665,
+        670,
+        682,
+        701,
+        711,
+        712,
+        714,
+        722,
+        728,
+        730,
+        735,
+        738,
+        774,
+        776,
+        779,
+        796,
+        800,
+        809,
+        820,
+        844,
+        868,
+        900,
+        904,
+        905,
+        907,
+        910,
+        924,
+        932,
+        943,
+        948,
+        961,
+        975,
+        980,
+        983,
+        994,
+        997,
+        1002,
+        1007,
+        1012,
+        1042,
+        1056,
+        1066,
+        1068,
+        1072,
+        1094,
+        1098,
+        1099,
+        1101,
+        1109,
+        1119,
+        1140,
+        1143,
+        1175,
+        1176,
+        1198,
+        1200,
+        1201,
+        1208,
+        1215,
+        1245,
+        1257,
+        1266,
+        1277,
+        1293,
+        1297,
+        1309,
+        1329,
+        1335,
+        1341,
+        1360,
+        1381,
+        1414,
+        1423,
+        1437,
+        1448,
+        1461,
+        1467,
+        1470,
+        1474,
+        1479,
+        1498,
+        1512,
+        1513,
+        1518,
+        1523,
+        1525,
+        1539,
+        1558,
+        1571,
+        1582,
+        1615,
+        1645,
+        1649,
+        1650,
+        1652,
+        1677,
+        1679,
+        1690,
+        1693,
+        1719,
+        1726,
+        1728,
+        1731,
+        1745,
+        1749,
+        1752,
+        1757,
+        1800,
+        1851,
+        1855,
+        1856,
+        1858,
+        1863,
+        1867,
+        1877,
+        1909,
+        1911,
+        1930,
+        1951,
+        1965,
+        1968,
+        1969,
+        1986,
+        1987,
+        1993,
+        1995,
+        1999
+      ],
+      "median_runs_when_solved": 62,
+      "rows": [
+        {
+          "size": 6,
+          "index": 9,
+          "walls": 2,
+          "seconds": 5.013,
+          "runs": 144,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 14,
+          "walls": 0,
+          "seconds": 5.01,
+          "runs": 140,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 18,
+          "walls": 0,
+          "seconds": 5.029,
+          "runs": 105,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 47,
+          "walls": 2,
+          "seconds": 4.997,
+          "runs": 128,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 52,
+          "walls": 4,
+          "seconds": 5.01,
+          "runs": 136,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 57,
+          "walls": 4,
+          "seconds": 5.009,
+          "runs": 117,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 65,
+          "walls": 2,
+          "seconds": 5.015,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 74,
+          "walls": 0,
+          "seconds": 5.002,
+          "runs": 126,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 76,
+          "walls": 5,
+          "seconds": 5.028,
+          "runs": 130,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 85,
+          "walls": 5,
+          "seconds": 4.987,
+          "runs": 107,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 92,
+          "walls": 0,
+          "seconds": 4.999,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 94,
+          "walls": 0,
+          "seconds": 5.016,
+          "runs": 103,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 99,
+          "walls": 5,
+          "seconds": 5.028,
+          "runs": 135,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 109,
+          "walls": 4,
+          "seconds": 5.025,
+          "runs": 121,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 138,
+          "walls": 2,
+          "seconds": 5.026,
+          "runs": 126,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 143,
+          "walls": 0,
+          "seconds": 4.997,
+          "runs": 114,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 156,
+          "walls": 3,
+          "seconds": 5.044,
+          "runs": 122,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 165,
+          "walls": 4,
+          "seconds": 4.993,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 166,
+          "walls": 2,
+          "seconds": 5.007,
+          "runs": 115,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 167,
+          "walls": 2,
+          "seconds": 5.02,
+          "runs": 97,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 169,
+          "walls": 0,
+          "seconds": 4.989,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 176,
+          "walls": 4,
+          "seconds": 4.99,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 180,
+          "walls": 2,
+          "seconds": 5.009,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 184,
+          "walls": 0,
+          "seconds": 5.03,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 187,
+          "walls": 5,
+          "seconds": 4.999,
+          "runs": 122,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 195,
+          "walls": 2,
+          "seconds": 5.012,
+          "runs": 120,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 206,
+          "walls": 0,
+          "seconds": 5.019,
+          "runs": 107,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 218,
+          "walls": 0,
+          "seconds": 5.014,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 223,
+          "walls": 0,
+          "seconds": 5.008,
+          "runs": 112,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 224,
+          "walls": 3,
+          "seconds": 5.017,
+          "runs": 108,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 229,
+          "walls": 0,
+          "seconds": 5.004,
+          "runs": 118,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 243,
+          "walls": 2,
+          "seconds": 5.027,
+          "runs": 93,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 254,
+          "walls": 3,
+          "seconds": 5.007,
+          "runs": 121,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 255,
+          "walls": 4,
+          "seconds": 5.026,
+          "runs": 122,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 257,
+          "walls": 5,
+          "seconds": 5.038,
+          "runs": 133,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 259,
+          "walls": 0,
+          "seconds": 5.013,
+          "runs": 102,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 278,
+          "walls": 0,
+          "seconds": 5.026,
+          "runs": 95,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 283,
+          "walls": 0,
+          "seconds": 5.033,
+          "runs": 105,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 325,
+          "walls": 0,
+          "seconds": 5.057,
+          "runs": 93,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 329,
+          "walls": 4,
+          "seconds": 5.022,
+          "runs": 135,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 344,
+          "walls": 0,
+          "seconds": 5.007,
+          "runs": 95,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 353,
+          "walls": 2,
+          "seconds": 5.008,
+          "runs": 93,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 359,
+          "walls": 0,
+          "seconds": 5.038,
+          "runs": 116,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 365,
+          "walls": 5,
+          "seconds": 5.042,
+          "runs": 116,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 368,
+          "walls": 0,
+          "seconds": 5.026,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 378,
+          "walls": 4,
+          "seconds": 5.01,
+          "runs": 103,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 381,
+          "walls": 5,
+          "seconds": 4.991,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 385,
+          "walls": 2,
+          "seconds": 5.024,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 387,
+          "walls": 0,
+          "seconds": 5.025,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 392,
+          "walls": 0,
+          "seconds": 5.011,
+          "runs": 112,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 409,
+          "walls": 4,
+          "seconds": 5.004,
+          "runs": 115,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 411,
+          "walls": 2,
+          "seconds": 5.019,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 413,
+          "walls": 0,
+          "seconds": 5.032,
+          "runs": 110,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 446,
+          "walls": 4,
+          "seconds": 5.017,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 462,
+          "walls": 2,
+          "seconds": 4.997,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 466,
+          "walls": 2,
+          "seconds": 5.016,
+          "runs": 121,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 472,
+          "walls": 5,
+          "seconds": 5.013,
+          "runs": 97,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 481,
+          "walls": 3,
+          "seconds": 5.01,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 482,
+          "walls": 2,
+          "seconds": 5.017,
+          "runs": 108,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 487,
+          "walls": 3,
+          "seconds": 5.036,
+          "runs": 107,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 510,
+          "walls": 0,
+          "seconds": 5.013,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 533,
+          "walls": 0,
+          "seconds": 5.002,
+          "runs": 114,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 537,
+          "walls": 0,
+          "seconds": 5.022,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 542,
+          "walls": 3,
+          "seconds": 5.019,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 551,
+          "walls": 2,
+          "seconds": 5.039,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 565,
+          "walls": 4,
+          "seconds": 5.009,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 602,
+          "walls": 0,
+          "seconds": 5.014,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 609,
+          "walls": 3,
+          "seconds": 5.028,
+          "runs": 118,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 610,
+          "walls": 0,
+          "seconds": 5.007,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 612,
+          "walls": 0,
+          "seconds": 5.017,
+          "runs": 117,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 613,
+          "walls": 4,
+          "seconds": 5.006,
+          "runs": 103,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 634,
+          "walls": 3,
+          "seconds": 5.019,
+          "runs": 121,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 662,
+          "walls": 3,
+          "seconds": 5.017,
+          "runs": 116,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 665,
+          "walls": 4,
+          "seconds": 5.006,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 670,
+          "walls": 3,
+          "seconds": 5.018,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 682,
+          "walls": 0,
+          "seconds": 5.015,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 701,
+          "walls": 0,
+          "seconds": 5.046,
+          "runs": 97,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 711,
+          "walls": 2,
+          "seconds": 5.045,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 712,
+          "walls": 3,
+          "seconds": 5.026,
+          "runs": 130,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 714,
+          "walls": 3,
+          "seconds": 5.022,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 722,
+          "walls": 0,
+          "seconds": 4.997,
+          "runs": 94,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 728,
+          "walls": 0,
+          "seconds": 5.024,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 730,
+          "walls": 3,
+          "seconds": 5.019,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 735,
+          "walls": 4,
+          "seconds": 5.033,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 738,
+          "walls": 4,
+          "seconds": 5.039,
+          "runs": 124,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 774,
+          "walls": 5,
+          "seconds": 5.018,
+          "runs": 117,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 776,
+          "walls": 0,
+          "seconds": 5.037,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 779,
+          "walls": 0,
+          "seconds": 5.036,
+          "runs": 89,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 796,
+          "walls": 5,
+          "seconds": 5.006,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 800,
+          "walls": 5,
+          "seconds": 5.015,
+          "runs": 95,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 809,
+          "walls": 5,
+          "seconds": 5.044,
+          "runs": 96,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 820,
+          "walls": 0,
+          "seconds": 5.01,
+          "runs": 89,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 844,
+          "walls": 4,
+          "seconds": 0.258,
+          "runs": 4,
+          "solved": true
+        },
+        {
+          "size": 6,
+          "index": 868,
+          "walls": 2,
+          "seconds": 3.051,
+          "runs": 62,
+          "solved": true
+        },
+        {
+          "size": 6,
+          "index": 900,
+          "walls": 0,
+          "seconds": 5.04,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 904,
+          "walls": 0,
+          "seconds": 5.026,
+          "runs": 94,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 905,
+          "walls": 2,
+          "seconds": 4.99,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 907,
+          "walls": 3,
+          "seconds": 5.033,
+          "runs": 86,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 910,
+          "walls": 0,
+          "seconds": 5.003,
+          "runs": 102,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 924,
+          "walls": 4,
+          "seconds": 5.032,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 932,
+          "walls": 0,
+          "seconds": 5.02,
+          "runs": 97,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 943,
+          "walls": 2,
+          "seconds": 5.002,
+          "runs": 120,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 948,
+          "walls": 2,
+          "seconds": 4.992,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 961,
+          "walls": 0,
+          "seconds": 5.026,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 975,
+          "walls": 0,
+          "seconds": 5.02,
+          "runs": 114,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 980,
+          "walls": 0,
+          "seconds": 5.045,
+          "runs": 120,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 983,
+          "walls": 5,
+          "seconds": 5.018,
+          "runs": 120,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 994,
+          "walls": 0,
+          "seconds": 5.014,
+          "runs": 114,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 997,
+          "walls": 3,
+          "seconds": 5.023,
+          "runs": 91,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1002,
+          "walls": 3,
+          "seconds": 5.005,
+          "runs": 107,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1007,
+          "walls": 0,
+          "seconds": 5.008,
+          "runs": 107,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1012,
+          "walls": 0,
+          "seconds": 5.025,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1042,
+          "walls": 0,
+          "seconds": 5.043,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1056,
+          "walls": 2,
+          "seconds": 5.027,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1066,
+          "walls": 0,
+          "seconds": 5.002,
+          "runs": 125,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1068,
+          "walls": 3,
+          "seconds": 5.006,
+          "runs": 105,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1072,
+          "walls": 5,
+          "seconds": 0.744,
+          "runs": 18,
+          "solved": true
+        },
+        {
+          "size": 6,
+          "index": 1094,
+          "walls": 0,
+          "seconds": 5.02,
+          "runs": 114,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1098,
+          "walls": 3,
+          "seconds": 5.013,
+          "runs": 101,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1099,
+          "walls": 5,
+          "seconds": 5.01,
+          "runs": 145,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1101,
+          "walls": 2,
+          "seconds": 5.012,
+          "runs": 116,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1109,
+          "walls": 0,
+          "seconds": 5.012,
+          "runs": 101,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1119,
+          "walls": 2,
+          "seconds": 5.033,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1140,
+          "walls": 2,
+          "seconds": 5.006,
+          "runs": 91,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1143,
+          "walls": 0,
+          "seconds": 5.025,
+          "runs": 94,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1175,
+          "walls": 2,
+          "seconds": 5.001,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1176,
+          "walls": 5,
+          "seconds": 5.017,
+          "runs": 114,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1198,
+          "walls": 3,
+          "seconds": 5.009,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1200,
+          "walls": 3,
+          "seconds": 4.989,
+          "runs": 115,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1201,
+          "walls": 0,
+          "seconds": 5.001,
+          "runs": 112,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1208,
+          "walls": 0,
+          "seconds": 4.992,
+          "runs": 108,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1215,
+          "walls": 4,
+          "seconds": 0.253,
+          "runs": 5,
+          "solved": true
+        },
+        {
+          "size": 6,
+          "index": 1245,
+          "walls": 4,
+          "seconds": 5.025,
+          "runs": 90,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1257,
+          "walls": 4,
+          "seconds": 5.036,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1266,
+          "walls": 2,
+          "seconds": 4.989,
+          "runs": 88,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1277,
+          "walls": 0,
+          "seconds": 5.022,
+          "runs": 91,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1293,
+          "walls": 0,
+          "seconds": 5.011,
+          "runs": 112,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1297,
+          "walls": 0,
+          "seconds": 5.048,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1309,
+          "walls": 2,
+          "seconds": 5.0,
+          "runs": 122,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1329,
+          "walls": 0,
+          "seconds": 5.039,
+          "runs": 105,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1335,
+          "walls": 2,
+          "seconds": 4.993,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1341,
+          "walls": 3,
+          "seconds": 5.005,
+          "runs": 133,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1360,
+          "walls": 4,
+          "seconds": 5.02,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1381,
+          "walls": 4,
+          "seconds": 5.006,
+          "runs": 107,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1414,
+          "walls": 4,
+          "seconds": 5.013,
+          "runs": 91,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1423,
+          "walls": 0,
+          "seconds": 5.035,
+          "runs": 94,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1437,
+          "walls": 5,
+          "seconds": 5.06,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1448,
+          "walls": 0,
+          "seconds": 5.011,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1461,
+          "walls": 3,
+          "seconds": 5.018,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1467,
+          "walls": 3,
+          "seconds": 4.99,
+          "runs": 118,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1470,
+          "walls": 4,
+          "seconds": 5.019,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1474,
+          "walls": 0,
+          "seconds": 4.993,
+          "runs": 115,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1479,
+          "walls": 0,
+          "seconds": 5.048,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1498,
+          "walls": 3,
+          "seconds": 5.02,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1512,
+          "walls": 0,
+          "seconds": 5.005,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1513,
+          "walls": 0,
+          "seconds": 5.024,
+          "runs": 124,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1518,
+          "walls": 2,
+          "seconds": 5.018,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1523,
+          "walls": 0,
+          "seconds": 5.003,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1525,
+          "walls": 0,
+          "seconds": 5.032,
+          "runs": 95,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1539,
+          "walls": 0,
+          "seconds": 5.041,
+          "runs": 99,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1558,
+          "walls": 4,
+          "seconds": 5.02,
+          "runs": 104,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1571,
+          "walls": 0,
+          "seconds": 4.997,
+          "runs": 116,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1582,
+          "walls": 2,
+          "seconds": 5.034,
+          "runs": 101,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1615,
+          "walls": 0,
+          "seconds": 4.999,
+          "runs": 102,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1645,
+          "walls": 0,
+          "seconds": 5.026,
+          "runs": 110,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1649,
+          "walls": 0,
+          "seconds": 2.979,
+          "runs": 68,
+          "solved": true
+        },
+        {
+          "size": 6,
+          "index": 1650,
+          "walls": 0,
+          "seconds": 4.996,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1652,
+          "walls": 0,
+          "seconds": 5.011,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1677,
+          "walls": 0,
+          "seconds": 3.416,
+          "runs": 70,
+          "solved": true
+        },
+        {
+          "size": 6,
+          "index": 1679,
+          "walls": 5,
+          "seconds": 5.027,
+          "runs": 115,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1690,
+          "walls": 0,
+          "seconds": 5.0,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1693,
+          "walls": 4,
+          "seconds": 5.025,
+          "runs": 133,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1719,
+          "walls": 3,
+          "seconds": 5.048,
+          "runs": 105,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1726,
+          "walls": 0,
+          "seconds": 5.015,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1728,
+          "walls": 0,
+          "seconds": 5.014,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1731,
+          "walls": 0,
+          "seconds": 5.0,
+          "runs": 128,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1745,
+          "walls": 5,
+          "seconds": 4.999,
+          "runs": 157,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1749,
+          "walls": 0,
+          "seconds": 5.004,
+          "runs": 123,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1752,
+          "walls": 2,
+          "seconds": 4.994,
+          "runs": 122,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1757,
+          "walls": 0,
+          "seconds": 5.036,
+          "runs": 111,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1800,
+          "walls": 0,
+          "seconds": 5.005,
+          "runs": 106,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1851,
+          "walls": 0,
+          "seconds": 5.034,
+          "runs": 125,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1855,
+          "walls": 0,
+          "seconds": 5.025,
+          "runs": 98,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1856,
+          "walls": 0,
+          "seconds": 4.997,
+          "runs": 124,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1858,
+          "walls": 3,
+          "seconds": 5.009,
+          "runs": 126,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1863,
+          "walls": 0,
+          "seconds": 4.99,
+          "runs": 105,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1867,
+          "walls": 0,
+          "seconds": 5.001,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1877,
+          "walls": 5,
+          "seconds": 5.035,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1909,
+          "walls": 2,
+          "seconds": 5.023,
+          "runs": 136,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1911,
+          "walls": 0,
+          "seconds": 5.019,
+          "runs": 115,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1930,
+          "walls": 4,
+          "seconds": 5.009,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1951,
+          "walls": 4,
+          "seconds": 5.028,
+          "runs": 102,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1965,
+          "walls": 0,
+          "seconds": 4.992,
+          "runs": 109,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1968,
+          "walls": 0,
+          "seconds": 5.034,
+          "runs": 100,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1969,
+          "walls": 4,
+          "seconds": 5.02,
+          "runs": 113,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1986,
+          "walls": 4,
+          "seconds": 5.056,
+          "runs": 92,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1987,
+          "walls": 0,
+          "seconds": 5.016,
+          "runs": 139,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1993,
+          "walls": 0,
+          "seconds": 5.051,
+          "runs": 95,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1995,
+          "walls": 5,
+          "seconds": 5.023,
+          "runs": 166,
+          "solved": false
+        },
+        {
+          "size": 6,
+          "index": 1999,
+          "walls": 2,
+          "seconds": 5.017,
+          "runs": 108,
+          "solved": false
+        }
+      ]
+    }
+  }
+}
