@@ -8,6 +8,7 @@
 
 ## Claude Code 專屬備註
 
+- 🛑 **2026-09-19 專案收尾、停止開發**：先讀 `ai-collab/reports/2026-09-19_project-wrap-up.md`；要重啟任何 track 先拿本人授權。
 - **第一站是 `ai-collab/roadmap.md`**：現況、下一步、已定案不要再重開的決策。
 - **本專案自 2025-10-30 起休眠約 9 個月**——開發前先 `uv sync` ＋ `uv run pytest` 建立基線，不要假設環境還是好的。
 - **venv**：Python 3.11，一律 `cd linkedin-zip-challenge` 再 `uv run`；repo 根的 `.venv` 是 py3.9 devtools，不能拿來跑這個專案。

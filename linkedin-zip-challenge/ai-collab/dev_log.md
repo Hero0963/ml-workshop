@@ -6,6 +6,38 @@
 
 ## 2026-09-19
 
+### 專案收尾（branch `docs/publish-weights-future-work`, worktree `zip-vlm`）
+
+**本人當次指示**：停止一切開發與實驗，只做 fix issue ＋ 收尾；`main` 本機與 remote 都要是最新；文件齊全；
+陌生人 `git clone` 後能用 Docker 跑；權重提案、RL 總結與後續路線、GPT-6 computer use survey、出一份最終報告；自主規劃、自己驗收。
+進度與原始觀察逐步記在 [`plans/2026-09-19_project-wrap-up.md`](plans/2026-09-19_project-wrap-up.md)，總帳在
+[`reports/2026-09-19_project-wrap-up.md`](reports/2026-09-19_project-wrap-up.md)。
+
+**git 盤點**：5 個 worktree、本機 10 條／remote 8 條分支**全部已是 `main` 的祖先**；`main` 比 `origin/main` 超前 6。
+`zip-solvers`（PSO 包預算量測）與 `zip-infra`（部署指南三段定案）有**沒 commit 的已完成工作** ⇒ 以 `git apply --3way` 移植，
+五個檔逐 hunk 比對相同，原 worktree 沒動。基線 `uv run pytest` **330 passed, 1 skipped, 8 xfailed**（skip 是缺 RL checkpoint）。
+
+**全新 clone 實測抓到並修掉的**（每一項都實跑過）：
+- `start.py` 在 Python 3.9 `TypeError`（`str | None` 在簽章裡）⇒ `from __future__ import annotations`。
+- 沒有 NVIDIA GPU 時 ollama `up` 失敗、`start.py` 直接 `sys.exit` ⇒ 改非致命。**故障注入**（driver 改成不存在的名字）實測：印出 `could not select device driver` 與說明、app 照常起。
+- Ollama 起來不等於模型在 ⇒ `report_ollama` 比對 `.env` 的 `OLLAMA_MODEL_NAME`。假 Ollama 四種情境測過。
+- torch 只有 x86_64 Linux wheel ⇒ app compose 釘 `platform: linux/amd64`（ARM 未測）。
+- `uv sync` → `uv sync --locked`；`node:lts-alpine` → `node:24-alpine`、`ollama/ollama:latest` → `0.32.13`（實測過的版本）。
+
+**驗收數字**：冷建置 88 秒；容器內 331 passed；9 種 solver 經 HTTP、答案用 `verify.is_solution` 判；RL 無權重 503、放入權重不重啟即可解；
+讀圖全新合成 6/6、held-out 4/4、真實截圖與操作手冊預期表逐列相同；模型缺席 503。腳本與 JSON 在 `reports/artifacts/wrap-up-acceptance/`。
+
+**踩到的坑**：
+- **本機 Docker 埠轉發整個失效**：對照組（無關的 `http.server` 容器）也連不上，重啟 Docker Desktop 無效 ⇒ 根因是 `.wslconfig` 在 2026-09-18 改成 `networkingMode=mirrored`。
+  沒改本人的全域設定，改在容器內驗收；主機端 `start.py` 輪詢與 Svelte 瀏覽器 e2e 因此**未驗**。
+- **重啟 Docker Desktop 把四個 `restart=always` 的別專案容器拉了起來**（`omni_parser` 吃約 50% CPU）⇒ 已 `docker stop` 回原狀。重啟前要先查 restart policy。
+- **匯出的文字塔 GGUF 與 Ollama blob 雜湊不同** ⇒ 寫 `gguf_compare.py` 逐張量比：metadata 35/35、張量 426/426 位元組相同，只是 Ollama 重排了順序。
+- 工具層會把 heredoc 裡的 `\\` 摺成 `\`：修 `vlm-operating-guide.md` 兩處被寫成垂直定位字元的 `\v` 時，替換字串本身又變回 `\v`。改用 `bytes([92])`。
+- `cmp -l` 比 8 GB 檔會跑超過 10 分鐘（差異位元組太多）——比模型要比張量，不要比檔案。
+
+**文件**：新增 `model-weights.md`、三份報告（收尾總帳、RL 收尾分析、computer-use survey）；README 兩份重寫；
+roadmap 開頭加收尾一節；三份 handover 加停止橫幅；deployment-guide §10；project_guide、兩份 AGENTS、`notes/01`（「加深網路」不是已證偽）更正。
+
 ### RL Track — 掃 BC 的 epoch ＋ ExIt 第一輪 ＋ 判定器改嚴格（branch `feat/rl-exit`, worktree `zip-rl`；實驗做一半時收尾）
 
 **本人當次授權**：「交給你規劃再來要幹嘛，然後就開工」⇒ 依 handover §3 的優先序自己排、直接開跑（不含 commit）。
