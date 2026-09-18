@@ -2,10 +2,9 @@
 from fastapi import APIRouter
 from src.app.schemas.echo import EchoRequest, EchoResponse, HealthResponse
 
-router = APIRouter(
-    prefix="/echo",
-    tags=["echo"],
-)
+# The tag is given where the router is included, as for the other routers; one here too
+# listed both endpoints twice in /docs, under "Echo" and "echo".
+router = APIRouter(prefix="/echo")
 
 
 @router.post("/", response_model=EchoResponse)
