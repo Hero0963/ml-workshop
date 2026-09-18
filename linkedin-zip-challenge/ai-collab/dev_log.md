@@ -202,6 +202,12 @@ Track B 已全數合併、沒有人在動，而且是事實錯誤，所以保留
 `roadmap.md` 裡「108 次只有 8 次是真解」與報告不符，用 `budget-measurements.json` 重算是 **180 次 16 次**，已校正；
 handover 的「這個 worktree 沒有 `models/`」也過期了（做 API 往返前就複製了，RL 才解得出 `puzzle_02`）。
 `main` 在這條 branch 之後多了 `a8c3626`（RL 文件，同樣動了 `dev_log.md`／`roadmap.md`），所以先 rebase 才能 `--ff-only`。
+rebase 沒有衝突（兩邊改的是不同段落），驗過 `roadmap.md` 相對 `main` 只動了 Track C 那一項與它的日誌列。
+rebase 後：`uv run pytest` **309 passed, 8 xfailed**、`ruff check` 全綠、repo 根 pre-commit 兩項 Passed。
+handover 舊基線「304 passed, 1 skipped」差的那 1 個是 RL 端到端測試（有 `models/` 就跑、沒有就 skip），
+另外 4 個差距沒追到來源——同一份程式碼現在收得到 317 個測試，已用實測數字取代舊基線。
+⚠ 新開的 worktree 根目錄沒有 devtools 的 `.venv`，但 git hook 本來就用主 checkout 的
+`ml-workshop/.venv` 跑 pre-commit，所以用那個直譯器 `-m pre_commit run --all-files` 就好，不必在 worktree 另建環境。
 
 ### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
 

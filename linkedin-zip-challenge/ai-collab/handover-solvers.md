@@ -108,7 +108,8 @@ Gradio 那邊是從 registry 動態拿的，所以兩個前端現在不一致。
 
 ```powershell
 cd linkedin-zip-challenge
-uv run pytest                    # 2026-09-12 基線：304 passed, 1 skipped, 8 xfailed
+uv run pytest                    # 2026-09-19 基線（rebase 到 main 後、有 models/）：309 passed, 8 xfailed
+                                 # 沒有 models/ 時 RL 端到端測試會變 skip（見 §6）
 uv run ruff check .
 
 # 重跑預算量測（約 4 分鐘，seed 已固定在腳本裡）
