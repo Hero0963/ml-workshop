@@ -169,6 +169,9 @@
      （BC 的訓練軌跡對同一 seed 是決定性的，兩次獨立執行的前六行紀錄逐位相同 ⇒ 不必每點重訓，省掉那 5 分鐘），
      附實測的評估秒數（6×6 best-of-32 × 2,000 題 590.1s／570.1s）、**必跑的對照**（重評 e6 要復現 0.9465，否則等於換了尺）、點的排程與判讀規則，**全部合計約 1 小時 20 分**。
      **接手的人先拿授權再開跑**；另一條開著的線是 **ExIt／拒絕抽樣微調**（唯一對準「保住多樣性」的方法）。
+   - **🚧 2026-09-19 進行中（本人授權重啟訓練，分支 `feat/rl-exit`）**：① 照配方掃 epoch ② ExIt 第一輪
+     （先驗「同一題真的有別條解嗎」，再用搜尋找到的解當額外標籤重訓）③ 贏家補 seed。
+     進度與數字即時寫在 [dev_log.md](dev_log.md) 的 2026-09-19 RL 小節。
    - **🐳 服務怎麼起**：[deployment-guide.md](deployment-guide.md)（`docker compose up -d --build`；
      `models/` 是唯讀掛載，沒有 checkpoint 時 RL solver 回 503、其他 solver 照常）。
    - 🤝 **接手第一站：[handover-rl-solver.md](handover-rl-solver.md)**——自足的交接文件（環境建置、已驗證事實、
