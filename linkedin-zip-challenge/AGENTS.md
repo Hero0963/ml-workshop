@@ -3,7 +3,7 @@
 > **本檔是這個子專案的操作規範正本。** `CLAUDE.md` 只用 `@AGENTS.md` 載入本檔。
 > repo 級規範（monorepo 地圖、venv 分工、紅線）在 [`../AGENTS.md`](../AGENTS.md)；Python 程式碼風格在 [`../rules.md`](../rules.md)。
 > **衝突時以本檔為準**（較具體者優先）。
-> Last Updated: 2026-08-29
+> Last Updated: 2026-09-19
 
 ---
 
@@ -21,7 +21,8 @@
 
 1. 看 SessionStart 簡報（分支／最近 commit／工作區狀態／下一步）。
 2. **接手進行中的 track → 先讀該 track 的交接文件**，那一份是自足的：環境建置、已驗證事實、下一步、
-   陷阱清單、該讀哪些延伸文件都在裡面。目前有兩條並行的 track：
+   陷阱清單、該讀哪些延伸文件都在裡面。目前有三條 track 各有一份：
+   - 全部 solver 上 API／Gradio／Svelte（roadmap 第 1 項）→ [`ai-collab/handover-solvers.md`](ai-collab/handover-solvers.md)
    - VLM 圖片解析（roadmap 第 2 項）→ [`ai-collab/handover-vlm-parser.md`](ai-collab/handover-vlm-parser.md)
    - RL solver（roadmap 第 3 項）→ [`ai-collab/handover-rl-solver.md`](ai-collab/handover-rl-solver.md)
 3. 讀 [`ai-collab/roadmap.md`](ai-collab/roadmap.md)——**現況、下一步、已定案不要再重開的決策**。
@@ -38,7 +39,7 @@
 |------|------|
 | `AGENTS.md`（本檔） | 操作規範正本：流程、環境、驗證、任務地圖、紅線 |
 | `CLAUDE.md` | 只有一行 `@AGENTS.md` |
-| `ai-collab/handover-<track>.md` | **各 track 的交接文件**：接手該 track 的第一站，自足到讀完就能動手（現有 `handover-vlm-parser.md`、`handover-rl-solver.md`）。track 告一段落就更新 |
+| `ai-collab/handover-<track>.md` | **各 track 的交接文件**：接手該 track 的第一站，自足到讀完就能動手（現有 `handover-solvers.md`、`handover-vlm-parser.md`、`handover-rl-solver.md`）。track 告一段落就更新 |
 | `ai-collab/roadmap.md` | **現況與下一步**。新 session 第一站；每次做完事要更新 |
 | `ai-collab/project_guide.md` | 架構、模組職責、資料流、啟動方式 |
 | `ai-collab/dev_log.md` | 開發日誌（逆時序，最新在上）。做完一段就加一則 |
@@ -106,7 +107,7 @@ python start.py --dev           # Docker 開發環境（hot-reload）
 | 任務 | 動哪裡 |
 |------|--------|
 | 新增一種 solver | `src/core/solvers/<name>.py` ＋ `src/core/tests/solvers/test_<name>.py`；要上線就在 **`src/core/solvers/registry.py`** 加一個 `SolverEntry`——API、截圖端點、Gradio 下拉選單**三處會一起拿到**（2026-09-12 前這份清單被抄了三份，加了一處另外兩處不會動）|
-| 把既有 solver 掛上 API | **`src/core/solvers/registry.py`**（唯一正本）＋ `src/app/schemas/solver.py`（啟發式需要 `attempts` 參數） |
+| 把既有 solver 掛上 API | **`src/core/solvers/registry.py`**（唯一正本）。啟發式要用 `_until_verified()` 包起來（沒通過 `verify.py` 的最佳猜測不能被畫成答案）；**預算固定在 registry、不開成 API 參數**，理由見 `ai-collab/reports/2026-09-12_heuristic-solvers-on-the-api.md` |
 | 改謎題資料格式／parser | `src/core/utils.py` 的 `Puzzle` 與 `parse_puzzle_layout()`——**唯一 parser，不要在別處重寫**；改了要全體 solver 回歸 |
 | 改評分邏輯 | `src/core/utils.py` 的 `calculate_fitness_score()`；牽動所有啟發式 solver |
 | 改視覺化（GIF／PNG） | `src/core/utils.py` 的 `save_*` 系列 |

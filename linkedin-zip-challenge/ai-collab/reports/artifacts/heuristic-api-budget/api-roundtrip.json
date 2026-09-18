@@ -1,0 +1,191 @@
+{
+  "endpoint": "http://127.0.0.1:7440/api/solver/solve",
+  "puzzle": "puzzle_01 (6x6, 10 walls)",
+  "rows": [
+    {
+      "solver": "DFS",
+      "kind": "Depth-fir",
+      "status": 200,
+      "seconds": 0.54,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "A* (heapq)",
+      "kind": "Best-firs",
+      "status": 200,
+      "seconds": 0.5,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "CP-SAT",
+      "kind": "Constrain",
+      "status": 200,
+      "seconds": 0.54,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "RL (behaviour cloning)",
+      "kind": "A trained",
+      "status": 200,
+      "seconds": 3.99,
+      "gif": false,
+      "png": false,
+      "verified": null,
+      "path_head": "Solver 'RL (behaviour cloning)' could not find a solution."
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "kind": "Ants walk",
+      "status": 200,
+      "seconds": 0.65,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "kind": "Keeps the",
+      "status": 200,
+      "seconds": 0.55,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "Particle Swarm Optimization",
+      "kind": "Moves wal",
+      "status": 200,
+      "seconds": 5.05,
+      "gif": false,
+      "png": false,
+      "verified": null,
+      "path_head": "Solver 'Particle Swarm Optimization' could not find a solu"
+    },
+    {
+      "solver": "Simulated Annealing",
+      "kind": "Cuts a wa",
+      "status": 200,
+      "seconds": 0.64,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "Tabu Search",
+      "kind": "Local sea",
+      "status": 200,
+      "seconds": 0.62,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    },
+    {
+      "solver": "Monte Carlo",
+      "kind": "Independe",
+      "status": 200,
+      "seconds": 2.02,
+      "gif": true,
+      "png": true,
+      "verified": true,
+      "path_head": "(1, 1) -> (2, 1) -> (2, 0) -> (1, 0) -> (0, 0) -> (0, 1) -"
+    }
+  ],
+  "second_board": {
+    "puzzle": "puzzle_02 (6x6, 0 walls, 12 numbers)",
+    "rows": [
+      {
+        "solver": "DFS",
+        "status": 200,
+        "seconds": 0.53,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "A* (heapq)",
+        "status": 200,
+        "seconds": 0.53,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "CP-SAT",
+        "status": 200,
+        "seconds": 0.56,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "RL (behaviour cloning)",
+        "status": 200,
+        "seconds": 0.62,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "Ant Colony Optimization",
+        "status": 200,
+        "seconds": 1.94,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "Genetic Algorithm",
+        "status": 200,
+        "seconds": 2.2,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "Particle Swarm Optimization",
+        "status": 200,
+        "seconds": 5.03,
+        "gif": false,
+        "verified": null,
+        "path_head": "Solver 'Particle Swarm Optimization' could not fin"
+      },
+      {
+        "solver": "Simulated Annealing",
+        "status": 200,
+        "seconds": 2.43,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "Tabu Search",
+        "status": 200,
+        "seconds": 0.55,
+        "gif": true,
+        "verified": true,
+        "path_head": "(2, 5) -> (3, 5) -> (4, 5) -> (5, 5) -> (5, 4) -> "
+      },
+      {
+        "solver": "Monte Carlo",
+        "status": 200,
+        "seconds": 5.02,
+        "gif": false,
+        "verified": null,
+        "path_head": "Solver 'Monte Carlo' could not find a solution."
+      }
+    ]
+  }
+}

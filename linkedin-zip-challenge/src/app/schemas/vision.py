@@ -11,7 +11,9 @@ collapsing them would hide the one that matters:
     path before the puzzle is carved out of it, so a real board always has a solution.
     An unsolvable reading is therefore *known* to be a misread, with no ground truth
     needed. The dangerous case is the opposite: a board that solves cleanly but was
-    never in the picture, which nothing can flag.
+    never in the picture, which nothing can flag. Only an exact solver can say "no
+    solution", so when a heuristic or the RL policy gives up the flag is ``None`` --
+    unjudged, not misread.
 *   ``solution_path`` -- absent when ``solvable`` is false, so a client cannot mistake
     "could not read it" for "there is no answer".
 """
@@ -42,11 +44,12 @@ class VisionSolveResponse(BaseModel):
         default_factory=list,
         description="Walls that were dropped, and anything else worth showing a user.",
     )
-    solvable: bool = Field(
+    solvable: bool | None = Field(
         ...,
         description=(
             "Whether the board as read has a solution. False means the reading is "
-            "definitely wrong, since every real board is generated from a path."
+            "definitely wrong, since every real board is generated from a path. None "
+            "means the chosen solver is not exact and gave up, which proves nothing."
         ),
     )
     solver_name: str

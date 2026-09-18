@@ -14,12 +14,16 @@
   let puzzle_grid = []; // 2D array for cell values
   let walls = new Set(); // Set to store wall tuples as JSON strings
   
-  let solver = "DFS";
-  let solvers = ["DFS", "A* (heapq)", "CP-SAT"];
+  // The solver list comes from the registry through GET /api/solver/list, never from a
+  // copy here: a hardcoded list is how this editor ended up offering three of ten.
+  let solvers = []; // [{ name, kind, note }], in the registry's order
+  let solver = "";
+  let solvers_error = "";
 
   let solution_path = "";
   let solution_gif = null;
   let solution_image = null;
+  let no_solution = null; // { message, note } when the solver returned no path
   let loading = false;
   let error_message = "";
 
@@ -53,9 +57,44 @@
       input_element.select();
   }
 
+  $: solver_groups = group_by_kind(solvers);
+  $: selected_solver = solvers.find(s => s.name === solver);
+
   onMount(() => {
     ctx = canvas.getContext("2d");
+    load_solvers();
   });
+
+  async function load_solvers() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/solver/list`);
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      solvers = await response.json();
+      solver = solvers.length > 0 ? solvers[0].name : "";
+    } catch (e) {
+      // No fallback list on purpose: it would be the copy this request replaces.
+      solvers_error = `Could not load the solver list: ${e.message}`;
+    }
+  }
+
+  function group_by_kind(list) {
+    const groups = [];
+    for (const s of list) {
+      let group = groups.find(g => g.kind === s.kind);
+      if (!group) {
+          group = { kind: s.kind, items: [] };
+          groups.push(group);
+      }
+      group.items.push(s);
+    }
+    return groups;
+  }
+
+  function kind_label(kind) {
+    return kind.charAt(0).toUpperCase() + kind.slice(1);
+  }
 
   // --- Core Functions ---
 
@@ -79,12 +118,14 @@
       solution_path = "";
       solution_gif = null;
       solution_image = null;
+      no_solution = null;
       error_message = "";
   }
 
   async function solve_puzzle() {
     loading = true;
     reset_solution();
+    const solver_used = selected_solver;
 
     const puzzle_list = puzzle_grid.map(row => 
         row.map(cell => {
@@ -128,6 +169,13 @@
       }
 
       const data = await response.json();
+      if (!data.solution_gif_b64) {
+          // The API draws every path it returns, so no picture means no path; the text
+          // is the reason. Only an exact solver's "no solution" says anything about the
+          // board, which is what the note tells the user.
+          no_solution = { message: data.solution_path, note: solver_used ? solver_used.note : "" };
+          return;
+      }
       solution_path = data.solution_path || "";
       if (data.solution_gif_b64) {
           solution_gif = `data:image/gif;base64,${data.solution_gif_b64}`;
@@ -293,13 +341,23 @@
       <div class="control-group">
         <h2>2. Solve</h2>
         <label>Solver: 
-            <select bind:value={solver}>
-                {#each solvers as s}
-                    <option value={s}>{s}</option>
+            <select bind:value={solver} disabled={solvers.length === 0}>
+                {#each solver_groups as group}
+                    <optgroup label={kind_label(group.kind)}>
+                        {#each group.items as s}
+                            <option value={s.name}>{s.name}</option>
+                        {/each}
+                    </optgroup>
                 {/each}
             </select>
         </label>
-        <button on:click={solve_puzzle} disabled={loading}>
+        {#if selected_solver}
+            <p class="solver-note">{selected_solver.note}</p>
+        {/if}
+        {#if solvers_error}
+            <p class="solver-note error-text">{solvers_error}</p>
+        {/if}
+        <button on:click={solve_puzzle} disabled={loading || !solver}>
             {#if loading}Solving...{:else}Solve Puzzle{/if}
         </button>
       </div>
@@ -307,8 +365,8 @@
        <div class="control-group">
         <h2>Instructions</h2>
         <ul>
-            <li>Click in the **middle** of a cell to set its value (number or 'x').</li>
-            <li>Click on a **border** between cells to toggle a wall.</li>
+            <li>Click in the <b>middle</b> of a cell to set its value (number or 'x').</li>
+            <li>Click on a <b>border</b> between cells to toggle a wall.</li>
             <li>Use the controls above to resize or reset the grid.</li>
         </ul>
       </div>
@@ -336,6 +394,16 @@
             <div class="solution-box error">
                 <h3>Error</h3>
                 <p>{error_message}</p>
+            </div>
+        {/if}
+
+        {#if no_solution}
+            <div class="solution-box no-solution">
+                <h3>No solution found</h3>
+                <p>{no_solution.message}</p>
+                {#if no_solution.note}
+                    <p class="solver-note">{no_solution.note}</p>
+                {/if}
             </div>
         {/if}
 
@@ -404,6 +472,19 @@
   .solution-box img {
       max-width: 100%;
       border: 1px solid #ddd;
+      margin-top: 1rem;
+  }
+  .solver-note {
+      max-width: 22rem;
+      font-size: 0.85rem;
+      color: #555;
+  }
+  .error-text {
+      color: red;
+  }
+  .no-solution {
+      border: 1px solid #e0a800;
+      padding: 1rem;
       margin-top: 1rem;
   }
   .error {

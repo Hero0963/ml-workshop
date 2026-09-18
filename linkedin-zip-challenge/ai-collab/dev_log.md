@@ -99,6 +99,89 @@ env 的 `_is_solved`、`dfs.py`、`calculate_fitness_score` **三個判定器都
 （選標籤用獨立的 `random.Random(seed)`，全域 `random` 的抽取與 sweep 完全相同），**唯一差別是每題每個 epoch 從「資料集那條 ＋ 嚴格別條解」均勻抽一條當標籤**。
 同一題所有解長度相同（都走滿所有格），所以每個 epoch 的梯度步數也相同。
 
+### Solvers Track — 兩個定案：`budget_seconds` 不做、PSO 下架但保留，並量出 PSO 在 4×4／6×6 的分數（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
+
+完整數字與理由在 [`reports/2026-09-19_pso-not-served.md`](reports/2026-09-19_pso-not-served.md)。
+
+**本人定案**：`budget_seconds` 請求欄位不做；PSO「先不開放接口，但目前成果留著」⇒ 從 `registry.SOLVER_ENTRIES` 拿掉
+（API、截圖端點、Gradio、Svelte 一起少了它，上線剩九種），`particle_swarm_optimization.py`、它的單元測試、所有量測都不動。
+registry 在原位置留了註解說明為什麼不在；`test_registry.py::test_pso_is_implemented_but_not_served` 釘住決定。
+實測：Chrome `--dump-dom` 下拉 9 個選項、DOM 裡沒有 PSO；`POST /api/solver/solve` 指定 PSO 回 **404**；`/api/solver/list` 9 筆。
+`uv run pytest` 仍是 **312 passed, 8 xfailed**（+1 新測試、−1 參數化的 PSO 那組）。
+
+**PSO 能得幾分**（題目是 RL 的 test split `seed20300000_n20000_456`，和 RL 的 best-of-32 同一批，可以直接對照）：
+
+| | 單次呼叫（決定性，全部題目） | 包 5 秒預算 | RL best-of-32 |
+|---|---|---|---|
+| 4×4 | **0.590**（1,139／1,931） | 待補 | 0.9953 |
+| 6×6 | **0.000**（0／2,000） | 待補 | 0.9465 |
+
+4×4 的單次解出率**隨牆數上升**（0 道 0.449 → 5 道 0.914）——牆砍掉合法後繼步，隨機產生的路徑更容易剛好合法，
+和 2026-09-12「牆少反而難」同一件事。6×6 的 0／2,000 不是「機率為零」，95% 信賴上界約 0.0015。
+
+**為什麼「包 5 秒預算」那欄待補**：它是牆鐘預算，而量的時候 `.agent-heavy-job` 是 `busy rl 2026-09-19 01:29`（CPU 約 50%）。
+依 AGENTS §10.3 不搶資源，也因為別人佔著 CPU 時量出來的分數會被壓低、不能用。
+單次呼叫那欄每題固定 seed、結果與機器忙不忙無關，所以先量（單一 process，137.8 秒）。
+待補那欄怎麼量、量完填哪裡，寫在 `handover-solvers.md` §5.2。
+
+**順手抓到的舊錯**：handover 寫 PSO「0/180」——180 是六種啟發式的總呼叫數，PSO 自己是 **0/30**；
+而「唯一一個從沒解出過的」只在包了預算之後成立（單次呼叫 Monte Carlo 也是 0/30；包預算後 PSO 0/6、Monte Carlo 1/6）。已在 `a8a2ca6` 改正。
+
+### Solvers Track C2 — Svelte 編輯器也拿到十種，外加兩個小 bug（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
+
+計畫在 [`plans/2026-09-12_next-tracks.md`](plans/2026-09-12_next-tracks.md) 的 C2 節（本人授權 Track C 自行規劃）；接手讀 [`handover-solvers.md`](handover-solvers.md)。
+
+**做了什麼**：Svelte 編輯器原本寫死 `DFS`／`A* (heapq)`／`CP-SAT`——十種只給三種、連 RL 都沒有，是前端裡唯一不從 registry 拿的。
+新增 `GET /api/solver/list`（直接由 `SOLVER_ENTRIES` 產生），編輯器開啟時去問它；下拉依 `kind` 分組（Exact／Learned／Heuristic）、顯示所選 solver 的 `note`。
+拿不到清單就顯示錯誤並停用 Solve，**刻意不退回寫死的清單**——退回的那份就是第四份拷貝。
+
+**順帶修掉的顯示錯誤**：API 對「放棄」回 200、沒有 GIF、訊息放在 `solution_path`。編輯器以前照樣把它放在「Solution」標題底下，
+還配兩張 `src=null` 的破圖。精確 solver 很少放棄所以沒人注意到；**啟發式一上來這就是常態**（PSO 在六題標準盤面上 0/6）。
+現在沒有 GIF 就顯示「No solution found」框並附上該 solver 的 note：精確 solver 的 note 說它是精確的，啟發式的 note 說「放棄 ≠ 無解」。
+判準與 Gradio 相同（有 GIF 才畫圖）。
+
+**守門**：`test_registry.py::test_the_svelte_editor_keeps_no_copy_of_the_list` 讀 `Index.svelte`，出現任何 registry 裡的名稱就失敗；
+改之前先跑過，確實抓到 `['DFS', 'A* (heapq)', 'CP-SAT']`（先紅後綠）。
+
+**端到端（真實 Chrome，不是 mock）**：[`reports/artifacts/svelte-solver-list/drive_editor.py`](reports/artifacts/svelte-solver-list/drive_editor.py)
+用 CDP 操作建置版——改尺寸、點格子填數字、點邊框加牆、選 solver、按 Solve，再把頁面上的路徑解析回座標送進 `is_solution`。
+solver 清單從頁面讀，腳本裡不寫。結果在 `editor-e2e.json`：
+
+| 盤面 | 結果 |
+|---|---|
+| 4×4 可解（1→2→3→4 蛇形） | 十種全部顯示 Solution 並畫出 GIF，**10/10 通過 `is_solution`** |
+| 同一盤面用兩道牆把 (3,3) 隔開（無解） | 精確／學習／啟發式各取第一種（DFS、RL、ACO）都顯示 No solution found、沒有畫圖；ACO 用了 5.07s（滿預算） |
+
+**一個修正舊說法的觀察**：handover 寫 PSO「從沒解出過任何一題」（六題：單次呼叫 0/30、包 5 秒預算後 0/6；handover 原本誤寫成 0/180，180 是六種加總）。
+但在這個 4×4 盤面上它兩次執行都解出來且通過驗證 ⇒ **不是不能解，是盤面一大就失效**。handover 已改寫（PSO 其後定案下架，見 §4.6）。
+
+**兩個 roadmap 列著的小 bug**（都在這條 track 的檔案範圍，各自獨立 commit）：
+
+- Svelte Instructions 直接印出 `**middle**`／`**border**` → 改成 `<b>`；Chrome 截圖與 `--dump-dom` 確認（DOM 裡 0 個 `**`）。
+- Swagger 的 Echo 群組出現兩次：`main.py` 掛 router 時給 `tags=["Echo"]`，`echo.py` 自己又給 `tags=["echo"]`，FastAPI 合併成兩個 tag。
+  先寫 `test_openapi.py`（每個端點只能有一個 tag）確認它失敗，拿掉 `echo.py` 那個之後轉綠；重啟服務後 live `/openapi.json` 與 Chrome 截的 `/docs` 都只剩一組。
+
+**驗證**：`uv run pytest` 309 → **312 passed, 8 xfailed**（多的 3 條就是上面三個新測試）、`ruff` 全綠、repo 根 pre-commit 通過。
+
+**合併**：本人授權後 `--ff-only` 合併進 `main` 並 push（`a8c3626..78c36c6`，9 個 commit；合併前重跑 pytest 312 passed、pre-commit 通過）。
+同時補了兩處共用文件（本人授權由我決定）：子專案 `AGENTS.md` §1／§2 列出 `handover-solvers.md`；
+repo `AGENTS.md` §10.7 寫明 worktree 沒有 devtools `.venv` 時怎麼跑 pre-commit——
+寫之前先查了五個 checkout，**`zip-infra`／`zip-rl` 其實有 `.venv`**，所以寫成「不一定有」而不是「沒有」。
+
+**踩到的坑**：`dist/` 與 `node_modules/` 不進版控，git 看不到——改 `Index.svelte` 後**一定要 `npm run build` 才看得到**。
+`/svelte-ui` 是 FastAPI 每次請求讀磁碟上的 `dist/`，所以重新 build 不必重啟服務；改 Python 就要（沒開 `--reload` 時）。
+
+**2026-09-19 收尾**：handover 原本寫「已合併進 `main`」，實際上兩個 commit 都還在 branch 上 ⇒ 改成「待本人合併」；
+`roadmap.md` 裡「108 次只有 8 次是真解」與報告不符，用 `budget-measurements.json` 重算是 **180 次 16 次**，已校正；
+handover 的「這個 worktree 沒有 `models/`」也過期了（做 API 往返前就複製了，RL 才解得出 `puzzle_02`）。
+`main` 在這條 branch 之後多了 `a8c3626`（RL 文件，同樣動了 `dev_log.md`／`roadmap.md`），所以先 rebase 才能 `--ff-only`。
+rebase 沒有衝突（兩邊改的是不同段落），驗過 `roadmap.md` 相對 `main` 只動了 Track C 那一項與它的日誌列。
+rebase 後：`uv run pytest` **309 passed, 8 xfailed**、`ruff check` 全綠、repo 根 pre-commit 兩項 Passed。
+handover 舊基線「304 passed, 1 skipped」差的那 1 個是 RL 端到端測試（有 `models/` 就跑、沒有就 skip），
+另外 4 個差距沒追到來源——同一份程式碼現在收得到 317 個測試，已用實測數字取代舊基線。
+⚠ 新開的 worktree 根目錄沒有 devtools 的 `.venv`，但 git hook 本來就用主 checkout 的
+`ml-workshop/.venv` 跑 pre-commit，所以用那個直譯器 `-m pre_commit run --all-files` 就好，不必在 worktree 另建環境。
+
 ## 2026-09-12
 
 ### RL Track — 收尾：不再訓練，把「掃 epoch」變成一份現成配方交出去（branch `feat/rl-ppo-finetune`, worktree `zip-rl`）
@@ -241,6 +324,57 @@ handover §2 關掉「加資料」的依據（落差 +0.009）量的是 **PPO** 
 
 **踩到的坑**：probe 用 run id 命名產物，重評已發表的 checkpoint 會**覆蓋**原檔 ⇒ 包一層 `hi-collab/scratch/probe_to.py` 改輸出目錄。
 兩個 seed 的 deterministic 逐位相同（0.915588）——驗過是巧合（權重 36/36 不同、各有 106 題只有自己解對）。
+
+### Solvers Track — 十種 solver 全部上 API，而關鍵不是「多了六個選項」而是「多了一個裁判」（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
+
+完整量測與設計理由在 [`reports/2026-09-12_heuristic-solvers-on-the-api.md`](reports/2026-09-12_heuristic-solvers-on-the-api.md)；
+接手讀 [`handover-solvers.md`](handover-solvers.md)。
+
+**先講最重要的發現：這六種 solver 不能直接上線。** 它們的共同寫法是「回傳看過最好的那條路」，
+而好壞由 `calculate_fitness_score()` 決定——**它們沒有「找不到」這個回傳值**。
+而兩個端點都是拿到什麼畫什麼。實測 180 次預設參數的呼叫：
+
+| | 數量 | 比例 |
+|---|---|---|
+| 回傳了一條路 | 180 | 100% |
+| 其中**真的是解** | 16 | **8.9%** |
+| 其中**不是解、但會被畫成 GIF 送出去** | **164** | **91.1%** |
+
+所以 registry 多了一層 `_until_verified()`：重跑到答案通過 `verify.py` 為止，每請求固定 5 秒，
+用完就回「could not find a solution」。包上之後六題的解出率 **8.9% → 58.3%（21/36）**，最慢的請求 5.04 秒。
+
+**裁判為什麼要獨立寫一份 `verify.py`，而不是用現成的 fitness score**：因為啟發式正在最佳化那個分數。
+一條靠分數漏洞拿高分的路，會被同一個漏洞認證為解。那個分數實際有兩個漏洞——第一步之後不再檢查
+blocked cell、負座標會從網格另一側繞回去索引。**優化目標不能同時當驗收標準**，這條在別的地方也成立。
+
+**API 實測**（`uv run python -m src.app.main` ＋ 十次 POST，兩題）：**各 10/10 回 200，
+而且凡是畫出圖的回應 100% 通過 `is_solution`**。RL 在 `puzzle_01` 放棄是**可預期且正確**的
+（10 道牆，它訓練在 0 或 2–5 道牆上），換到 0 道牆的 `puzzle_02` 就 0.62 秒解出來。
+
+**一個反直覺的量測**：難度的指標不是盤面大小，是「數字密度高 ＋ 牆少」。
+`puzzle_04`（7×7、14 道牆）四種解得出來；`puzzle_06`（7×7、21 個數字、**0 道牆**）六種全滅。
+**牆砍掉合法後繼步，反而讓隨機走法更好走。**
+
+**兩個刻意不做的決定**：
+
+1. **預算不開成 API 參數**（舊 roadmap 的 done 條件寫「schema 支援 `attempts`」，作廢）。
+   六種的預算單位不可共量：隨機走法數／迭代數／世代×族群／溫度排程。`attempts` 只有 Monte Carlo 吃得到，
+   要正確對應得開六組旋鈕——**而六組不同的旋鈕沒辦法拿來比較**，上線的目的正是同尺度比較。
+   秒是唯一共同單位，所以固定在伺服器端。
+2. **同步就夠，不加背景任務**（roadmap 的開放問題結案）。最壞 5.04s ≪ Gradio 的 120s timeout。
+
+**連帶修掉一個使用者看得到的錯誤**：截圖端點原本「solver 找不到解 ⇒ 判定圖讀錯了」。
+這個推論**只對精確 solver 成立**（真實盤面都是從完整路徑生成的，所以精確 solver 說無解就證明讀錯）；
+啟發式或 RL 放棄什麼都沒證明。`VisionSolveResponse.solvable` 因此從 `bool` 變成 `bool | None`，
+三態一路貫穿 schema、router、Gradio 文案與 request log——**事後分析不會再把「啟發式放棄」誤算成解析失敗**。
+
+**還沒做，留給下一個人**：Svelte 下拉仍寫死三種（連 RL 都沒有），正確做法是加一個回傳
+`SOLVER_ENTRIES` 的端點讓前端去問，不要再寫死第四份清單。細節在 `handover-solvers.md` §5.1。
+
+**順手修掉的過期**：`README.md`／`README_zh-TW.md` 的啟動範例、`deployment-guide.md` 的錯誤訊息範例
+都還寫著服務中的模型是 `bc_multi_456`，但 `solver_service.RUN_ID_BY_SIZE` 早在同日就換成 `bc_multi_456_e6` 了。
+（這三處不在 Track C 的檔案範圍：README 只有 solver 表格歸 C、`deployment-guide.md` 歸 Track B。
+Track B 已全數合併、沒有人在動，而且是事實錯誤，所以保留。`roadmap.md` RL 項的同一個錯誤 `main` 的 `a8c3626` 已經修了，這邊的版本丟掉。）
 
 ### RL Track — 收尾：一個模型吃三個尺寸、掛上 API、Docker 起得來，外加把三份 solver 清單收成一份（branch `feat/rl-a2-training`, worktree `zip-rl`）
 

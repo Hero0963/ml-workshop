@@ -16,6 +16,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from src.app.main import app
+from src.core.solvers import registry
 from src.core.tests.conftest import puzzle_01_layout
 from src.core.vl_models.backends import VisionResponse
 from src.core.vl_models.puzzle_parser import VisionBackendError
@@ -156,6 +157,21 @@ class TestReadingsThatAreWrong:
         assert data["solution_path"] is None
         assert any("no solution" in warning for warning in data["warnings"])
 
+    def test_a_solver_that_gave_up_does_not_call_the_reading_wrong(
+        self, monkeypatch, log_dir
+    ):
+        """Only an exact solver's "no solution" proves a misread; a heuristic gives up."""
+        _stub_model(monkeypatch, _truth_json())
+        monkeypatch.setitem(registry.SOLVERS, "Monte Carlo", lambda puzzle: None)
+
+        data = _upload(solver_name="Monte Carlo").json()
+
+        assert data["solvable"] is None
+        assert data["solution_path"] is None
+        assert not any("misread" in warning for warning in data["warnings"])
+        assert any("says nothing" in warning for warning in data["warnings"])
+        assert _logged(log_dir)[-1]["solvable"] is None
+
     def test_unparseable_output_is_422_not_a_200_with_nothing_in_it(self, monkeypatch):
         _stub_model(monkeypatch, "I am sorry, I cannot see a puzzle in this image.")
 
@@ -192,7 +208,7 @@ class TestRefusals:
     def test_rejects_an_unknown_solver(self, monkeypatch):
         _stub_model(monkeypatch, _truth_json())
 
-        response = _upload(solver_name="Simulated Annealing")
+        response = _upload(solver_name="No Such Solver")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 

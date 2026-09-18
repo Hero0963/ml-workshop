@@ -101,7 +101,7 @@ linkedin-zip-challenge/
 | 啟發式 | `simulated_annealing.py` | 鄰域用 **truncate-and-regrow**（不是 2-opt，2-opt 在格盤上會產生跳格） |
 | 啟發式 | `genetic_algorithm.py` | 刻意 **no-crossover**（傳統交叉會破壞路徑連續性），靠菁英保留＋突變 |
 | 啟發式 | `tabu_search.py` | `deque(maxlen=…)` 當短期記憶，存路徑 hash 省記憶體；含 aspiration 準則 |
-| 啟發式 | `particle_swarm_optimization.py` | 離散化 PSO：位置＝路徑、速度＝交換操作序列 |
+| 啟發式 | `particle_swarm_optimization.py` | 離散化 PSO：位置＝路徑、速度＝交換操作序列。**不上線**（2026-09-19 本人定案，實作保留；見 `reports/2026-09-19_pso-not-served.md`）|
 | 啟發式 | `ant_colony_optimization.py` | 蟻群 |
 
 > ⚠ **API 目前只暴露 3 種**（`src/app/routers/solver.py` 的 `SOLVERS`：DFS／A\*(heapq)／CP-SAT）。補齊是 roadmap 下一步 #2。
@@ -123,6 +123,7 @@ linkedin-zip-challenge/
 
 ### `src/app/` — API 契約
 
+- `GET /api/solver/list` — 回 `list[SolverInfo]`（`name`／`kind`／`note`），**直接由 `registry.SOLVER_ENTRIES` 產生**；Svelte 編輯器的下拉就是它（2026-09-19）
 - `POST /api/solver/solve` — 收 `SolverRequest`（`puzzle_layout_str`、`walls_str`、`solver_name`），回 `SolverResponse`（`solution_path` ＋ Base64 GIF ＋ Base64 PNG）
 - `POST /api/echo` — 連通性測試
 - `GET /docs` — Swagger

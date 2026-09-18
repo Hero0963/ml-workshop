@@ -50,7 +50,7 @@ $ docker compose -f docker-compose.yml -p zip-app-ml-workshop up -d --build
 Waiting for http://127.0.0.1:7440/api/echo/health
 API is up.
 Ollama is up. Models: ['zip-qwen35-4b-p4c:f16', ...]
-RL solver weights found (models/rl_a2/bc_multi_456/checkpoints/model_final.zip).
+RL solver weights found (models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip).
 
   Gradio console   http://127.0.0.1:7440/ui
   Svelte editor    http://127.0.0.1:7440/svelte-ui/
@@ -93,14 +93,15 @@ Gradio 主控台、Svelte 編輯器，以及決定性的資料集產生器
 
 ### 3. 解題
 
-`POST /api/solver/solve` 吃盤面與 solver 名稱。專案實作了 **10 種 solver**，目前 **4 種掛上 API**。
+`POST /api/solver/solve` 吃盤面與 solver 名稱。下表 10 種 solver 中 **9 種上線**；粒子群最佳化保留實作但不開放。
 
 ---
 
 ## Solver 清單
 
 所有 solver 都在 `src/core/solvers/`，共用同一套題目表示法（`src/core/utils.py`）。
-API、截圖端點與 Gradio 下拉選單的清單來自**同一份 registry**（`src/core/solvers/registry.py`）。
+API、截圖端點、Gradio 下拉選單與 Svelte 編輯器的清單來自**同一份 registry**（`src/core/solvers/registry.py`）；
+編輯器透過 `GET /api/solver/list` 取得。
 
 | Solver | 類型 | 已上線 | 說明 |
 |---|---|---|---|
@@ -108,15 +109,18 @@ API、截圖端點與 Gradio 下拉選單的清單來自**同一份 registry**�
 | **DFS** | 精確 | ✅ | 深度優先 ＋ 剪枝 |
 | **A\*** | 精確 | ✅ | 同一個搜尋空間的最佳優先 |
 | **RL（行為克隆）** | 學習 | ✅ | 神經策略。**不精確也不保證**——見下 |
-| 蟻群演算法 | 啟發式 | — | 已實作且有測試，未掛上 API |
-| 基因演算法 | 啟發式 | — | 同上 |
-| 粒子群最佳化 | 啟發式 | — | 同上 |
-| 模擬退火 | 啟發式 | — | 同上 |
-| 禁忌搜尋 | 啟發式 | — | 同上 |
-| 蒙地卡羅 | 啟發式 | — | 同上 |
+| 蟻群演算法 | 啟發式 | ✅ | **不精確也不保證**——見下 |
+| 基因演算法 | 啟發式 | ✅ | 同上 |
+| 模擬退火 | 啟發式 | ✅ | 同上 |
+| 禁忌搜尋 | 啟發式 | ✅ | 同上 |
+| 蒙地卡羅 | 啟發式 | ✅ | 同上。基準線：彼此獨立的隨機走法 |
+| 粒子群最佳化 | 啟發式 | ❌ | **有實作、有量測，但不上線**：它靠「交換格子」移動，會把路徑拆成不相鄰的步，6×6 幾乎解不出來（`ai-collab/reports/2026-09-19_pso-not-served.md`） |
 
-六種啟發式**刻意不上線**：在這麼小的盤面上它們每一項都輸給 CP-SAT，
-所以「把它們掛上去」是被記錄下來、刻意延後的項目，不是漏做。
+五種上線的啟發式是**為了比較，不是為了效能**——在這麼小的盤面上 CP-SAT 每一項都贏。
+它們不管有沒有解出來，都會交回「看過最好的那條路」，所以 registry 會重跑到答案通過
+`src/core/solvers/verify.py` 為止，**每個請求固定 5 秒**，用完就回「could not find a solution」。
+對啟發式來說這代表**它放棄了，不代表盤面無解**。預算**刻意不開成 API 參數**：各演算法計算努力的單位各不相同，
+固定預算才能拿來比較（`ai-collab/reports/2026-09-12_heuristic-solvers-on-the-api.md`）。
 
 ---
 
@@ -288,4 +292,3 @@ uv run ruff check .
     擋在前面的問題（訓練 value head 會不會傷到策略）已經量過並排除。
 *   **把視覺評估集變難**——合成 held-out 已飽和在 1.000；加視覺雜訊、多種渲染風格、更大盤面，
     才能讓它重新有鑑別力。
-*   **把六種啟發式 solver 掛上 API**，做同尺度的比較。

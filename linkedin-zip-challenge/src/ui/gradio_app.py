@@ -100,8 +100,16 @@ def _describe_reading(data: dict) -> str:
         f"(prompt `{data.get('prompt_variant')}`), solved with **{data.get('solver_name')}**.",
         f"**Grid**: {rows}x{columns}",
     ]
-    if data.get("solvable"):
+    solvable = data.get("solvable")
+    if solvable:
         lines.append("**Solvable**: yes.")
+    elif solvable is None:
+        # Only an exact solver's "no solution" is evidence; a heuristic or the RL policy
+        # can simply give up, and blaming the reading for that would be a false alarm.
+        lines.append(
+            f"**Solvable**: unknown. {data.get('solver_name')} gave up without a "
+            "solution, which says nothing about the reading. Try CP-SAT."
+        )
     else:
         # Every real board is generated from a complete path, so this is not "hard
         # puzzle" -- it is proof the reading is wrong, and the user should be told so.

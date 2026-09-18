@@ -53,7 +53,7 @@ $ docker compose -f docker-compose.yml -p zip-app-ml-workshop up -d --build
 Waiting for http://127.0.0.1:7440/api/echo/health
 API is up.
 Ollama is up. Models: ['zip-qwen35-4b-p4c:f16', ...]
-RL solver weights found (models/rl_a2/bc_multi_456/checkpoints/model_final.zip).
+RL solver weights found (models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip).
 
   Gradio console   http://127.0.0.1:7440/ui
   Svelte editor    http://127.0.0.1:7440/svelte-ui/
@@ -101,16 +101,17 @@ two fields are how you notice it. See [The two models](#the-two-models).
 
 ### 3. Solve it
 
-`POST /api/solver/solve` takes a board and a solver name. Ten solvers are implemented; four
-are wired into the API today.
+`POST /api/solver/solve` takes a board and a solver name. Nine of the ten solvers below are served;
+Particle Swarm Optimization is kept in the code but not offered.
 
 ---
 
 ## The solvers
 
 Every solver lives in `src/core/solvers/` and shares one puzzle representation
-(`src/core/utils.py`). The list served by the API, the screenshot endpoint and the Gradio
-dropdown comes from a single registry (`src/core/solvers/registry.py`).
+(`src/core/utils.py`). The list served by the API, the screenshot endpoint, the Gradio
+dropdown and the Svelte editor comes from a single registry (`src/core/solvers/registry.py`);
+the editor reads it from `GET /api/solver/list`.
 
 | Solver | Kind | Served today | Notes |
 |---|---|---|---|
@@ -118,16 +119,20 @@ dropdown comes from a single registry (`src/core/solvers/registry.py`).
 | **DFS** | exact | yes | Depth-first with pruning. |
 | **A\*** | exact | yes | Best-first over the same space. |
 | **RL (behaviour cloning)** | learned | yes | A neural policy. Not exact, not guaranteed — see below. |
-| Ant Colony Optimization | metaheuristic | — | Implemented and tested, not exposed. |
-| Genetic Algorithm | metaheuristic | — | " |
-| Particle Swarm Optimization | metaheuristic | — | " |
-| Simulated Annealing | metaheuristic | — | " |
-| Tabu Search | metaheuristic | — | " |
-| Monte Carlo | metaheuristic | — | " |
+| Ant Colony Optimization | metaheuristic | yes | Not exact, not guaranteed — see below. |
+| Genetic Algorithm | metaheuristic | yes | " |
+| Simulated Annealing | metaheuristic | yes | " |
+| Tabu Search | metaheuristic | yes | " |
+| Monte Carlo | metaheuristic | yes | " The baseline: independent random walks. |
+| Particle Swarm Optimization | metaheuristic | **no** | Implemented and measured, not served: its swap moves break walks apart, so it almost never solves a 6x6 board (`ai-collab/reports/2026-09-19_pso-not-served.md`). |
 
-The six metaheuristics are deliberately not exposed: on a board this small they lose to CP-SAT
-on every axis, and wiring them up is tracked as a known, deprioritised item rather than an
-oversight.
+The five served metaheuristics are there for comparison, not for speed — on a board this small CP-SAT
+beats them on every axis. Each one returns the best path it saw whether or not that path solves
+anything, so the registry reruns it until an answer passes `src/core/solvers/verify.py`, for a
+fixed 5 seconds per request, and otherwise answers "could not find a solution". For a
+heuristic that means it gave up, not that the board has none. The budget is deliberately not an
+API parameter: they count their effort in different units, and a fixed budget is what makes
+them comparable (`ai-collab/reports/2026-09-12_heuristic-solvers-on-the-api.md`).
 
 ---
 
@@ -311,4 +316,3 @@ A Traditional Chinese overview is in [`README_zh-TW.md`](./README_zh-TW.md).
 *   **Make the vision evaluation harder.** The synthetic held-out set is saturated at 1.000;
     visual noise, several renderer styles and larger boards would restore its power to
     discriminate.
-*   **Expose the six metaheuristic solvers** through the API for a like-for-like comparison.

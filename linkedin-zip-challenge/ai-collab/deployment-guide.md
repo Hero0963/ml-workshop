@@ -109,7 +109,7 @@ zip-app-zip-infra       running(1)    D:\...\zip-infra\linkedin-zip-challenge\do
 zip-ollama              running(1)    D:\...\zip-infra\linkedin-zip-challenge\docker-compose.ollama.yml
 
   :7441 DFS                      200 solved
-  :7441 RL (behaviour cloning)   503  No checkpoint at /app/models/rl_a2/bc_multi_456/...   <- 它真的是另一份
+  :7441 RL (behaviour cloning)   503  No checkpoint at /app/models/rl_a2/bc_multi_456_e6/...   <- 它真的是另一份
   :7440 DFS                      200 solved
   :7440 RL (behaviour cloning)   200 solved
 
