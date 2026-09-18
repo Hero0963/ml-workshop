@@ -1,0 +1,62 @@
+[
+  {
+    "image": "puzzle_01.png",
+    "grid": [
+      6,
+      6
+    ],
+    "walls": 10,
+    "solvable": true,
+    "warnings": 0
+  },
+  {
+    "image": "puzzle_02.png",
+    "grid": [
+      6,
+      6
+    ],
+    "walls": 0,
+    "solvable": true,
+    "warnings": 0
+  },
+  {
+    "image": "puzzle_03.png",
+    "grid": [
+      6,
+      6
+    ],
+    "walls": 5,
+    "solvable": false,
+    "warnings": 1
+  },
+  {
+    "image": "puzzle_04.png",
+    "grid": [
+      7,
+      7
+    ],
+    "walls": 14,
+    "solvable": true,
+    "warnings": 0
+  },
+  {
+    "image": "puzzle_05.png",
+    "grid": [
+      6,
+      6
+    ],
+    "walls": 4,
+    "solvable": true,
+    "warnings": 0
+  },
+  {
+    "image": "puzzle_06.png",
+    "grid": [
+      7,
+      7
+    ],
+    "walls": 0,
+    "solvable": true,
+    "warnings": 0
+  }
+]

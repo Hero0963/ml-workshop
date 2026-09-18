@@ -102,6 +102,42 @@ log：scratchpad `fresh/cold-build.log`。
 停掉佔 7440 的 `zip-app-zip-infra`（`docker stop`，可 `docker start` 還原）→ `python start.py` →
 API 各 solver、RL 503、放入 14 MB checkpoint 後 RL 200、視覺模型缺席訊息、無 GPU 故障注入。
 
+**⚠ 實測撞到本機環境問題（不是 repo 的錯）**：`python start.py`（py3.9）建置與起容器都成功、容器內 health 一直 200，
+但主機端 `curl 127.0.0.1:7440` 000、`netstat` 沒人聽 7440／11435。**對照組**（無關的 `python -m http.server` 容器 `-p 18081:8000`）也 000；
+重啟 Docker Desktop 4.32 後仍 000；只綁 `127.0.0.1:` 也 000；app 容器內打 `host.docker.internal:11435` 被拒。
+**根因**：`%USERPROFILE%\.wslconfig` 於 **2026-09-18 15:49** 改成 `networkingMode=mirrored`（晚於 09-12 的 Docker 驗收），
+WSL mirrored 模式與 Docker Desktop 埠轉發衝突是已知問題（microsoft/WSL#10494、#41284）。
+**處置**：不改本人的全域設定；改做容器內驗收（見下）；需要主機埠的項目（`start.py` 輪詢、Svelte 瀏覽器 e2e）最後問本人要不要暫切 NAT。
+順帶：`zip-app-zip-infra` 已 `docker stop`（還原：`docker start zip-app-zip-infra-zip-challenge-app-1`）；Docker Desktop 重啟過一次。
+**README 要加一條 troubleshooting**：Windows ＋ WSL mirrored networking 會讓 published port 失效。
+
+另發現文件錯字：`vlm-operating-guide.md` L221 路徑 `datasetsl\main_6x6` 少了 `\v`。
+
+**容器內驗收結果（fresh clone 的 image，2026-09-19 06:30–06:45）**——腳本與原始 JSON 在
+`ai-collab/reports/artifacts/wrap-up-acceptance/`：
+- `acceptance.py`（只走 HTTP，答案用 `verify.is_solution` 裁判）：5 個頁面 200；`/api/solver/list` 9 種、無 PSO。
+  **無 RL 權重**：3 種精確解 5／5 盤全解（含 7×7）；RL 在 4／5／6×6 回 **503**（訊息指出缺哪個 checkpoint）、7×7 回 **400**；
+  啟發式 7×7 有 ACO、Monte Carlo 放棄（5 秒用完，回 200＋「could not find」）、其餘全解。
+  **放入 14 MB checkpoint（sha256 `653efaa5…` 與 `zip-rl` 原檔相同）後不重啟**：RL 解出生成的 4／5／6×6；
+  真實題 `puzzle_01`（10 道牆，訓練分布外）這次放棄——與部署指南「同題 20 次解 10 次」一致。
+- `vision_check.py`（版面逐格、牆集合、路徑能否解**標準答案那張盤**）：**全新合成 6 張（seed 919000000，牆 2–12、亮／暗）6/6 全對**、
+  **held-out 4 張 4/4 全對**；第一張 58.2 秒（載模型），之後 3.2–7.8 秒／張。
+- 真實截圖 6 張：輸出與 `vlm-operating-guide.md` §3.5 的預期表**逐列相同**（含刻意保留的 `puzzle_03` False）。
+- 模型缺席（`OLLAMA_MODEL_NAME=zip-model-not-imported:f16`）：**503**，detail 寫 `model ... not found`。
+- 讀圖測試走的是**同 image 另起的探針容器、直連 `zip_ollama_server:11434`**（主機埠在本機壞了）；GPU 號誌用完已改回 `free`。
+- 容器內 `uv run pytest`：**331 passed, 8 xfailed**（Python 3.11.16、torch 2.4.1+cu121、cuda_available False）。
+- `start.py` 新路徑：假 Ollama（主機 loopback）測 `report_ollama` 四種 model 值、假 compose 測 `ensure_ollama` 失敗／成功 ⇒ **ALL OK**（py3.9，腳本 scratchpad `fresh/test_start_report.py`）。
+  **真實故障注入**（scratch clone 把 driver 改成不存在的名字）：印出 `could not select device driver ... [[gpu]]` 與新訊息、**沒有中止**、app 照常 up。
+- 開發版：`docker compose -f docker-compose.dev.yml up -d --build` 9 秒（與正式版共用 `uv sync --locked` 層）、app healthy、`uvicorn --reload` 是 PID 1、
+  vite 5.4.20 在 `0.0.0.0:5173`，容器內 `/svelte-ui/` 200、node v24.21.0（與先前 `lts` 同 digest）。
+- **待本人決定**：主機端輪詢（`start.py` 的 health 等待）與 Svelte 瀏覽器 e2e 需要主機埠，本機 mirrored 模式下測不到。
+
+**⚠ 我造成的副作用，已復原**：重啟 Docker Desktop 讓 4 個別專案容器（`ai_translator_app`、`pdf2zh_server`、`omni_parser`、`speech_motion_aligner`，
+全是 `restart=always`，原本 Exited）被守護程序拉起來，`omni_parser` 吃約 50% CPU、`ai_translator_app` 重啟迴圈（exit 127）。
+06:50 已 `docker stop` 四個，回到原本的停止狀態。**教訓：重啟 Docker 前先列出 `restart=always` 的容器。** 要回報本人。
+
+S3 其餘待辦：README 加 WSL mirrored troubleshooting、修 `vlm-operating-guide.md` L221 錯字（併入 S5）。
+
 ### S4 Survey 筆記（進行中）
 
 **GPT-6 computer use（2026-09-19 查證）**

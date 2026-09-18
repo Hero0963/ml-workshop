@@ -1,0 +1,473 @@
+{
+  "base_url": "http://127.0.0.1:7440",
+  "pages": {
+    "/api/echo/health": 200,
+    "/ui/": 200,
+    "/svelte-ui/": 200,
+    "/docs": 200,
+    "/openapi.json": 200
+  },
+  "solvers": [
+    "DFS",
+    "A* (heapq)",
+    "CP-SAT",
+    "RL (behaviour cloning)",
+    "Ant Colony Optimization",
+    "Genetic Algorithm",
+    "Simulated Annealing",
+    "Tabu Search",
+    "Monte Carlo"
+  ],
+  "rows": [
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.34,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.351,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.349,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "RL (behaviour cloning)",
+      "status": 503,
+      "seconds": 0.002,
+      "solved": false,
+      "gave_up": false,
+      "has_images": false,
+      "detail": "No checkpoint at /app/models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip. `models/` is not in version control -- train the goal or mount the model volume."
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.377,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.44,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.536,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.38,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.578,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.614,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.617,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.602,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "RL (behaviour cloning)",
+      "status": 400,
+      "seconds": 0.001,
+      "solved": false,
+      "gave_up": false,
+      "has_images": false,
+      "detail": "No RL policy for a 7x7 board; trained sizes are [4, 5, 6]."
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 5.01,
+      "solved": false,
+      "gave_up": true,
+      "has_images": false,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 1.239,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.735,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.63,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 5.01,
+      "solved": false,
+      "gave_up": true,
+      "has_images": false,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.085,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.079,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.079,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "RL (behaviour cloning)",
+      "status": 503,
+      "seconds": 0.002,
+      "solved": false,
+      "gave_up": false,
+      "has_images": false,
+      "detail": "No checkpoint at /app/models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip. `models/` is not in version control -- train the goal or mount the model volume."
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.099,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.132,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.103,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.102,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.093,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.175,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.171,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.181,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "RL (behaviour cloning)",
+      "status": 503,
+      "seconds": 0.002,
+      "solved": false,
+      "gave_up": false,
+      "has_images": false,
+      "detail": "No checkpoint at /app/models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip. `models/` is not in version control -- train the goal or mount the model volume."
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.195,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.249,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.201,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.192,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.21,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.354,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.538,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.385,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "RL (behaviour cloning)",
+      "status": 503,
+      "seconds": 0.002,
+      "solved": false,
+      "gave_up": false,
+      "has_images": false,
+      "detail": "No checkpoint at /app/models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip. `models/` is not in version control -- train the goal or mount the model volume."
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.386,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.547,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.609,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.655,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.601,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    }
+  ]
+}

@@ -1,0 +1,473 @@
+{
+  "base_url": "http://127.0.0.1:7440",
+  "pages": {
+    "/api/echo/health": 200,
+    "/ui/": 200,
+    "/svelte-ui/": 200,
+    "/docs": 200,
+    "/openapi.json": 200
+  },
+  "solvers": [
+    "DFS",
+    "A* (heapq)",
+    "CP-SAT",
+    "RL (behaviour cloning)",
+    "Ant Colony Optimization",
+    "Genetic Algorithm",
+    "Simulated Annealing",
+    "Tabu Search",
+    "Monte Carlo"
+  ],
+  "rows": [
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.329,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.344,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.339,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "RL (behaviour cloning)",
+      "status": 200,
+      "seconds": 4.518,
+      "solved": false,
+      "gave_up": true,
+      "has_images": false,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.493,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.439,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.389,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.621,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_01 (6x6, fixture)",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.744,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.591,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.609,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.61,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "RL (behaviour cloning)",
+      "status": 400,
+      "seconds": 0.002,
+      "solved": false,
+      "gave_up": false,
+      "has_images": false,
+      "detail": "No RL policy for a 7x7 board; trained sizes are [4, 5, 6]."
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 5.037,
+      "solved": false,
+      "gave_up": true,
+      "has_images": false,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 1.025,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.69,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.626,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "puzzle_04 (7x7, fixture)",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 5.028,
+      "solved": false,
+      "gave_up": true,
+      "has_images": false,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.084,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.078,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.081,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "RL (behaviour cloning)",
+      "status": 200,
+      "seconds": 0.085,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.101,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.134,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.107,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.101,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 4x4, 3 walls",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.094,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.164,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.165,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.172,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "RL (behaviour cloning)",
+      "status": 200,
+      "seconds": 0.183,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.197,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.249,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.201,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.198,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 5x5, 5 walls",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 0.19,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "DFS",
+      "status": 200,
+      "seconds": 0.353,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "A* (heapq)",
+      "status": 200,
+      "seconds": 0.624,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "CP-SAT",
+      "status": 200,
+      "seconds": 0.39,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "RL (behaviour cloning)",
+      "status": 200,
+      "seconds": 0.377,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Ant Colony Optimization",
+      "status": 200,
+      "seconds": 0.608,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Genetic Algorithm",
+      "status": 200,
+      "seconds": 0.735,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Simulated Annealing",
+      "status": 200,
+      "seconds": 0.403,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Tabu Search",
+      "status": 200,
+      "seconds": 0.502,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    },
+    {
+      "board": "generated 6x6, 3 walls",
+      "solver": "Monte Carlo",
+      "status": 200,
+      "seconds": 2.718,
+      "solved": true,
+      "gave_up": false,
+      "has_images": true,
+      "detail": null
+    }
+  ]
+}

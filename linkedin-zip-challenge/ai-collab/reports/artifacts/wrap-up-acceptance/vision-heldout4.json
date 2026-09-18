@@ -1,0 +1,54 @@
+[
+  {
+    "image": "images/007807.jpg",
+    "label_walls": 12,
+    "status": 200,
+    "seconds": 7.5,
+    "layout_exact": true,
+    "walls_exact": true,
+    "solvable": true,
+    "warnings": [],
+    "solves_labelled_board": true,
+    "model_name": "zip-qwen35-4b-p4c:f16",
+    "detail": null
+  },
+  {
+    "image": "images/007811.jpg",
+    "label_walls": 0,
+    "status": 200,
+    "seconds": 3.2,
+    "layout_exact": true,
+    "walls_exact": true,
+    "solvable": true,
+    "warnings": [],
+    "solves_labelled_board": true,
+    "model_name": "zip-qwen35-4b-p4c:f16",
+    "detail": null
+  },
+  {
+    "image": "images/007817.jpg",
+    "label_walls": 4,
+    "status": 200,
+    "seconds": 4.6,
+    "layout_exact": true,
+    "walls_exact": true,
+    "solvable": true,
+    "warnings": [],
+    "solves_labelled_board": true,
+    "model_name": "zip-qwen35-4b-p4c:f16",
+    "detail": null
+  },
+  {
+    "image": "images/007841.jpg",
+    "label_walls": 8,
+    "status": 200,
+    "seconds": 6.1,
+    "layout_exact": true,
+    "walls_exact": true,
+    "solvable": true,
+    "warnings": [],
+    "solves_labelled_board": true,
+    "model_name": "zip-qwen35-4b-p4c:f16",
+    "detail": null
+  }
+]
