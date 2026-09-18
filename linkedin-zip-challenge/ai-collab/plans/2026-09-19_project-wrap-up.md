@@ -71,8 +71,10 @@ Docker：`zip-app-zip-infra` 在 7440 跑舊程式（`babc1cb`）；`zip_ollama_
 - [x] S0 盤點（06:20）
 - [x] S1 本檔
 - [x] S2 收攏散落改動（`git apply --3way`；五個檔的 hunk 與原 worktree 逐行相同、`pso-served.json` `cmp` 相同；原 worktree 未動）
-- [ ] S3 修 issue
-- [ ] S4 Survey
+- [x] S3 修 issue（A–F 已修並實測；主機埠相關兩項待本人決定是否暫切 WSL NAT）
+- [x] S4 Survey（筆記在 §4；寫成文件在 S5/S6）
+- 文件產出順序（每寫完一份就是一個檢查點）：`model-weights.md` → `reports/2026-09-19_rl-where-next.md` → `reports/2026-09-19_computer-use-agents-and-zip.md`
+  → `reports/2026-09-19_project-wrap-up.md`（主報告）→ README ×2 → roadmap／handover ×3／deployment-guide／vlm-operating-guide／project_guide／AGENTS ×2／notes/01／dev_log
 - [ ] S5 文件
 - [ ] S6 最終報告
 - [ ] S7 驗證
@@ -149,3 +151,46 @@ S3 其餘待辦：README 加 WSL mirrored troubleshooting、修 `vlm-operating-g
   「2048」搜到的是**用 Astra 做出來的 2048 類遊戲 CityMaker**，不是它去玩 2048 ⇒ 本人說的「會玩 2048」**查無一手出處**，報告要照實寫。
   另有 Tom's Hardware：Astra 自主玩通 Portal（24 小時、token 成本 $571）——待讀原文確認。
 - 搜尋關鍵字：`GPT-6 computer use OpenAI`、`OpenAI GPT-6 release announcement 2026`、`GPT-6 Astra Microsoft Paint drawing 2048 game computer use demo`、`"Astra" OpenAI "2048" game computer use`
+- **Portal**（Tom's Hardware，Chrome dump 讀到正文）：愛好者 CozyBlaze 用 **MCP ＋ 改過的 SourcePauseTool**；模型思考時遊戲暫停，
+  拿**截圖＋角色座標**，再送出輸入序列；24 小時、**3,336 次工具呼叫**、API 帳面 **$571.18**（實際由 $200 Codex Pro 訂閱支付）。
+  同站另一篇：Astra 在 Minecraft 被 Creeper 炸死後花數小時種馬鈴薯（「defeated」）。讀者留言質疑 Portal 攻略在訓練資料裡。
+  https://www.tomshardware.com/tech-industry/artificial-intelligence/openais-gpt-6-astra-model-autonomously-completes-portal-in-24-hours-feat-cost-just-usd571-in-tokens
+- **Pencil Puzzle Bench**（arXiv:2603.02119，Justin Waugh，2026-03-02；repo approximatelabs/pencil-puzzle-bench，引擎 pzpr.js）：
+  62,231 題／94 種、精選 300 題／20 種；**單發 vs agentic（多輪＋驗證器回饋）**：Claude Opus 4.6 0.3% → 30.0%、GPT-5.2@xhigh 20.2% → **56.0%**；
+  agentic 中位 29 輪／17 分鐘，最長 1,221 輪／14.3 小時。**逐步驗證器可當密集獎勵**（repo 有 GRPO pipeline 範例）。
+  ⇒ 通用模型「純推理」解約束謎題仍弱，**有驗證器的迭代**才拉得起來——和本專案「best-of-N＋is_solution」同一個結構。
+  （註：abstract 沒列出是否含 Numbrix／Hidato 這種哈密頓路徑類題型，**不宣稱**它含 Zip 同類題。）
+
+- **Quesma blog〈GPT-6 Astra solves puzzles〉2026-09-14**（https://quesma.com/blog/gpt-6-astra-solves-puzzles/）：Baba Is You 154 關、文字介面、6 小時、原生 harness（Astra＝Codex、Fable 5.1＝Claude Code）⇒ Astra 80 關、Fable 5.1 33 關；
+  **「70 關中只有 7 關是第一次嘗試、不用 undo 就解開」**（其中一關看到 16 秒後打出 79 步）；MazeBench Astra 14% vs Fable 2%；ARC-AGI-3 標準 harness 63%、自訂 harness 99%；Portal 約 23 小時 43 分、約 $570。
+  WebFetch 摘要說它們是「推理而非寫 solver」——**這句是摘要器的轉述，未逐字核對**，報告要保守。
+- 搜尋「GPT-6 Astra LinkedIn Zip」：**查無有人讓它玩 Zip 的一手紀錄** ⇒ 報告寫成推演，不寫成事實。
+
+**RL 路線要引用的論文（都已搜到 arXiv／會議頁，2026-09-19）**
+- PHS：Orseau & Lelis, *Policy-Guided Heuristic Search with Guarantees*, AAAI 2021, arXiv:2103.11505——**實驗含 The Witness 謎題**（格子上畫路徑，與 Zip 同形）、Sokoban、滑塊。
+- LevinTS：Orseau et al., *Single-Agent Policy Tree Search With Guarantees*, NeurIPS 2018（PHS 的前身；待確認 arXiv 號再引）。
+- Ranked Reward（R2）：Laterre et al., arXiv:1807.01672, NeurIPS 2018 Deep RL workshop——**單人版 AlphaZero**（policy＋value＋MCTS，用自己過去分數排名當相對獎勵），bin packing。
+- Gumbel AlphaZero/MuZero：Danihelka, Guez, Schrittwieser, Silver, ICLR 2022 spotlight——**模擬次數很少時**仍保證策略改進。
+- Yue et al., *Does RL Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?* arXiv:2504.13837——RLVR 在小 k 贏、大 k 輸給 base model（**與本專案 PPO 微調「det 升、bo32 降」同形**）。
+- Chen et al., *Pass@k Training…* arXiv:2508.10751——用 pass@k 當獎勵保住探索。
+- ExIt：Anthony, Tian, Barber 2017 arXiv:1705.08439（既有文件已引）；AlphaZero 一手數字已在 oracle 報告 §8。
+
+**權重託管（查證 2026-09-19）**
+- GitHub Release：每檔 **< 2 GiB**、每個 release 最多 1000 個檔、**無總量與頻寬上限**（docs.github.com …/about-releases）⇒ RL 14 MB 適合；VLM 8.42 GB 放不下。
+- HF Hub ＋ Ollama：`ollama run hf.co/{user}/{repo}:{quant}`；template 預設從 GGUF metadata 選，或 repo 放 `template` 檔（Go template）。
+  **文件沒保證視覺模型的 mmproj 會一起抓**（docs.huggingface.co/docs/hub/en/ollama）。
+- Ollama registry：`ollama cp` ＋ `ollama push`，要 ollama.com 帳號＋公鑰（docs.ollama.com/import）；文件沒提 vision／projector。
+- Qwen3.5-4B：**Apache-2.0**、Image-Text-to-Text、2026-02（huggingface.co/Qwen/Qwen3.5-4B）⇒ 可散布衍生權重（附授權聲明）。
+- **本機微調模型實況**（`ollama show`，Ollama 0.32.13）：manifest 只有兩層——projector `sha256:4c2081c3…`（672,423,040 B，`zip-qwen35-4b-p4c-mmproj-f16.gguf`）
+  ＋ model `sha256:fcbb7d29…`（8,424,393,344 B），**沒有 template 層**（`ollama show --modelfile` 顯示預設 `TEMPLATE {{ .Prompt }}`）；
+  config：qwen35、4.2B、F16。⇒ 下載兩個 GGUF＋兩行 `FROM` 的 Modelfile `ollama create` 可重建**同 digest**；`hf.co` 直拉會加 template 層，**不等價、可能安靜地錯**。
+- RL checkpoint sha256 `653efaa5ab0195b573d0c8c45ad592cca41e5c5f8d827d3c2037604182130a28`（14,095,177 B）。SB3 `.zip` 內含 cloudpickle ⇒ **只載自家來源、附校驗值**。
+- **推薦**：RL → 本 repo 的 GitHub Release asset；VLM → Hugging Face model repo（兩個 GGUF＋Modelfile＋model card＋可選 168 MB LoRA adapter），
+  使用者 `hf download` 到 `models/vlm/` 後 `docker exec zip_ollama_server ollama create … -f /models/vlm/Modelfile`（ollama 容器本來就把 `./models` 唯讀掛在 `/models`）。
+  Ollama registry push 列為可選鏡像。**都要本人帳號，本 session 不代上傳。**
+
+**「4n² 步」提問的量化（只用既有產物，服務模型 `bc_multi_456_e6`，寬鬆尺，2026-09-12）**
+- 每局要走 n²−1 步 ⇒ 4n² ÷ (n²−1) ≈ **4 次完整嘗試**（任何 n 都約 4）⇒ 這個標準**比 best-of-32 嚴**（bo32 最壞 32×35=1,120 步）。
+- deterministic 失敗局平均長度（由 `eval_test.json` 的 mean_steps 反推）：4×4 9.63、5×5 13.86、**6×6 18.65 步**。
+- 只重來不倒車：保證下界＝bo4 ⇒ **4×4 ≥ 0.9757、6×6 ≥ 0.7375**；以失敗長度估可試約 6–7 次 ⇒ 6×6 **約 0.80（估計，介於 bo4 0.7375 與 bo8 0.84）**。
+- 允許倒車：舊 PPO 模型的節點預算數據（oracle 報告 §10）6×6 在 100–175 節點附近正好是「DFS 倒車 vs 重來」的交叉點。**服務模型沒量過。**
