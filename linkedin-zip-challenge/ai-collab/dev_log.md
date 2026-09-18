@@ -42,6 +42,11 @@ solver 清單從頁面讀，腳本裡不寫。結果在 `editor-e2e.json`：
 
 **驗證**：`uv run pytest` 309 → **312 passed, 8 xfailed**（多的 3 條就是上面三個新測試）、`ruff` 全綠、repo 根 pre-commit 通過。
 
+**合併**：本人授權後 `--ff-only` 合併進 `main` 並 push（`a8c3626..78c36c6`，9 個 commit；合併前重跑 pytest 312 passed、pre-commit 通過）。
+同時補了兩處共用文件（本人授權由我決定）：子專案 `AGENTS.md` §1／§2 列出 `handover-solvers.md`；
+repo `AGENTS.md` §10.7 寫明 worktree 沒有 devtools `.venv` 時怎麼跑 pre-commit——
+寫之前先查了五個 checkout，**`zip-infra`／`zip-rl` 其實有 `.venv`**，所以寫成「不一定有」而不是「沒有」。
+
 **踩到的坑**：`dist/` 與 `node_modules/` 不進版控，git 看不到——改 `Index.svelte` 後**一定要 `npm run build` 才看得到**。
 `/svelte-ui` 是 FastAPI 每次請求讀磁碟上的 `dist/`，所以重新 build 不必重啟服務；改 Python 就要（沒開 `--reload` 時）。
 

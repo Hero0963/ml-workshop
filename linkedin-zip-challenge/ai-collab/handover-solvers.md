@@ -1,7 +1,7 @@
 # Handover — solvers track（把十種 solver 掛上 API）
 
 > **接手這條線只要讀這一份。** Track C 的程式碼於 **2026-09-12** 完成，**2026-09-19** 收尾（文件校正、rebase 到 `main`）；
-> 合併進 `main` 由本人照 [`AGENTS.md` §10.5](../../AGENTS.md) Step 5 執行（`git merge --ff-only feat/expose-heuristic-solvers`）。
+> **2026-09-19 已 `--ff-only` 合併進 `main` 並 push**（`a8c3626..78c36c6`，含 Svelte 編輯器，見 §5.1）。
 > 完整的量測與設計理由在 [`reports/2026-09-12_heuristic-solvers-on-the-api.md`](reports/2026-09-12_heuristic-solvers-on-the-api.md)。
 > Last Updated: 2026-09-19
 

@@ -38,7 +38,7 @@
 > **#1 已於 2026-09-12 由本人指派為 Track C 並完成**；最後一個缺口 Svelte 下拉於 2026-09-19 補上（見 #1 最後一點）。
 > 下面的編號維持技術優先序，不代表執行順序。
 
-1. **把全部 solver 掛進 API** ← **✅ API／截圖端點／Gradio 已完成（2026-09-12，Track C，branch `feat/expose-heuristic-solvers`；2026-09-19 收尾：文件校正、rebase 到 `main`，並補上 Svelte 編輯器）**
+1. **把全部 solver 掛進 API** ← **✅ API／截圖端點／Gradio 已完成（2026-09-12，Track C，branch `feat/expose-heuristic-solvers`；2026-09-19 收尾：文件校正、rebase 到 `main`，並補上 Svelte 編輯器；**同日已合併進 `main` 並 push**）**
    - 🤝 **接手第一站：[handover-solvers.md](handover-solvers.md)**——架構、已驗證事實、定案決策、剩下的缺口都在那一份。
    - 十種都從 `src/core/solvers/registry.py` 上線。啟發式包一層 `_until_verified()`：重跑到答案通過
      `src/core/solvers/verify.py` 為止，每請求固定 `HEURISTIC_TIME_BUDGET_SECONDS`（5 秒），用完就回「could not find a solution」。
