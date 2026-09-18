@@ -6,6 +6,33 @@
 
 ## 2026-09-19
 
+### Solvers Track — 兩個定案：`budget_seconds` 不做、PSO 下架但保留，並量出 PSO 在 4×4／6×6 的分數（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
+
+完整數字與理由在 [`reports/2026-09-19_pso-not-served.md`](reports/2026-09-19_pso-not-served.md)。
+
+**本人定案**：`budget_seconds` 請求欄位不做；PSO「先不開放接口，但目前成果留著」⇒ 從 `registry.SOLVER_ENTRIES` 拿掉
+（API、截圖端點、Gradio、Svelte 一起少了它，上線剩九種），`particle_swarm_optimization.py`、它的單元測試、所有量測都不動。
+registry 在原位置留了註解說明為什麼不在；`test_registry.py::test_pso_is_implemented_but_not_served` 釘住決定。
+實測：Chrome `--dump-dom` 下拉 9 個選項、DOM 裡沒有 PSO；`POST /api/solver/solve` 指定 PSO 回 **404**；`/api/solver/list` 9 筆。
+`uv run pytest` 仍是 **312 passed, 8 xfailed**（+1 新測試、−1 參數化的 PSO 那組）。
+
+**PSO 能得幾分**（題目是 RL 的 test split `seed20300000_n20000_456`，和 RL 的 best-of-32 同一批，可以直接對照）：
+
+| | 單次呼叫（決定性，全部題目） | 包 5 秒預算 | RL best-of-32 |
+|---|---|---|---|
+| 4×4 | **0.590**（1,139／1,931） | 待補 | 0.9953 |
+| 6×6 | **0.000**（0／2,000） | 待補 | 0.9465 |
+
+4×4 的單次解出率**隨牆數上升**（0 道 0.449 → 5 道 0.914）——牆砍掉合法後繼步，隨機產生的路徑更容易剛好合法，
+和 2026-09-12「牆少反而難」同一件事。6×6 的 0／2,000 不是「機率為零」，95% 信賴上界約 0.0015。
+
+**為什麼「包 5 秒預算」那欄待補**：它是牆鐘預算，而量的時候 `.agent-heavy-job` 是 `busy rl 2026-09-19 01:29`（CPU 約 50%）。
+依 AGENTS §10.3 不搶資源，也因為別人佔著 CPU 時量出來的分數會被壓低、不能用。
+單次呼叫那欄每題固定 seed、結果與機器忙不忙無關，所以先量（單一 process，137.8 秒）。
+
+**順手抓到的舊錯**：handover 寫 PSO「0/180」——180 是六種啟發式的總呼叫數，PSO 自己是 **0/30**；
+而「唯一一個從沒解出過的」只在包了預算之後成立（單次呼叫 Monte Carlo 也是 0/30；包預算後 PSO 0/6、Monte Carlo 1/6）。已在 `a8a2ca6` 改正。
+
 ### Solvers Track C2 — Svelte 編輯器也拿到十種，外加兩個小 bug（branch `feat/expose-heuristic-solvers`, worktree `zip-solvers`）
 
 計畫在 [`plans/2026-09-12_next-tracks.md`](plans/2026-09-12_next-tracks.md) 的 C2 節（本人授權 Track C 自行規劃）；接手讀 [`handover-solvers.md`](handover-solvers.md)。
