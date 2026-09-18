@@ -73,11 +73,9 @@ Docker：`zip-app-zip-infra` 在 7440 跑舊程式（`babc1cb`）；`zip_ollama_
 - [x] S2 收攏散落改動（`git apply --3way`；五個檔的 hunk 與原 worktree 逐行相同、`pso-served.json` `cmp` 相同；原 worktree 未動）
 - [x] S3 修 issue（A–F 已修並實測；主機埠相關兩項待本人決定是否暫切 WSL NAT）
 - [x] S4 Survey（筆記在 §4；寫成文件在 S5/S6）
-- 文件產出（✅＝已 commit）：✅ `model-weights.md`（53f7e5f）✅ `rl-where-next`（7b21025）✅ `computer-use-agents-and-zip`；待寫：`model-weights.md` → `reports/2026-09-19_rl-where-next.md` → `reports/2026-09-19_computer-use-agents-and-zip.md`
-  → `reports/2026-09-19_project-wrap-up.md`（主報告）→ README ×2 → roadmap／handover ×3／deployment-guide／vlm-operating-guide／project_guide／AGENTS ×2／notes/01／dev_log
-- [ ] S5 文件
-- [ ] S6 最終報告
-- [ ] S7 驗證
+- [x] S5 文件：`model-weights.md`、README ×2、roadmap、handover ×3、deployment-guide §10、vlm-operating-guide（兩處 `` 控制字元）、project_guide、AGENTS ×2、CLAUDE.md、`notes/01`、dev_log
+- [x] S6 報告：`reports/2026-09-19_project-wrap-up.md`（主）、`2026-09-19_rl-where-next.md`、`2026-09-19_computer-use-agents-and-zip.md`
+- [x] S7 驗證（主機）：`pytest` 330 passed／1 skipped／8 xfailed；`ruff check`、`ruff format --check`、repo 根 `pre-commit run --all-files` 全過；本分支改過的 20 份 Markdown 共 289 個相對連結 0 壞；新增 1,164 行的粗體定界符 0 問題。GitHub 實際渲染待 push 後驗
 - [ ] S8 git 收尾
 
 ## 4. 各階段筆記（邊做邊記）
