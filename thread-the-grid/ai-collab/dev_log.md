@@ -47,7 +47,8 @@
   4. **`zip-vlm` 已移除**（2026-09-20，下一個 session 從主 checkout 照 [第二輪報告](reports/2026-09-19_wrap-up-round-2.md) §5.1 執行）：
      確認工作區乾淨、分支就是 `main` 的 `3b25e79` ⇒ 整個搬進 `soft-delete/20260920-013136/zip-vlm/`（70,587 個檔，附 `RESTORE.txt`）⇒ `git worktree prune`、刪本機分支。
      **踩到的坑**：原處留下一個**空的** `zip-vlm\linkedin-zip-challenge\` 搬不走——Docker Desktop 的 `com.docker.backend` 工作目錄就是它（讀各程序 PEB 查到；先懷疑的孤兒 headless Chrome 不是）。
-     PowerShell 5.1 的 `Move-Item` 整包改名失敗會**改成逐項搬**，所以失敗＝搬了一半，要兩邊加總檔數核對。重啟 Docker Desktop 後把空殼搬進同一個資料夾，指令在 `RESTORE.txt`。
+     PowerShell 5.1 的 `Move-Item` 整包改名失敗會**改成逐項搬**，所以失敗＝搬了一半，要兩邊加總檔數核對。
+     本人關掉 Docker Desktop 後，空殼同日搬進 `soft-delete/20260920-013136/zip-vlm-empty-shell/`，`zip-vlm` 已完全不在原處。
   5. 操作文件裡「資料在 `zip-vlm`／`zip-rl`」的指示改指向主 checkout（操作指南 §1／§3.5、三份 handover、`rl-traps-and-facts.md` #22、repo 根 `AGENTS.md` §10.5 一句）；有日期的歷史紀錄不動。
 - **服務改從主 checkout 起**：`zip-vlm` 的 app 與 ollama `down`，改由 `ml-workshop/thread-the-grid` 的 `python start.py` 起，兩個容器的 `/models` 都改掛主 checkout。
   驗收與收尾時同一把尺、結果逐列相同：頁面 5/5 200、`acceptance.py` 45 列 41 解（沒解的 4 列與基準相同：RL 在 puzzle_01 放棄、RL 7×7 回 400、ACO／MC 7×7 放棄）、`vision_check` 全新 6/6＋held-out 4/4（[`artifacts/wrap-up-round-2/main-checkout-*.json`](reports/artifacts/wrap-up-round-2/)）。

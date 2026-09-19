@@ -118,13 +118,7 @@
 | 開工前確認 | `zip-vlm` 工作區乾淨；`feat/thread-the-grid-round-2` ＝ `main` ＝ `origin/main` ＝ `3b25e79` |
 | 軟刪除 | 整個搬進 `ml-workshop/soft-delete/20260920-013136/zip-vlm/`（23 個頂層項目、70,587 個檔），還原方式寫在同資料夾的 `RESTORE.txt`。main 沒有的只有一份 solver 測試 log（`log_20260919T164039_556504Z.log`），跟著留在那裡 |
 | git | `git worktree prune`、`git branch -d feat/thread-the-grid-round-2` ⇒ `worktree list` 只剩 `ml-workshop [main]`，`branch -a` 只剩 `main`／`origin/main` |
-| **沒搬走的** | 空資料夾 `zip-vlm\linkedin-zip-challenge\`（0 個檔）：Docker Desktop 的 `com.docker.backend` 工作目錄就是它（讀程序 PEB 查到），被當成工作目錄的資料夾 Windows 不准搬 |
-
-重啟 Docker Desktop（從開始選單開，不要從終端機）之後，把空殼搬進同一個資料夾：
-
-```powershell
-Move-Item D:\it_project\github_sync\zip-vlm D:\it_project\github_sync\ml-workshop\soft-delete\20260920-013136\zip-vlm-empty-shell
-```
+| 空殼 | 空資料夾 `zip-vlm\linkedin-zip-challenge\`（0 個檔）第一次搬不走：Docker Desktop 的 `com.docker.backend` 工作目錄就是它（讀程序 PEB 查到），被當成工作目錄的資料夾 Windows 不准搬。本人關掉 Docker Desktop 後同日搬進 `soft-delete/20260920-013136/zip-vlm-empty-shell/` ⇒ `D:\it_project\github_sync\zip-vlm` 已不存在 |
 
 **教訓**：PowerShell 5.1 的 `Move-Item` 搬資料夾時，整包改名失敗會改成逐項搬，所以報錯代表「搬了一半」而不是「沒動」，要兩邊加總檔數核對（本次 33,989 ＋ 36,598 ＝ 70,587）。
 從某個資料夾的終端機啟動的常駐程式會繼承工作目錄並把它鎖住——常駐程式從開始選單啟動。
