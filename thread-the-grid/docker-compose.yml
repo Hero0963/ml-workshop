@@ -1,0 +1,66 @@
+# docker-compose.yml
+# The PRODUCTION app: FastAPI + Gradio + the built Svelte editor + the solvers.
+#
+#     python start.py                                        # recommended
+#
+# or by hand:
+#
+#     docker compose -f docker-compose.ollama.yml up -d      # once per machine
+#     docker compose up -d --build
+#
+# The image is self-contained (multi-stage build: Svelte frontend, then the Python app),
+# so there is no source mount and an edit on the host changes nothing until a rebuild --
+# that immutability is the point. For hot reload use `docker-compose.dev.yml`.
+#
+# One app stack per checkout. start.py names the compose project after the checkout
+# (`threadgrid-app-<checkout dir>`), so two worktrees never share containers, a network or an
+# image -- which is also why no container name or image name is hardcoded here. What
+# they can still share is a host port: give each worktree its own APP_PORT in `.env`.
+# Ollama is not in this file because it is one per machine: docker-compose.ollama.yml.
+
+services:
+  threadgrid-app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    # torch 2.4.1+cu121 has Linux wheels for x86_64 only (uv.lock), so a native build on
+    # an ARM host (Apple Silicon, ARM Linux) fails in `uv sync`. Pinning the platform makes
+    # such a host build and run the x86_64 image under emulation: slower, but it works.
+    # On an x86_64 host this changes nothing.
+    platform: linux/amd64
+    ports:
+      - "${APP_PORT:-7440}:${APP_PORT:-7440}"
+    env_file:
+      - ./.env
+    environment:
+      # `.env` holds the host-side address, because that is how the app is usually run
+      # (`uv run python -m src.app.main`). Inside a container 127.0.0.1 is the container
+      # itself, so it is overridden here -- `environment:` takes precedence over
+      # `env_file:`. Ollama is a separate compose project, not on this project's network,
+      # so the app reaches it the same way a host process does: the port Ollama publishes.
+      - OLLAMA_PROVIDER_URL=http://host.docker.internal:${OLLAMA_HOST_PORT:-11435}/v1
+    extra_hosts:
+      # Docker Desktop resolves host.docker.internal on its own; a Linux engine needs this.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # The RL solver's checkpoints. `models/` is 6.6GB and not in version control, so it
+      # is mounted rather than baked: the image stays small and a machine without trained
+      # weights still starts -- /api/solver/solve answers 503 for the RL solver and every
+      # other solver keeps working.
+      - ./models:/app/models:ro
+    # No depends_on: Ollama lives in another project, and only /api/vision needs it. A 503
+    # from that one endpoint beats the app waiting for a model runtime to load.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;
+          sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:${APP_PORT:-7440}/api/echo/health',
+          timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    stdin_open: true
+    tty: true
+    restart: on-failure

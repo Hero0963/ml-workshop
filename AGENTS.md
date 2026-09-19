@@ -15,7 +15,7 @@
 
 | 子專案 | 一句話 | 協作文件 |
 |--------|--------|----------|
-| `linkedin-zip-challenge/` | ★ **最大最活躍**。LinkedIn Zip 解謎：9 種 solver ＋ FastAPI ＋ Gradio ＋ Svelte 編輯器 ＋ **微調 VLM 讀圖解題** ＋ **RL solver**（都已上線）。**2026-09-19 收尾、停止開發**（見子專案 `ai-collab/reports/2026-09-19_project-wrap-up.md`） | `AGENTS.md` ＋ `ai-collab/` |
+| `thread-the-grid/` | ★ **最大最活躍**。一筆畫路徑謎題（依序經過號碼、走滿每一格；靈感來自網路上的 Zip 遊戲；2026-09-19 前叫 `linkedin-zip-challenge`）：9 種 solver ＋ FastAPI ＋ Gradio ＋ Svelte 編輯器 ＋ **微調 VLM 讀圖解題** ＋ **RL solver**（都已上線）。**2026-09-19 收尾、停止開發**（見子專案 `ai-collab/reports/2026-09-19_project-wrap-up.md`） | `AGENTS.md` ＋ `ai-collab/` |
 | `board-game-rl/` | 井字遊戲 RL：Q-Learning／Alpha-Beta／DQN ＋ FastAPI ＋ Gradio，DDD 分層 | `ai-collab/` |
 | `deep-learning-karpathy/` | Karpathy 教材重現：minBPE tokenizer ＋ nanoGPT | `ai-collab/` |
 | `lingua-tutor/` | 語言學習助理：STT 轉錄與評分 | `dev_log.md` |
@@ -101,17 +101,17 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 | 位置 | Python | 用途 |
 |------|--------|------|
 | `ml-workshop/.venv` | 3.9 | 只裝 devtools（`pre-commit`、`pytest`），跑 repo 級 lint 用 |
-| `linkedin-zip-challenge/.venv` | 3.11 | 該子專案（鎖 `torch==2.4.1` ＋ cu121 index） |
+| `thread-the-grid/.venv` | 3.11 | 該子專案（鎖 `torch==2.4.1` ＋ cu121 index） |
 | `board-game-rl/.venv` | 3.13 | 該子專案 |
 | `lingua-tutor/`、`more_simple_reinforcement_learning/`、`notes/` | 各自 | 各自 |
 
 **三條硬規則**
 
 1. **一律 `cd <子專案>` 之後才 `uv run <cmd>`。** 絕不在 repo 根的 `.venv`（py3.9 devtools）跑子專案程式——會 import 不到、或裝錯版本。
-2. **`linkedin-zip-challenge` 刻意不進 root uv workspace。** 根 `pyproject.toml` 的 `[tool.uv.workspace] members` 只有 `deep-learning-karpathy`。原因：它鎖 Python 3.11 ＋ `torch==2.4.1`／`cu121` 自訂 index，與根的 3.9 衝突；**不要為了「統一」把它加進 workspace**。
+2. **`thread-the-grid` 刻意不進 root uv workspace。** 根 `pyproject.toml` 的 `[tool.uv.workspace] members` 只有 `deep-learning-karpathy`。原因：它鎖 Python 3.11 ＋ `torch==2.4.1`／`cu121` 自訂 index，與根的 3.9 衝突；**不要為了「統一」把它加進 workspace**。
 3. **新增套件由本人手動執行 `uv add`**，Agent 只負責通知要裝什麼、為什麼。
 
-**環境確定性**：子專案應有 `.python-version` 讓 `uv sync` 決定性挑版本。目前 `linkedin-zip-challenge`（3.11）與 `board-game-rl`（3.13）有；其餘待補。
+**環境確定性**：子專案應有 `.python-version` 讓 `uv sync` 決定性挑版本。目前 `thread-the-grid`（3.11）與 `board-game-rl`（3.13）有；其餘待補。
 
 ## 6. 驗證與交付
 
@@ -141,7 +141,7 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 
 | 要動哪裡 | 先讀 |
 |---------|------|
-| Zip 解謎（solver／API／Gradio／Svelte／RL／VL） | `linkedin-zip-challenge/AGENTS.md` → `ai-collab/roadmap.md` |
+| 路徑謎題 thread-the-grid（solver／API／Gradio／Svelte／RL／VL） | `thread-the-grid/AGENTS.md` → `ai-collab/roadmap.md` |
 | 井字遊戲 RL（Q-Learning／DQN／Alpha-Beta／UI） | `board-game-rl/ai-collab/rules.md` ＋ `project_guide.md` |
 | Karpathy 教材（tokenizer／nanoGPT） | `deep-learning-karpathy/ai-collab/rules.md` ＋ `handover.md` |
 | 語言學習助理 | `lingua-tutor/README.md` ＋ `dev_log.md` |
@@ -238,7 +238,7 @@ git pull
 
 寫一份任務計畫書放 `<子專案>/ai-collab/plans/YYYY-MM-DD_<主題>.md`，每條 track 一節，
 每節都要有：**目標／擁有哪些檔／不准動哪些檔／done 條件／要不要 GPU／已知陷阱**。
-（範例：[`linkedin-zip-challenge/ai-collab/plans/2026-09-12_next-tracks.md`](linkedin-zip-challenge/ai-collab/plans/2026-09-12_next-tracks.md)）
+（範例：[`thread-the-grid/ai-collab/plans/2026-09-12_next-tracks.md`](thread-the-grid/ai-collab/plans/2026-09-12_next-tracks.md)）
 
 ⚠ **檢查交集**：把每條 track 會動的資料夾列出來，**有重疊就不要平行**，改成序列做。
 
@@ -249,9 +249,9 @@ cd D:\it_project\github_sync\ml-workshop
 git worktree add ..\zip-<track> -b feat/<track>
 
 # .env 不進版控，一定要手動複製，否則服務起不來
-Copy-Item .\linkedin-zip-challenge\.env ..\zip-<track>\linkedin-zip-challenge\.env
+Copy-Item .\thread-the-grid\.env ..\zip-<track>\thread-the-grid\.env
 
-cd ..\zip-<track>\linkedin-zip-challenge
+cd ..\zip-<track>\thread-the-grid
 uv sync
 ```
 
@@ -284,10 +284,10 @@ git push origin main
 你負責 <track 名稱>，worktree 是 D:\it_project\github_sync\zip-<track>。
 所有指令都在這個目錄跑，不要 cd 回 ml-workshop。
 
-1. 讀 linkedin-zip-challenge/ai-collab/plans/<任務計畫書>.md 裡「<track 名稱>」那一節
-2. 讀該 track 的 handover（若有）：linkedin-zip-challenge/ai-collab/handover-<track>.md
+1. 讀 thread-the-grid/ai-collab/plans/<任務計畫書>.md 裡「<track 名稱>」那一節
+2. 讀該 track 的 handover（若有）：thread-the-grid/ai-collab/handover-<track>.md
 3. 讀 AGENTS.md §10（平行開發規則）
-4. 建立基線：cd linkedin-zip-challenge && uv run pytest && uv run ruff check .
+4. 建立基線：cd thread-the-grid && uv run pytest && uv run ruff check .
 5. 回報：目標是什麼、你要動哪些檔、done 條件、風險
 6. 先不要動手，等我確認
 

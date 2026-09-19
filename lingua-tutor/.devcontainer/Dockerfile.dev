@@ -1,5 +1,5 @@
 # .devcontainer/Dockerfile.dev
-# A concise Dockerfile for DEVELOPMENT, mirroring the linkedin-zip-challenge setup.
+# A concise Dockerfile for DEVELOPMENT, mirroring the thread-the-grid setup.
 
 FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
 

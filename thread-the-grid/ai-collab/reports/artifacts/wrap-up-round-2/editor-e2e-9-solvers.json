@@ -1,0 +1,237 @@
+{
+  "measured_at": "2026-09-19T19:55:21+08:00",
+  "app_url": "http://127.0.0.1:7440/svelte-ui/",
+  "board": {
+    "layout": [
+      [
+        "1",
+        "  ",
+        "  ",
+        "  "
+      ],
+      [
+        "  ",
+        "  ",
+        "  ",
+        "2"
+      ],
+      [
+        "3",
+        "  ",
+        "  ",
+        "  "
+      ],
+      [
+        "4",
+        "  ",
+        "  ",
+        "  "
+      ]
+    ],
+    "isolating_walls": [
+      [
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ]
+    ]
+  },
+  "dropdown": {
+    "disabled": false,
+    "selected": "DFS",
+    "groups": [
+      {
+        "label": "Exact",
+        "options": [
+          "DFS",
+          "A* (heapq)",
+          "CP-SAT"
+        ]
+      },
+      {
+        "label": "Learned",
+        "options": [
+          "RL (behaviour cloning)"
+        ]
+      },
+      {
+        "label": "Heuristic",
+        "options": [
+          "Ant Colony Optimization",
+          "Genetic Algorithm",
+          "Simulated Annealing",
+          "Tabu Search",
+          "Monte Carlo"
+        ]
+      }
+    ],
+    "notes": [
+      "A new board, a blank one to fill in yourself, or one read from a screenshot. Either way it lands on the canvas, where you can change it before solving.",
+      "Reading uses the solver chosen below, and takes up to a minute the first time while the vision model loads.",
+      "Depth-first search with pruning. Exact; fine on small boards."
+    ]
+  },
+  "solvable_board": [
+    {
+      "solver": "DFS",
+      "seconds": 0.15,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (1, 1) -> (1, 0) -> (2, 0) -> (2, 1) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "A* (heapq)",
+      "seconds": 0.16,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (2, 1) -> (1, 1) -> (1, 0) -> (2, 0) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "CP-SAT",
+      "seconds": 0.15,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (1, 0) -> (1, 1) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (2, 1) -> (2, 0) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "RL (behaviour cloning)",
+      "seconds": 3.87,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (1, 0) -> (1, 1) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (2, 1) -> (2, 0) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "seconds": 0.16,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (2, 3) -> (3, 3) -> (3, 2) -> (2, 2) -> (1, 2) -> (1, 1) -> (1, 0) -> (2, 0) -> (2, 1) -> (3, 1) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "Genetic Algorithm",
+      "seconds": 0.15,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (1, 1) -> (1, 0) -> (2, 0) -> (2, 1) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "Simulated Annealing",
+      "seconds": 0.15,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (2, 1) -> (1, 1) -> (1, 0) -> (2, 0) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "Tabu Search",
+      "seconds": 0.15,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (1, 1) -> (1, 0) -> (2, 0) -> (2, 1) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    },
+    {
+      "solver": "Monte Carlo",
+      "seconds": 0.15,
+      "headings": [
+        "Solution"
+      ],
+      "drew_gif": true,
+      "verified": true,
+      "text": [
+        "Solution\n\nPath: (0, 0) -> (0, 1) -> (0, 2) -> (0, 3) -> (1, 3) -> (1, 2) -> (2, 2) -> (2, 3) -> (3, 3) -> (3, 2) -> (3, 1) -> (2, 1) -> (1, 1) -> (1, 0) -> (2, 0) -> (3, 0)\n\nAnimation:\nFinal State:"
+      ]
+    }
+  ],
+  "unsolvable_board": [
+    {
+      "solver": "DFS",
+      "seconds": 0.15,
+      "headings": [
+        "No solution found"
+      ],
+      "drew_gif": false,
+      "verified": null,
+      "text": [
+        "No solution found\n\nSolver 'DFS' could not find a solution.\n\nDepth-first search with pruning. Exact; fine on small boards."
+      ]
+    },
+    {
+      "solver": "RL (behaviour cloning)",
+      "seconds": 0.26,
+      "headings": [
+        "No solution found"
+      ],
+      "drew_gif": false,
+      "verified": null,
+      "text": [
+        "No solution found\n\nSolver 'RL (behaviour cloning)' could not find a solution.\n\nA trained policy, sampled up to 32 times. Not exact and not guaranteed, and it needs a checkpoint under models/ (503 without one). One model serves 4x4, 5x5 and 6x6. Trained on boards with 0 or 2-5 walls, so a screenshot with more than that is out of distribution -- experimental."
+      ]
+    },
+    {
+      "solver": "Ant Colony Optimization",
+      "seconds": 4.6,
+      "headings": [
+        "No solution found"
+      ],
+      "drew_gif": false,
+      "verified": null,
+      "text": [
+        "No solution found\n\nSolver 'Ant Colony Optimization' could not find a solution.\n\nAnts walk from 1 and reinforce the edges of good walks. Heuristic: reruns until an answer verifies, for 5s. 'No solution found' means it gave up, not that the board has none."
+      ]
+    }
+  ]
+}

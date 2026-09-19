@@ -1,0 +1,83 @@
+[project]
+name = "thread-the-grid"
+version = "0.1.0"
+description = "Generate, read and solve grid path puzzles with numbered waypoints."
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "accelerate>=1.11.0",
+    "fastapi>=0.119.0",
+    "gradio>=5.49.1",
+    "gymnasium>=1.2.1",
+    "hf-xet>=1.1.10",
+    "httpx>=0.28.1",
+    "loguru>=0.7.3",
+    "numpy>=1.26.4,<2.0",
+    "ollama>=0.6.0",
+    "ortools>=9.14.6206",
+    "pandas>=2.3.2",
+    "pillow>=11.3.0",
+    "pydantic>=2.11.10",
+    "pydantic-ai-slim[openai]==1.107.5",
+    "pydantic-settings>=2.11.0",
+    "pytest>=8.4.2",
+    "pytest-html>=4.1.1",
+    "pytest-reportlog>=0.4.0",
+    "python-multipart>=0.0.20",
+    "requests>=2.32.5",
+    "sb3-contrib==2.7.1",
+    "sentencepiece>=0.2.1",
+    "sortedcontainers>=2.4.0",
+    "stable-baselines3>=2.7.0",
+    "tensorboard>=2.20.0",
+    "torch==2.4.1",
+    "torchaudio==2.4.1",
+    "torchvision==0.19.1",
+    "tqdm>=4.67.1",
+    "transformers>=4.57.1,<5",
+    "uvicorn[standard]>=0.37.0",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+# Notebooks are excluded on purpose. They are Colab artifacts, not library code: they run
+# against a different pinned stack (torch 2.8.0 there vs 2.4.1 here), they keep their
+# executed outputs as the record of a run, and they carry deliberately ad-hoc exploratory
+# cells that would be edited away by a linter -- which would rewrite that record.
+# "module level import not at top of cell" also simply is not a notebook rule.
+#
+# The one notebook defect that has actually bitten us -- a cell magic below line 1, which
+# silently skipped an entire install cell -- is caught by an assertion in the generator
+# instead, which is a check ruff does not offer.
+extend-exclude = ["notebooks"]
+
+
+[tool.uv.pip]
+extra-index-url = ["https://download.pytorch.org/whl/cu121"]
+index-strategy = "unsafe-best-match"
+
+# The cu121 index is `explicit`: uv consults it only for the packages routed to it
+# below. Without that, every dependency is resolved against this index first (it is
+# declared before PyPI), and `uv add` / `uv lock` fail on anything the PyTorch index
+# happens to carry an old copy of -- `requests` pinned at 2.28.1 was the one that bit.
+# Note the `[tool.uv.pip]` block above does NOT help: it applies to `uv pip` only,
+# never to the project interface (`uv add`, `uv lock`, `uv sync`).
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+torchaudio = { index = "pytorch-cu121" }
+
+[dependency-groups]
+dev = [
+    "ruff==0.14.1",
+]

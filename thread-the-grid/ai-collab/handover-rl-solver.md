@@ -1,0 +1,467 @@
+# 交接文件 — RL Track（一筆畫 solver）
+
+> 🛑 **2026-09-19 專案收尾，這條 track 已停止。** 收尾時的總結——為什麼到不了 100%、「只准走一次」這條規則對不對、AlphaZero 對照、依優先序的後續路線——在 [`reports/2026-09-19_rl-where-next.md`](reports/2026-09-19_rl-where-next.md)。下面 §0.3 的「接手第一件事」是**想重啟時**的第一件事，不是待辦。服務中的權重沒有進版控，取得方式見 [`model-weights.md`](model-weights.md)。
+
+> **接手這條 track 從這一份開始讀。這裡只寫「開工前必須知道的」。**
+> 細節一律不重複——量過的數字與踩過的坑在 [`rl-traps-and-facts.md`](rl-traps-and-facts.md)，
+> 其餘去哪查看 **§6 總目錄**。
+> 最後更新：2026-09-19（Asia/Taipei）｜分支 `feat/rl-exit`（**已合進 `main`**）｜worktree `zip-rl`｜roadmap 第 3 項
+>
+> ★★ **2026-09-19 session 在「實驗做一半」時收尾**（本人要求收尾交接）。**先讀 §0，它就是接手要做的事。**
+> 訓練與批次評估**開跑前仍要拿本人當次授權**；唯讀的事（讀程式、讀 `logs/`、寫文件、`pytest`／`ruff`）不用問。
+>
+> ⚠ **要讀就讀 `zip-rl` 這份**：本檔在每個 worktree 都有一份，別的 worktree 拿到的是那條分支
+> 上次 commit 的版本（`zip-vlm` 的副本停在 2026-08-15，還在說「A2 尚未開始」）。
+> 姊妹 track：[`handover-vlm-parser.md`](handover-vlm-parser.md)
+
+---
+
+## 0. ★ 2026-09-19：做了什麼、停在哪、接手第一件事
+
+完整數字與推理在 [報告](reports/2026-09-19_rl-epoch-sweep-and-exit.md)，流水帳在 `dev_log.md` 的 2026-09-19 RL 小節。
+
+### 一句話
+
+**掃完 epoch、ExIt 第一輪訓練完成、判定器全面改嚴格**（路必須停在最大數字）。
+**ExIt 在單次嘗試（deterministic）上大贏**（6×6 0.6455 vs 同 epoch 的 BC 0.5205），但那是**單 seed、舊的寬鬆尺**；
+**嚴格尺下的 BC vs ExIt 對照只量完 e4 一對**（det +0.059、bo32 +0.015），seed 雜訊沒量完 ⇒ **接手第一件事是把 §0.3 的 1、2 跑完**。
+
+### 0.1 ⚠ 量尺換了（最容易踩的坑）
+
+2026-09-19 起，**「解開」的定義多了一條：路必須停在最大數字上**（本人定案）。7 個判定器一起改：
+`rl_env_v2._is_solved`、`dfs.py`、`a_star.py`（兩版）、`cp.py`、`utils.calculate_fitness_score`、`solvers/verify.py`、`vl_models/score_predictions.path_is_legal`，
+由 `src/core/tests/test_end_on_last_number.py` 一次釘住。
+⇒ **2026-09-19 以前的所有 RL 數字（含本檔 §1 的 0.9953／0.9465，也含今天 sweep 的 e1–e6）都是寬鬆尺**。
+兩把尺的差距實測約 **−0.005**（6×6 bo32，`bc_multi_456_e6`：0.948 → 0.9435，用收集器的抽樣量的），在評估雜訊內，
+**但比較兩個方法時兩邊必須同一把尺**。嚴格尺的產物一律帶 `strict_` 前綴。
+服務中的 RL solver 走的是同一個 env ⇒ **現在只會回傳停在最大數字的路**。
+
+### 0.2 已完成（都有產物）
+
+| 項目 | 結果 | 產物 |
+|---|---|---|
+| 掃 epoch（寬鬆尺，6×6 bo32）| e1 0.884、**e2–e5 平台 0.9595–0.967**（彼此差 <0.01，分不出贏家）、e6 0.9465、e10 0.8535；det 在 **e5 最高 0.5915**；bo1 隨 epoch 單調上升 | `logs/rl_probes/cross_size_bc_multi_456_sweep_e{1..6}_6x6_test.json`；權重 `models/rl_a2/bc_multi_456_sweep/checkpoints/model_epoch_{1..10}.zip` |
+| 決定性與量尺對照 | sweep 十個 epoch 的紀錄與 `bc_multi_456` **逐位相同**；sweep e6 重評**完全復現** 0.9465 | 同上 |
+| **多解實測** | 訓練題有別條解的比例（嚴格）：**4×4 54.1%／5×5 75.1%／6×6 87.5%**（下界，只數得到模型抽得到的）| `logs/rl_exit/exit_r1_e6_k32/summary.json`、`logs/rl_exit/endpoints_exit_r1_e6_k32.json` |
+| ExIt 收集 | 收集者 `bc_multi_456_e6`、訓練集 47,435 題 × 32 次、1,927 秒（CPU）⇒ **135,818 條停在最大數字的別條解、34,364 題** | `logs/rl_exit/exit_r1_e6_k32/solutions_strict.json` |
+| ExIt 第一輪訓練 | `exit_r1_e6k32`：與 sweep **同 seed、同順序、同步數**，唯一差別是標籤。**loss 地板 0.0709 vs 0.0337**（多解 ⇒ 最佳預測本來就該分散）| `models/rl_a2/exit_r1_e6k32/checkpoints/model_epoch_{1..10}.zip`、`logs/rl_a2/exit_r1_e6k32/` |
+| **ExIt e10 deterministic**（寬鬆尺、單 seed）| **4×4 0.9555／5×5 0.8451／6×6 0.6455**，對照 BC e10 0.9404／0.7496／0.5205（**+0.015／+0.095／+0.125**）| `logs/rl_a2/exit_r1_e6k32/eval_test.json` |
+| **嚴格尺 e4 對照**（6×6）| BC det 0.5495／bo32 0.9605／4.97 次 vs **ExIt det 0.6085／bo32 0.9755／4.57 次** ⇒ det **+0.059**、bo32 +0.015（<0.02、單 seed ⇒ 有動但未確證）；ExIt 兩頭都沒輸（PPO 微調是 det 升、bo32 降）| `logs/rl_probes/cross_size_strict_*_e4_6x6_test.json` |
+
+### 0.3 沒做完——接手依序做（都要先拿授權）
+
+GPU 預算：**同時只能跑 1 個 probe**（一個 probe 約佔 40% GPU 時間；2 個就 85%，超過 75% 上限）。
+`../hi-collab/scratch/probe_queue.ps1` 會自動排隊（也會等正在跑的 BC 訓練）。
+
+1. **嚴格尺的 BC vs ExIt 對照**（最重要，約 8.5 分鐘／點，10 點約 85 分鐘）：
+   ```powershell
+   cd thread-the-grid
+   powershell -NoProfile -ExecutionPolicy Bypass -Command "& ../hi-collab/scratch/probe_queue.ps1 -Jobs bc_multi_456_sweep:6,exit_r1_e6k32:6,exit_r1_e6k32:10,bc_multi_456_sweep:2,exit_r1_e6k32:2,bc_multi_456_sweep:5,exit_r1_e6k32:5,exit_r1_e6k32:8,bc_multi_456_sweep:10 -LabelPrefix strict"
+   uv run python ../hi-collab/scratch/summarise_probes.py strict_bc_multi_456_sweep_e4 strict_exit_r1_e6k32_e4 ...
+   ```
+   ⚠ 一定要用 `-Command "& ..."`，**不要用 `-File`**：`-File` 會把 `a:4,b:6` 當成一個字串。
+2. **seed 雜訊**（6×6 從來沒量過）：BC 與 ExIt 各多 2 個 seed（27182818、31415926），每次訓練約 10 分鐘 ＋ probe 贏家 epoch 約 8.5 分鐘，合計約 75 分鐘：
+   ```powershell
+   uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi --run-id bc_multi_456_sweep_s27182818 --seed 27182818 --epochs 10 --eval-episodes 0 --checkpoint-every-epoch
+   uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi --run-id exit_r1_e6k32_s27182818 --seed 27182818 --epochs 10 --eval-episodes 0 --checkpoint-every-epoch --extra-solutions logs/rl_exit/exit_r1_e6_k32/solutions_strict.json
+   ```
+   ⚠ 2026-09-19 收尾時這組是**中途停掉**的（BC s27182818 跑到 4 個 epoch，另兩個剛開始）。三個不完整的 run 目錄
+   （`logs/rl_a2/` 與 `models/rl_a2/` 各三個）**已軟刪除**到 `zip-rl/soft-delete/20260919-024456/thread-the-grid/…`
+   ⇒ 直接用同名 run id 重跑即可。（`bc_progress.jsonl` 是附加寫入，留著舊目錄會把新紀錄接在舊的後面。）
+3. **贏家補 4×4／5×5 的嚴格 best-of-32** ＋ 多樣性 probe（`../hi-collab/scratch/probe_diversity.py run_id:model_epoch_N`）做機制對照。
+4. **要不要把服務模型換成 ExIt 版由本人決定**（`solver_service.py` 的 `RUN_ID_BY_SIZE` 不屬於本 track）。
+5. **ExIt 第二輪**：用第一輪的贏家當收集者重跑 `collect_solutions.py`，再訓練一次——這才是真正的「迭代」。
+
+### 0.4 判讀時要記得
+
+- **ExIt 的 deterministic 大進步有兩個可能機制，還沒分開**：(a) 岔路口的多標籤讓策略把機率分給**所有合法走法**；
+  (b) 別條解走過**資料集沒有的局面**，等於更多樣的訓練狀態（像沒付專家成本的 DAgger）。要分開得另設一臂
+  （例如只在「資料集路徑上的局面」用多標籤）。
+- **寬鬆 vs 嚴格的數字不能混比**（§0.1）。
+- 6×6 的 seed 雜訊沒量過之前，0.0x 的差異一律標「有動但未確證」；+0.125 大概率是真的，但仍是單 seed。
+
+---
+
+## 1. goal 與判定標準（先讀這個）
+
+**訓練出能解「沒看過的題目」的策略**：`goal1_4x4` ≥ **0.90**、`goal2_6x6` ≥ **0.85**（held-out test），
+最終 **A5 掛成 API 的第 10 種 solver**。
+
+⚠ 同樣是定案的：**這條 track 的產出是「做中學」，不是指標。**
+沒達標不等於失敗，**「知道為什麼沒達標」本身就是產出**；反過來，為了衝分數而犧牲可解釋性
+（同時改多個變數、只留贏的那次、拿訓練期高分當成績）**與目標相反**。
+
+> ⚠ **goal 原本寫在這份文件的第 520 行，而前面是一面十幾條的資訊牆——2026-09-05 實際造成過發散**
+> （接手的 agent 讀完那面牆，開始優化最後一條提到的東西）。所以它現在在最前面。
+> **但要誠實：知道 goal 並不足以防發散**——當天那個 agent 讀過也引用過 goal，照樣多花 30 分鐘
+> 去確認一個試跑已經否定的東西。**真正能擋住的是 §2 那張死路地圖**，不是自我提醒。
+
+### 判定用哪個推論模式（★ 2026-09-05 定案，此前一直是空白）
+
+**門檻用 best-of-N 判定，但 deterministic 與 best-of-N 兩個數字都要報**（附 N 與平均嘗試次數）。
+
+- **為什麼**：0.90／0.85 從來沒指定推論模式（同一個模型 deterministic 0.870 未達標、best-of-2 0.903 達標），
+  而 A5 的產品形態就是 solver、**Zip 的解可驗證** ⇒ 花推論預算是正當手段，不是猜。
+- ⚠ **但 deterministic 仍是比較「訓練設定」的唯一公平尺**（它沒有預算這個變數）。
+  **拿 best-of-N 比兩種訓練方法＝拿「多花計算」冒充「變聰明」。**
+
+### 現況（2026-09-12；⚠ 下表是寬鬆尺，2026-09-19 的更新見 §0）
+
+**判定基準是 best-of-32**（2026-09-11 本人定案：練習用專案，不在 N=32 vs 64 上著墨）。
+
+**★ 目前最好的模型是 `bc_multi_456_e6`（BC 只訓練 6 epochs，2026-09-12 Track A）。**
+
+| goal | deterministic | best-of-32 | 門檻 | 狀態 |
+|---|---|---|---|---|
+| 4×4 | 0.9410 | **0.9953**（1.41 次／題）| 0.90 | **✅ 有餘裕** |
+| 6×6 | 0.5430 | **0.9465**（5.24 次／題）| 0.85 | **✅ 有餘裕（+0.096）** |
+
+**★ 2026-09-12 已把服務模型換成它**（本人當次授權；`solver_service.py:48-62` 的 `RUN_ID_BY_SIZE` 三個尺寸都指向
+`bc_multi_456_e6`）。實跑驗證：一題 6×6 第一次嘗試就解開，log 印 `RL solver (bc_multi_456_e6) solved a 6x6`。
+舊的 `bc_multi_456`（10 epochs）留在原地沒有刪，數字是 4×4 bo32 0.9917、6×6 bo32 **0.8535（踩線）**。
+⚠ **只有一種情況舊的比較好**：呼叫端把 `attempts` 設成 1（best-of-1 6×6 0.4810 vs 0.4265）。API 預設是 32。
+
+⚠ **跨了檔案所有權**：計畫書把 `solver_service.py` 排除在 Track A 之外，這次是本人當次指示才動的。
+**★ 舊 run id 的殘留已經補完了**（commit `babc1cb`）：`start.py:60` 的權重檢查路徑與 `deployment-guide.md` 都指向
+`bc_multi_456_e6`，**服務／啟動檢查／文件三處現在一致**（2026-09-12 實際 grep 過）。
+唯一還印舊路徑的是 `deployment-guide.md:112`，那是「503 長什麼樣」的示範訊息，不是設定。
+
+### 服務用的權重怎麼來（`models/` 不進版控，fresh clone 沒有它）
+
+**一行指令，約 5 分鐘**（`goal3_multi` ＋ 6 epochs 就是現在服務中的那個模型）：
+
+```bash
+cd thread-the-grid
+uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi \
+    --run-id bc_multi_456_e6 --epochs 6 --eval-split test --eval-episodes 1
+```
+
+產出 `models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip`（**14 MB**）。
+沒有它，`/api/solver/solve` 的 RL solver 回 **503**，其他 solver 照常（`solver_service.py:92-96`）。
+⚠ `models/` 整個目錄目前 **9.7 GB**（全是歷次訓練的 checkpoint，刻意從不刪除），但**服務只讀其中這 14 MB**。
+
+⚠ **早停版是單一 seed**（epoch 的效果本身是同 seed 配對比較、不含訓練雜訊，但「別的 seed 幅度多少」沒量），
+而 best-of-N 的**評估雜訊約 ±0.01**——不過 6×6 的 +0.093 遠大於它。**沒有掃 epoch，最佳點可能比 6 更早。**
+
+**★ 為什麼是「一個模型吃三種尺寸」**（`bc_multi_456`，2026-09-12 收尾時定的）：4×4／5×5／6×6 三個盤面**都**贏過
+同資料訓練的單尺寸專用模型（+0.0362／+0.0365／+0.0315，deterministic），訓練成本還略低。
+**5×5 從此有模型**。完整對照在 [收尾報告](reports/2026-09-12_rl-wrap-up.md) §2；
+兩種訓練 × 每個 N 的舊對照在 [BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §3。
+
+**A5 已完成**：`RL (behaviour cloning)` 是 `/api/solver/solve` 的第 4 種 solver，
+Docker 一鍵起得來（[部署指南](deployment-guide.md)）。
+
+**PPO 到底能不能成功？** 4×4 **已經成功**（best-of-4 = 0.9238）。
+6×6 **沒有證據支持它能到 0.85**：curriculum 卡在 k=30/36、每級成本約 ×2、8M 步只有 0.4095，
+而外推不可信。**唯一沒做的 PPO 實驗是「推到全長會停在哪」，1–2 小時，要授權。**
+詳見 [BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §6。
+
+**★ 2026-09-12 Track A 補完了這一題**：從 BC 暖啟動的 PPO 微調**做得起來也不會崩**（用 `--learning-rate 3e-5`），
+但它在判定基準上是淨損失（下一節）。所以「PPO 推到全長會停在哪」仍然沒做，**而且優先序已經降低**——
+6×6 的門檻現在是被**早停的 BC**清掉的，不是被 PPO。
+
+⇒ **兩個 goal 的門檻都已被 `bc_multi_456_e6` 清掉且有餘裕**。
+**① 換服務模型已經做完**（2026-09-12，本人當次授權）。**還開著的是兩件**：
+② **掃 BC 的 epoch 找最佳點**（§3 有現成配方，成本已重算，比「每點 17 分鐘」便宜）
+③ **ExIt／拒絕抽樣微調**（保住多樣性的方法）。
+**不是在做這兩件的工作，開跑前先說明為什麼要做**；而且**兩件都要先拿授權**（見本檔開頭）。
+
+### ★ BC → PPO 微調已完成（2026-09-12，Track A）——**RL 買到單次準度，賠掉多樣性**
+
+完整數字見 [BC → PPO 微調報告](reports/2026-09-12_rl-bc-ppo-finetune.md)。`--init-from` 已實作。
+
+| | deterministic | best-of-32 |
+|---|---|---|
+| 4×4（3 seed，全距 0.002／0.001）| **+0.0070 確證** | **−0.0129 確證** |
+| 6×6（det 3 seed；bo32 單 seed）| 3/3 為正、平均 **+0.021**、全距 0.032 ⇒ 方向一致、**幅度未定** | **−0.0685** |
+
+**判讀**：微調讓策略變尖（held-out 熵 −49%～−60%、每題相異路徑 −33%～−38%）⇒ 單次嘗試更準
+（6×6 best-of-1 +0.065），但**多試幾次的邊際效益被吃掉** ⇒ 依判定基準 best-of-32，**微調是淨損失**。
+⇒ 「這題不該用 RL」**沒有被推翻，而且證據更強**：只有「只給一次嘗試」時微調才划算。
+⚠ 但 6×6 測試集的進步**大於**訓練集（+0.0375 vs +0.025）⇒ **它確實學到泛化的東西**，不是背題。
+
+**★ 順帶量到、會改優先序的兩件事**：
+① **BC 自己在 6×6 嚴重過擬合**——deterministic 訓練集 **0.9005** vs 測試集 **0.5200**（落差 0.38；4×4 只有 0.042），
+BC 的 val 選擇準確率 **epoch 6 就到頂**、epoch 10 反而退。
+**★ 當天就驗了，而且是目前最大的一筆**：`--epochs 6`（`bc_multi_456_e6`）讓 6×6 **best-of-32 從 0.8535 變成 0.9465**、
+每題嘗試次數 **7.76 → 5.24**，4×4 從 0.9917 變成 0.9953；但 **best-of-1 反而降**（0.4810 → 0.4265）
+⇒ **和微調是同一條軸的兩端**，判定基準是 best-of-32 ⇒ **正確方向是「少訓練」**。詳見報告 §9。
+機制也對稱：held-out 策略熵 **+80%**（微調是 −49%）、每題相異路徑 5.02 → **8.86**、16 次全失敗的題數 65 → **24**。
+**三個尺寸的 deterministic 都沒退步**（4×4 +0.0005、5×5 **+0.0205**、6×6 **+0.0225**）
+⇒ 換掉服務中的模型不會犧牲別的盤面（**要不要換由本人決定**，`solver_service.py` 不屬於本 track）。
+⚠ 這不是重開 §2 的「繼續加資料」——那條線量的是 **PPO** 模型，不是 BC。
+② **6×6 微調的 seed 雜訊首次量到 ≈ ±0.016**（4×4 微調只有 ±0.001）⇒ 6×6 的 0.0x 差異仍要三個 seed 才算數。
+
+**什麼算做完**：4×4 已達標 ⇒ 後續判定只看 6×6。
+**若 6×6 窮盡目前路線仍到不了 0.85 ⇒ A5 只上 4×4，6×6 標為實驗性並寫清楚為什麼**——那份說明就是交付物。
+
+### 判讀規則（違反這條的數字不要報告成進步）
+
+**訓練 seed 的雜訊地板：4×4 實測 ±0.02–0.04**（3 seed 臂內全距 0.0380，而 greedy baseline 跨 6 個 run
+只差 0.002 ⇒ **雜訊幾乎全在訓練 seed，不在評估**）。**任何改動效果要大於 ±0.04 才算數。**
+⚠ **6×6 的雜訊從來沒量過**（一輪約 20 分鐘）——在那之前，6×6 的 0.0x 差異一律標「**有動但未確證**」。
+
+---
+
+## 2. ⛔ 已關掉的線（都有實驗證據，**不要重開**）
+
+| 不做 | 為什麼 | 證據 |
+|---|---|---|
+| 繼續加資料 | 落差只剩 +0.009，沒東西可再 overfit | dev_log `2026-08-29` |
+| 把「**當前狀態**的拓撲性質」放進觀測 | 策略根本沒在用它（失敗中亮燈比例 62.1% → 64.6%）| [連通性報告](reports/2026-09-05_rl-connectivity-feature.md) |
+| **動作條件版**連通性、**割點** | 一步前瞻的 oracle **上界**只有 +0.0156（4×4），而那是**整族**的上界 | [oracle 報告](reports/2026-09-05_rl-lookahead-oracle.md) §5 |
+| **GNN** | 主要論據被上面兩個否掉；只剩「跨尺寸泛化」沒被測到 | 同上 §7.5 |
+| **policy 排序 DFS 用在 6×6** | 100 節點以上輸給 best-of-N | 同上 §10 |
+| **帶重啟的 DFS** | k1／k2 輸給 best-of-N **和** policy-DFS ⇒ 這一族的極值在「完全不回溯」端點 | 同上 §11 |
+| 調 PPO 超參、`shaping_lambda` 掃描 | 能買到的量級大機率在雜訊裡；λ=0 vs 0.2 已是 null | [預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md) §6 |
+| 單純把 6×6 推到全長 | 只會把 0.409 推高一點，**不會靠近 0.85** | 同上 §1–3 |
+| 調 reward 權重解迴圈 | 2025-10 試過；根因在 env，已重寫 | [A0 報告](reports/2026-08-15_a0-env-v1-findings.md) |
+
+**還開著、但目前沒有證據支持的**：加深 conv trunk（已證偽的是「加拓撲特徵」，**不是**「加深度」）。
+
+**★ 2026-09-12 更正一條**：舊版這裡寫「GNN 的跨尺寸泛化測不到，因為 `Linear(4104→256)` 綁死 8×8 padding」
+——**寫反了**。padding 到 8×8 正是**讓**跨尺寸可測的原因（純量帶 `height/8`、`width/8`，
+`_load_sample()` 每局重讀高寬），所以現成 checkpoint 直接就能餵別的尺寸。已經量完：
+**泛化真的存在但單向**（6×6 模型在沒看過的 4×4 拿 0.5456，4×4 模型在 6×6 只有 0.0105），
+而且**混合尺寸訓練在三個盤面都贏單尺寸專用模型**。⇒ GNN 的「跨尺寸」論據現在不是「沒測過」，
+而是「**不用 GNN 也做得到**」。
+
+**★ 已經量到的唯一瓶頸**：**6×6 單步正確率 93.9%，達標需要 98.9%**——要把單步錯誤率**砍 5.4 倍**。
+這是「換等級」不是「改良」，任何新想法先對照這個數字。
+（模型大小**不是**瓶頸，有三個實測支持，見 [oracle 報告](reports/2026-09-05_rl-lookahead-oracle.md) §7 的 AlphaGo 定量對照。）
+
+---
+
+## 3. 現在該做什麼
+
+**★ 2026-09-11 本人定案：「我知道有別種 solver，但這個專案就是要用 RL 做。」**
+⇒ 收尾已完成（多尺寸模型、A5 掛 API、Docker），**主線變成「真的用 RL」**。
+
+### 下一步，依優先序
+
+| 順位 | 做什麼 | 修的是什麼 | 成本 | 正牌 RL？ |
+|---|---|---|---|---|
+| ~~1~~ | ~~**BC → PPO 微調**~~ | **✅ 2026-09-12 完成**（上一節）：單次準度升、多樣性降，best-of-32 淨損失 | 已花約 1.5h GPU | ✅ |
+| **1** | **ExIt／拒絕抽樣微調** | **2026-09-19 第一輪訓練完成，嚴格尺對照與 seed 還沒做完 ⇒ 見 §0.3** | 剩約 2.5 小時 GPU | 介於 |
+| ~~2~~ | ~~**掃 BC 的 epoch 找最佳點**~~ | **✅ 2026-09-19 完成（寬鬆尺）**：e2–e5 是平台（bo32 0.9595–0.967），e6 開始下滑 ⇒ 見 §0.2 | 已花約 1 小時 | ❌ 監督式 |
+| 3 | **DAgger** | 走偏後沒訊號（專家＝CP-SAT，現成免費）| 半天 | ❌ 仍是監督式 |
+| 4 | **AlphaZero 式** | 長程規劃本身 | 1–2 天 | ✅ |
+
+**名詞不懂就去 [`notes/01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)**，那裡有白話對照與「為什麼這題 RL 的優勢用不到」。
+
+### 掃 epoch 的配方（2026-09-12 寫好、**2026-09-19 照做完**；留著是因為設計理由還有效，結果見 §0.2）
+
+**為什麼它比之前估的便宜**：BC 的訓練軌跡對同一個 seed 是**決定性**的——`bc_multi_456`（10 epochs）與
+`bc_multi_456_e6`（6 epochs）是兩次獨立執行，`bc_progress.jsonl` 的**前六行逐位相同**
+（loss 0.16514／0.106681／0.090412／0.07982／0.070765／0.061844）⇒ **「epoch N 的模型」就是同一條軌跡上的第 N 個點**。
+
+⇒ **訓練一次 10 epochs、每個 epoch 存一個 checkpoint**（約 9 分鐘，實測 44–55 秒／epoch），所有點一次拿齊；
+之後每點只付評估的錢。原估的「每點 17 分鐘」有 5 分鐘是白付的重訓。
+
+**實測成本**（取自既有產物的 `seconds` 欄位，不是估的）：
+
+| 評估 | 題數 | 實測秒數 | 出處 |
+|---|---|---|---|
+| 6×6 best-of-32 | 2,000 | **590.1s／570.1s** | `logs/rl_probes/cross_size_bc_multi_456{,_e6}_6x6_test.json` |
+| 4×4 best-of-32 | 1,931 | 139.9s／131.0s | 同上，檔名 `_4x4_` |
+| 多樣性（熵＋相異路徑）| 2,000＋300 | 173.0s | `logs/rl_probes/diversity_6x6_test_20260912T065449Z.json` |
+
+⚠ **越早的 epoch 越貴**：成本由「解不開的題」決定（每題燒滿 32 次）。e6 每題 5.24 次、e10 是 7.76 次，
+更早的 epoch 只會更低分 ⇒ 單點可能 **15–25 分鐘**，不要拿 e6 的秒數乘倍數。
+
+**需要的兩個小改動**（刻意還沒寫：沒跑過的旗標就是死程式碼，而它唯一的用途是這個還沒授權的 sweep）：
+
+1. `src/core/rl/train_behaviour_cloning.py` 加 `--checkpoint-every-epoch`，每個 epoch 存
+   `model_epoch_<N>.zip` 到 run 自己的 `checkpoints/`（跟 PPO 的 `model_<steps>.zip` 同慣例）。
+   現在只在最後存 `model_final.zip`（`train_behaviour_cloning.py:339`）。
+   ⚠ `model.save()` 不消耗 RNG，所以存檔**理論上**不動訓練軌跡——**但要用「前 N 行紀錄與已發表的逐位相同」實際驗一次**。
+   順手補一個測試（BC 現有 10 個在 `src/core/tests/rl/test_train_behaviour_cloning.py`）。
+2. `../hi-collab/scratch/probe_cross_size.py` 加選用的 `--checkpoint`／`--label`（它現在只載 run id 底下的
+   `model_final.zip`）。**評分迴圈一個字都不要動**——換一支腳本等於換尺。
+
+**必跑的對照（不做就不要採信任何新數字）**：拿 sweep 的 **e6** checkpoint 重跑 6×6 best-of-32，
+必須復現 **0.9465**。改過的 probe 復現不了就是**換了尺**，整組數字作廢。成本約 10 分鐘。
+
+**點的排程**：先 **e4、e2**（約 27 分鐘）看形狀，再依形狀補兩點（峰在低端補 e1／e3，峰在 5–6 補 e5／e7）；
+**e6 與 e10 是既有錨點**（0.9465／0.8535），**e1 放最後**（最貴、val 準確率最低）。
+贏家再補 4×4（約 2.5 分）＋ 5×5（約 4 分）確認沒退步，加一次多樣性 probe（3 分）做機制對照
+（早停的機制是熵 +80%、每題相異路徑 5.02 → 8.86，見 [BC → PPO 微調報告](reports/2026-09-12_rl-bc-ppo-finetune.md) §9）。
+
+**免費的訊號（已經在磁碟上，不用重跑）**：`logs/rl_a2/bc_multi_456/bc_progress.jsonl` 有十個 epoch 的
+val 選擇準確率——e1 0.8698／e2 0.8856／e3 0.8884／e4 0.8798／e5 0.8984／**e6 0.8999**（頂）／e7 0.8970／
+e8 0.8863／e9 0.8891／e10 0.8891。⚠ **只能用來排除明顯太弱的 epoch，不能用來選贏家**：
+它是 pass@1 型訊號，而 6 vs 10 那組已經證明它與 best-of-32 會分歧（e6 的 bo32 高 0.093，bo1 卻低 0.055）。
+
+**判讀規則**：
+
+- **勝負一律用完整 2,000 題**。小樣本只能看機制——**300 題那次量出的勝負方向與完整測試集相反**。
+- best-of-N 的**評估雜訊約 ±0.01** ⇒ 相鄰 epoch 差距 <0.02 就報「這段是平台，分不出來」，不要硬選贏家。
+- 整條曲線是**同一個 seed 的同一條軌跡**：好處是沒有訓練 seed 雜訊（配對比較），代價是只能宣稱
+  「**這個 seed 上**最佳點是 e_k」。要宣稱「最佳 epoch 是 k」得在贏家 epoch 上**多跑 2 個 seed**
+  （每個 5 分訓練 ＋ 10 分評估，約 30 分鐘）——那同時把「**6×6 的 seed 雜訊從來沒量過**」這筆一起清掉。
+
+**微調的具體約束**：跑**全長、不用 curriculum**（`CurriculumState(current_k=None)`，
+`_maybe_promote` 對 `None` 是 no-op）。
+**前置封鎖已解除**：value head 會不會傷到策略，2026-09-12 量完了——
+`--value-coef 0.5` vs `0` 差 **−0.0083**（在 ±0.02–0.04 雜訊內）⇒ **沒有證據支持它有害**，
+可以直接用帶 critic 的 checkpoint 去微調。
+**⚠ 2026-09-12 實測更正（Track A）**：「帶 critic」**必要但不充分**——BC 的 critic 只看過永遠成功的專家軌跡，
+微調第一次更新的 explained variance 三個 seed 都約 **−0.005**。而且 **PPO 預設學習率 3e-4 對微調太大**：
+前 100k 步 approx_kl 0.14–0.16（正常約 0.01–0.02），**4×4 三個 seed 都比 BC 差約 0.025，6×6 直接崩**
+（訓練集抽樣 0.785 → 0.07，held-out deterministic 0.5205 → 0.2415）。**微調一律帶 `--learning-rate 3e-5`**。
+完整數字見 [BC → PPO 微調報告](reports/2026-09-12_rl-bc-ppo-finetune.md)。
+
+### 還沒做、也記下來的
+
+- **6×6 的 seed 雜訊仍然沒量過**（用 BC 量只要約 16 分鐘：3 seed × 228s ＋ 評估）。
+  在那之前 6×6 的 0.0x 差異一律標「有動但未確證」。
+- **多尺寸為什麼有效沒有機制實驗**。事後解釋是「小盤面提供密度更高的長程訊號＝免費的 curriculum」，
+  要驗證得另外設計臂（例如 4+6 不含 5）。
+- **app image 有 22.9 GB**（基底是 CUDA devel 但 app 不用 GPU），換 slim 基底可大幅縮小，未驗證系統相依。
+
+### ★ BC 還算 RL 嗎？——不算，而且這件事對 goal 有意義
+
+**BC 是模仿學習（IL）裡最簡單的一種，演算法上就是監督式學習**（cross-entropy、固定 `(X, y)`、
+無獎勵、無探索、無信用分配）。RL 的定義特徵是「用獎勵優化自己產生的軌跡」，BC 三樣都沒有。
+
+**但**：整條 pipeline 仍是 RL 的（env、遮罩、評估協定沒換），**BC 的定位是暖啟動不是替代品**，
+下一步接 PPO 微調就是 RL；而且「先監督再 RL」正是原始 AlphaGo 的做法。
+
+⚠ **誠實的部分**：這個問題**獎勵極稀疏、專家示範免費且完整、解可驗證、mask 後平均分支只有 1.5**
+⇒ **RL 的三個典型優勢在這裡全部用不到。** 目前最好的模型仍然是監督式訓練出來的。
+**BC → PPO 微調是唯一能推翻這個結論的實驗。**
+完整論證見 [BC 報告](reports/2026-09-05_rl-behaviour-cloning.md) §4 與 [`notes/01-rl-methods-explained.md`](notes/01-rl-methods-explained.md)。
+
+### 資料集完整性（2026-09-05 實測複驗，不是引用）
+
+**現行 `seed20300000_n20000_4-6` 乾淨**：三個 split 內部重複 0、兩兩交集 0、digest `--verify` 全過。
+分尺寸：**4×4 train 15,419／val 1,927／test 1,928**、**6×6 16,000／2,000／2,000**，train∩test 都是 0。
+**id 是內容推導的**（`sample_fingerprint()` 的 canonical JSON），`PuzzleSample` **沒有 id 欄位**。
+⚠ 舊的 `main_n1700_456` 有**訓練集內部 4 筆重複 ＋ train∩val 1 筆**（`train∩test` 仍是 0，不影響已發表數字）。
+**教訓：「驗過 train∩test」不等於「三個 split 兩兩不交」。**
+
+**授權門檻**：小時級的工作（例如把 6×6 推到全長，估 1–2 小時）**開跑前要問本人**。
+分鐘級的訓練（4×4 約 4 分、6×6 約 20 分）可自行執行，**但跑完要回報**。
+
+---
+
+## 4. 環境與驗證（照做就能開工）
+
+worktree `D:\it_project\github_sync\zip-rl` 已存在且已 `uv sync`。從零重建：
+
+```powershell
+cd D:\it_project\github_sync\ml-workshop
+git worktree add ..\zip-rl feat/rl-a2-training
+Copy-Item .\thread-the-grid\.env ..\zip-rl\thread-the-grid\.env   # .env 不進版控
+cd ..\zip-rl\thread-the-grid
+uv sync
+```
+
+**開工第一件事，建立基線**（不要假設環境是好的——本專案曾休眠 9 個月）：
+
+```powershell
+cd D:\it_project\github_sync\zip-rl\thread-the-grid
+uv run pytest        # 2026-09-19 feat/rl-exit 尾端（含 main 的 Track C）實測 331 passed, 8 xfailed
+uv run ruff check .  # 期待 All checks passed!
+```
+
+- ⚠ **通過數取決於這條 branch 帶了哪些 commit，不是固定值。** 用法是「開工先跑一次記下來，之後拿它比較」。
+- **8 個 xfailed 是刻意的**（`xfail(strict=True)` 釘住 env v1 的缺陷）；變成 XPASS 代表有人改了 `rl_env.py`。
+- **venv 陷阱**：一律 `cd thread-the-grid` 再 `uv run`。repo 根的 `.venv` 是 py3.9 devtools，跑不動。
+- 相依已就緒（`torch 2.4.1+cu121`、`stable-baselines3 2.7.0`、`sb3-contrib 2.7.1`、`tensorboard`）；**沒有新套件**。
+
+**重建資料集**（`datasets/` 不進版控）：
+
+```powershell
+uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --timeout 0.5 --name main_n1700_456
+```
+
+⚠ 現行**預設資料集是 `seed20300000_n20000_4-6`**（4×4 train 15,419／6×6 16,000）；
+重現 A2 的舊數字要加 `--dataset main_n1700_456`。**資料集用 digest 認，不用指令認。**
+
+**本機資源上限 75%**（本人常設要求）。預算只寫在 `train_config.DEFAULT_CPU_FRACTION` 一處，訓練與生成共用。
+⚠「N% 的核心數」不等於「N% CPU」——**要在工作實際跑的時候取樣過才算設好**。
+
+---
+
+## 5. 程式地圖
+
+| 檔案 | 用途 |
+|---|---|
+| `src/core/rl/rl_env_v2.py` | **主角**。一筆畫 env、`action_masks()`、反向 curriculum、死路終止 |
+| `src/core/rl/train_config.py` | **改設定只改這裡**：goal（盤面／牆／步數／門檻）、PPO、網路、curriculum、資源上限 |
+| `src/core/rl/train_maskable_ppo.py` | PPO 訓練：`GridScalarExtractor`、curriculum callback、checkpoint、評估 |
+| `src/core/rl/train_behaviour_cloning.py` | **2026-09-05 新增**。監督式暖啟動，產出與 PPO **同架構、可互換**的 checkpoint（BC 是**第三個** env 建構點，見陷阱 #24）。2026-09-19 加了 `--checkpoint-every-epoch`、`--extra-solutions`（ExIt 的重標籤：每題每 epoch 從已知合法解均勻抽一條，用獨立亂數，不動打亂順序）、`--eval-episodes 0`（跳過結尾約 10 分鐘的評估）|
+| `src/core/rl/collect_solutions.py` | **2026-09-19 新增**。ExIt 的收集步驟：批次抽樣（1,024 局並行、一次前向）、每條解再用 `calculate_fitness_score` 獨立驗一次、寫出「≠ 資料集那條」的別條解 |
+| `src/core/rl/solver_service.py` | **2026-09-12 新增。唯一的服務端**：checkpoint 載入（lazy＋快取）、`puzzle` → env、best-of-N rollout。缺模型 503、尺寸不支援 400 |
+| `src/core/solvers/registry.py` | **solver 清單的唯一正本**（API／截圖端點／Gradio 都 import 它）|
+| `src/core/rl/baselines.py` | masked random／greedy 對照組 ＋ `evaluate()`。**評估 env 只能從 `make_eval_env()` 建** |
+| `src/core/rl/generate_dataset_v2.py` | 決定性資料集產生器，**保留 solution path** |
+| `src/core/rl/action_space.py` | 共用動作編碼（0:Up 1:Down 2:Left 3:Right）與 `path_to_actions()` |
+| `src/core/rl/diagnose_env_v1.py` | A0 的六個 probe，可重跑產生證據 JSON |
+| `src/core/tests/rl/` | env 21 個、PPO 訓練 18＋個、**BC 10 個**、v1 診斷 8 個 strict xfail |
+
+**env v2 介面速覽**
+
+```python
+env = PuzzleEnvV2(samples, reverse_curriculum_k=None, shaping_lambda=0.2, gamma=0.99,
+                  connectivity_features=False)   # True -> scalars 8 -> 10（舊 checkpoint 載不動）
+obs, info = env.reset()          # obs = {"grid": (8,8,8) float32, "scalars": (8,) float32}
+mask = env.action_masks()        # (4,) bool —— MaskablePPO 直接吃這個方法名
+```
+
+- **8 個 grid channel**：valid／wall_right／wall_down／visited／agent／wp_next／wp_future／wp_done
+- **reward 冰湖式**：成功 +1、其餘 0，「越快越好」由 γ 表達；死路與超時**沒有懲罰**
+- **失敗只有兩種**：死路（四方向全被 mask）與超時（一筆畫下幾乎不會發生，是防呆）
+
+**不要動**：`src/core/utils.py`、`src/core/puzzle_generation/`（共用模組，VLM track 也在用）、
+`src/core/rl/` 的 v1 舊檔與 `models/dqn_*.pth`（留作對照）。
+
+---
+
+## 6. ★ 去哪裡查什麼
+
+| 想知道什麼 | 去哪 |
+|---|---|
+| **量過的數字、踩過的坑**（30 個陷阱 ＋ 35 條已驗證事實 ＋ 已定案的設計決策 ＋ 實驗編年史；2026-09-19 新增事實 #32–35、陷阱 #27–30） | [`rl-traps-and-facts.md`](rl-traps-and-facts.md) ← **動手前掃一遍標題** |
+| **名詞看不懂、判讀規則、推論怎麼跑**（做中學筆記）| [`notes/`](notes/)：[概念](notes/01-rl-methods-explained.md)、[判讀紀律](notes/02-reading-the-numbers.md)、[推論與上線](notes/03-inference-and-serving.md)、[決策紀錄](notes/2026-09-11-decisions-rl-track.md) |
+| **怎麼把服務起起來** | [`deployment-guide.md`](deployment-guide.md)（Docker 一鍵、驗收指令、常見失敗）|
+| 某個實驗**怎麼做、為什麼是那個結論** | [`reports/`](reports/)：**[掃 epoch ＋ ExIt 第一輪 ＋ 判定器改嚴格](reports/2026-09-19_rl-epoch-sweep-and-exit.md)（最新）**、[收尾報告](reports/2026-09-12_rl-wrap-up.md)（多尺寸／value-coef／A5／Docker）、[A0 env 診斷](reports/2026-08-15_a0-env-v1-findings.md)、[預算與設計筆記](reports/2026-09-05_rl-budget-and-design-notes.md)（**§5 是 AlphaGo 對照與設計理由**）、[連通性特徵](reports/2026-09-05_rl-connectivity-feature.md)、[oracle 上界／best-of-N／搜尋](reports/2026-09-05_rl-lookahead-oracle.md)、**[行為克隆](reports/2026-09-05_rl-behaviour-cloning.md)**（**§4 是「BC 還算不算 RL」的完整論證**、§5 資料集複驗、§6 PPO 能不能成功）|
+| **某天做了什麼、量到什麼**（逆時序全記錄，1,900+ 行） | [`dev_log.md`](dev_log.md) ⚠ **不要整份讀**，用日期或關鍵字搜 |
+| 專案整體現況、兩條 track 的優先序 | [`roadmap.md`](roadmap.md) |
+| 原始作戰計畫、分階段 done 條件、A0–A6 路線 | [`plans/2026-08-15_track-rl-solver.md`](plans/2026-08-15_track-rl-solver.md) ＋ [restart plan（HTML，瀏覽器開）](reports/2026-08-15_rl-restart-plan.html) |
+| 專案架構、啟動方式、模組職責 | [`project_guide.md`](project_guide.md) |
+| 子專案規範（venv、驗證、紅線、回報格式） | [`../AGENTS.md`](../AGENTS.md)；repo 級 [`../../AGENTS.md`](../../AGENTS.md)、程式風格 [`../../rules.md`](../../rules.md) |
+| **某個決定當時為什麼那樣下** | `git log --oneline -- ai-collab/` ＋ 對應 commit message（本 track 的 commit message 寫的是**結論與理由**，不是檔案清單） |
+| 程式實際怎麼跑 | 直接讀 `src/core/rl/`——每個檔開頭的 docstring 都寫了它為什麼存在 |
+| 常用指令 | [`commands.txt`](commands.txt) |
+
+---
+
+## 7. 工作守則（都是實際犯錯後定下來的）
+
+1. **下結論前先跑掉能推翻它的對照**，還沒排除的要明講。
+   例：訓練／held-out 的落差，要先用「沒學過任何一邊」的 baseline 證明兩邊難度相同，才能叫泛化問題。
+2. **進行中的 log 不能當結論**——曲線還在跑就外推，這條 track 錯過兩次。
+3. **一次只改一件事**；效果小於 ±0.04 不要當成進步。
+4. **長時間或吃資源的工作開跑前先問**；跑到一半發現超標，**先停再修**。
+5. **告一段落就更新文件再 commit**：`dev_log.md` 記做了什麼、`roadmap.md` 記現況與下一步、本檔記接手要知道的、
+   較大的任務出 `reports/`。**不要只留在對話裡。** commit 需**當次授權**，單獨說 commit **不含** push。
+6. **解釋要跟數字一起交付**。被問「為什麼這樣設計」時去**讀原始決策文件**，不要憑印象重編理由；
+   查完就寫進 `reports/`。判準：**下一個 session 會不會需要再問一次同樣的問題**。
+
+---
+
+## 8. 與 VLM track 的協作約定
+
+| 面向 | 約定 |
+|---|---|
+| 程式碼 | 我動 `src/core/rl/`；VLM 動 `src/core/vl_models/`、`src/app/`、`src/ui/` |
+| ⚠ 交會點 | **A5 會動 `src/app/routers/solver.py`**，動之前先確認 VLM track 沒有同時在改 |
+| 共用模組 | `src/core/utils.py`、`src/core/puzzle_generation/` **只讀不改**，要改先提出 |
+| 相依 | `pyproject.toml`／`uv.lock` 序列化處理；新套件由本人授權後手動 `uv add` |
+| 文件 | dev_log 各加自己的 `###`；roadmap 只改自己那一項；衝突時兩邊都保留 |
+| CPU | VLM 的資料生成也吃多核，長工作錯開跑 |
+
+⚠ **A5 還有一個沒解的分布問題**：RL 訓練資料的牆是 0 或 2–5 道，
+而 VLM 從真實截圖讀出來的可到 10+ 道 ⇒ **分布外**。

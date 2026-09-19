@@ -1,0 +1,406 @@
+{
+ "url": "http://127.0.0.1:7440/ui/",
+ "measured_at": "2026-09-19T19:22:45+0800",
+ "checks": [
+  {
+   "check": "only two tabs: Generate Puzzle, Solve",
+   "ok": true,
+   "detail": [
+    "Generate Puzzle",
+    "Solve"
+   ]
+  },
+  {
+   "check": "fresh Solve tab: upload shown, editor hidden",
+   "ok": true,
+   "detail": {
+    "tab": "Solve",
+    "mode": [
+     "Upload screenshot"
+    ],
+    "upload_visible": true,
+    "editor_visible": false,
+    "editor_heading_visible": false
+   }
+  },
+  {
+   "check": "4x4: 'Open in editor' finishes (not stuck)",
+   "ok": true,
+   "detail": 1.0
+  },
+  {
+   "check": "lands on Solve / Editor",
+   "ok": true,
+   "detail": {
+    "tab": "Solve",
+    "mode": [
+     "Editor"
+    ],
+    "upload_visible": false,
+    "editor_visible": true
+   }
+  },
+  {
+   "check": "editor grid equals the generated layout",
+   "ok": true,
+   "detail": {
+    "grid": [
+     [
+      "",
+      "",
+      "4",
+      ""
+     ],
+     [
+      "2",
+      "",
+      "",
+      ""
+     ],
+     [
+      "",
+      "",
+      "",
+      ""
+     ],
+     [
+      "1",
+      "",
+      "",
+      "3"
+     ]
+    ],
+    "layout": [
+     [
+      "  ",
+      "  ",
+      "04",
+      "  "
+     ],
+     [
+      "02",
+      "  ",
+      "  ",
+      "  "
+     ],
+     [
+      "  ",
+      "  ",
+      "  ",
+      "  "
+     ],
+     [
+      "01",
+      "  ",
+      "  ",
+      "03"
+     ]
+    ]
+   }
+  },
+  {
+   "check": "one tag per generated wall",
+   "ok": true,
+   "detail": {
+    "chips": [
+     "((2, 1), (2, 2))",
+     "((2, 2), (2, 3))",
+     "((3, 1), (3, 2))"
+    ],
+    "walls": [
+     [
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       2
+      ]
+     ],
+     [
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       3
+      ]
+     ],
+     [
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       2
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "check": "4x4 solves from the editor",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "check": "added wall appears as a tag",
+   "ok": true,
+   "detail": [
+    "((0, 0), (0, 1))",
+    "((2, 1), (2, 2))",
+    "((2, 2), (2, 3))",
+    "((3, 1), (3, 2))"
+   ]
+  },
+  {
+   "check": "removed wall's tag is gone",
+   "ok": true,
+   "detail": [
+    "((2, 1), (2, 2))",
+    "((2, 2), (2, 3))",
+    "((3, 1), (3, 2))"
+   ]
+  },
+  {
+   "check": "preview redrawn after removal",
+   "ok": true,
+   "detail": {
+    "before": "8aed2de2f1b0fe724bd06307aa488/image.webp",
+    "after": "abb12580f7f3ba4285ad36747392b/image.webp"
+   }
+  },
+  {
+   "check": "still solves after add/remove",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "check": "6x6: 'Open in editor' finishes (not stuck)",
+   "ok": true,
+   "detail": 1.0
+  },
+  {
+   "check": "6x6 replaces the 4x4 in the editor",
+   "ok": true,
+   "detail": {
+    "grid": [
+     [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "3"
+     ],
+     [
+      "",
+      "",
+      "",
+      "",
+      "4",
+      ""
+     ],
+     [
+      "",
+      "2",
+      "1",
+      "",
+      "",
+      ""
+     ],
+     [
+      "",
+      "6",
+      "5",
+      "",
+      "10",
+      ""
+     ],
+     [
+      "7",
+      "",
+      "",
+      "8",
+      "",
+      ""
+     ],
+     [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "9"
+     ]
+    ]
+   }
+  },
+  {
+   "check": "6x6 tags match its walls",
+   "ok": true,
+   "detail": [
+    "((0, 1), (1, 1))",
+    "((0, 3), (1, 3))",
+    "((2, 0), (3, 0))",
+    "((4, 0), (4, 1))"
+   ]
+  },
+  {
+   "check": "mode switch shows upload, hides editor",
+   "ok": true,
+   "detail": {
+    "tab": "Solve",
+    "mode": [
+     "Upload screenshot"
+    ],
+    "upload_visible": true,
+    "editor_visible": false
+   }
+  },
+  {
+   "check": "screenshot read and solvable",
+   "ok": true,
+   "detail": {
+    "seconds": 5.8,
+    "summary": "readgrid-qwen35-4b-p4c:f16 (prompt finetune), solved with CP-SAT.\n\nGrid: 6x6\n\nSolvable: yes. | Read by threadgrid-qwen35-4b-p4c:f16 (prompt finetune), solved with CP-SAT.\n\nGrid: 6x6\n\nSolvable: yes. | "
+   }
+  },
+  {
+   "check": "'Edit in editor' switches to Editor",
+   "ok": true,
+   "detail": {
+    "tab": "Solve",
+    "mode": [
+     "Editor"
+    ],
+    "upload_visible": false,
+    "editor_visible": true
+   }
+  },
+  {
+   "check": "editor holds the board that was read",
+   "ok": true,
+   "detail": {
+    "grid": [
+     [
+      "",
+      "",
+      "2",
+      "3",
+      "",
+      "9"
+     ],
+     [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ],
+     [
+      "",
+      "",
+      "1",
+      "4",
+      "",
+      ""
+     ],
+     [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ],
+     [
+      "6",
+      "",
+      "5",
+      "",
+      "",
+      ""
+     ],
+     [
+      "7",
+      "",
+      "",
+      "",
+      "",
+      "8"
+     ]
+    ],
+    "read": [
+     [
+      "  ",
+      "  ",
+      "02",
+      "03",
+      "  ",
+      "09"
+     ],
+     [
+      "  ",
+      "  ",
+      "  ",
+      "  ",
+      "  ",
+      "  "
+     ],
+     [
+      "  ",
+      "  ",
+      "01",
+      "04",
+      "  ",
+      "  "
+     ],
+     [
+      "  ",
+      "  ",
+      "  ",
+      "  ",
+      "  ",
+      "  "
+     ],
+     [
+      "06",
+      "  ",
+      "05",
+      "  ",
+      "  ",
+      "  "
+     ],
+     [
+      "07",
+      "  ",
+      "  ",
+      "  ",
+      "  ",
+      "08"
+     ]
+    ]
+   }
+  },
+  {
+   "check": "editor tags are the walls that were read",
+   "ok": true,
+   "detail": [
+    "((1, 1), (2, 1))",
+    "((3, 1), (3, 2))",
+    "((3, 4), (3, 5))",
+    "((4, 2), (4, 3))"
+   ]
+  },
+  {
+   "check": "reset clears the wall tags",
+   "ok": true,
+   "detail": []
+  }
+ ]
+}

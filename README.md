@@ -9,9 +9,9 @@ environment only holds shared dev tooling. See [AGENTS.md](./AGENTS.md) for the 
 
 ## Projects
 
-### [LinkedIn Zip Puzzle Solver Challenge](./linkedin-zip-challenge/README.md)
+### [Thread the Grid](./thread-the-grid/README.md)
 
-A project exploring algorithms to solve the "LinkedIn Zip" puzzle game, featuring multiple solvers, procedural generation, and web UIs. Start with its [roadmap](./linkedin-zip-challenge/ai-collab/roadmap.md).
+Grid path puzzles — one line through every cell, visiting the numbered waypoints in order — generated, read from screenshots by a fine-tuned vision model, and solved by nine solvers behind a Gradio UI and a Svelte editor. Inspired by the Zip puzzle games found online. Start with its [roadmap](./thread-the-grid/ai-collab/roadmap.md).
 
 ### [Board Game RL](./board-game-rl/README.md)
 

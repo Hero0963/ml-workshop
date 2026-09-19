@@ -13,6 +13,6 @@
 
 - 已設 **SessionStart hook**：每次自動跑 `.claude/session-brief.py`，印出分支／最近 commit／工作區狀態／各子專案下一步（設定在 `.claude/settings.json`）。
 - 首次遇到 `@import` 會跳一次核可對話框，按「允許」即可，之後每次自動載入 `AGENTS.md` 與 `rules.md`。
-- **進子專案工作要再讀該子專案的 `AGENTS.md`**（例如 `linkedin-zip-challenge/AGENTS.md`）；從子專案目錄直接開 Claude Code 也可以，那裡有自己的 `CLAUDE.md`。
+- **進子專案工作要再讀該子專案的 `AGENTS.md`**（例如 `thread-the-grid/AGENTS.md`）；從子專案目錄直接開 Claude Code 也可以，那裡有自己的 `CLAUDE.md`。
 - 助理的跨 session 記憶在 `~/.claude/projects/D--it-project-github-sync-ml-workshop/memory/`（索引 `MEMORY.md`）。
 - **venv 陷阱**：repo 根的 `.venv` 是 py3.9 devtools，不是拿來跑子專案的。一律 `cd <子專案>` 再 `uv run`（見 `AGENTS.md §5`）。

@@ -207,6 +207,9 @@ my_personal_note.txt
 more_simple_reinforcement_learning/chap02/best_model.pth
 *.pth
 .vscode
+# linkedin-zip-challenge was renamed thread-the-grid on 2026-09-19. Git moves tracked files
+# but not these ignored ones, so a checkout keeps them under the old name until someone
+# moves them by hand -- and without these lines one `git add -A` there would stage them.
 linkedin-zip-challenge/puzzle_dataset
 linkedin-zip-challenge/datasets
 linkedin-zip-challenge/logs
@@ -214,6 +217,13 @@ linkedin-zip-challenge/models
 linkedin-zip-challenge/src/custom_components/puzzle_editor/frontend/node_modules
 linkedin-zip-challenge/src/zip_puzzles/cod_dataset_20251024_165902
 linkedin-zip-challenge/zip_puzzles/cod_dataset_20251028_124358
+thread-the-grid/puzzle_dataset
+thread-the-grid/datasets
+thread-the-grid/logs
+thread-the-grid/models
+thread-the-grid/src/custom_components/puzzle_editor/frontend/node_modules
+thread-the-grid/src/zip_puzzles/cod_dataset_20251024_165902
+thread-the-grid/zip_puzzles/cod_dataset_20251028_124358
 lingua-tutor/output/stt
 
 # Shared resource token for parallel agents (AGENTS.md section 10). Lives in the main

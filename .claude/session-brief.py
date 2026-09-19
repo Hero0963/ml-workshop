@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # 有 ai-collab/roadmap.md 的子專案會被掃描；沒有的就跳過（不報錯）
 SUBPROJECTS = [
-    "linkedin-zip-challenge",
+    "thread-the-grid",
     "board-game-rl",
     "deep-learning-karpathy",
     "lingua-tutor",
