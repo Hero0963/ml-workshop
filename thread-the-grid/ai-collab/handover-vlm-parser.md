@@ -4,6 +4,8 @@
 
 > **接手這條 track 的 agent／developer 從這一份開始讀，讀完就能動手。**
 > 最後更新：2026-08-29（Asia/Taipei）｜分支 `feat/vlm-parser`｜worktree `zip-vlm`｜對應 roadmap 第 2 項
+> ⚠ **2026-09-20 起分支與 worktree 都收掉了，只剩 `main`／主 checkout `ml-workshop`**；`zip-vlm` 的 `datasets/`、`models/`、`logs/` 已搬進 `ml-workshop/thread-the-grid/`。
+> 下文的 `zip-vlm` 路徑是當時的；要重啟這條 track，照 §2 重建 worktree，並從主 checkout 複製需要的大檔。
 > 其他文件是延伸閱讀，本檔會標明什麼時候該去翻哪一份。
 
 ---

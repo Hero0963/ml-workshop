@@ -312,6 +312,7 @@
     `zip-vlm` 的副本停在 2026-08-15，還在寫「下一步是 A2 第一次訓練」，而 A2 早就跑完兩輪。
     **從哪個 worktree 開 session，讀到的 `CLAUDE.md`／`AGENTS.md`／handover 就是哪一份。**
     要動 RL 就從 `zip-rl` 開，或至少確認你讀的是 `zip-rl` 那份。
+    （2026-09-20 起 worktree 都收掉了、只剩 `main`；重開 worktree 前這條不會發生。）
 23. **★ `--timesteps N --resume` 是「再加 N 步」不是「總數」**（SB3 `base_class.py:416`：
     `reset_num_timesteps=False` 時 `total_timesteps += self.num_timesteps`）。
     把它當總數會得到一個比預期長得多的 run。

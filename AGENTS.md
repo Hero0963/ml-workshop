@@ -256,7 +256,7 @@ uv sync
 ```
 
 ⚠ **一律從 `main` 長**，不要從別的 feature 分支長——會讓兩條 track 的歷史糾纏，合併時很痛。
-⚠ 已經存在的 worktree 就直接用（例如 `zip-vlm`、`zip-rl`），不用重開。
+⚠ 已經存在的 worktree 就直接用，不用重開。（2026-09-20：`thread-the-grid` 的 worktree 與分支都已收掉，只剩主 checkout 與 `main`；被忽略的大檔都在主 checkout。）
 
 **Step 4｜在每個 worktree 目錄各開一個 Claude Code session，貼 §10.6 的起手式**
 

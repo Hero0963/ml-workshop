@@ -44,7 +44,8 @@
      | `research/board-game-rl` | `da52f66` | 遠端 |
      | `feat/thread-the-grid-round-2` | 本次 commit | 合併進 main 後刪遠端；本機要等 `zip-vlm` 移除後 |
 
-  4. **`zip-vlm` 留給本人**：這個 session 的工作目錄就在裡面，Windows 不准搬。步驟見 [第二輪報告](reports/2026-09-19_wrap-up-round-2.md) §5。
+  4. **`zip-vlm` 留給本人**：這個 session 的工作目錄就在裡面，Windows 不准搬。步驟見 [第二輪報告](reports/2026-09-19_wrap-up-round-2.md) §5.1。
+  5. 操作文件裡「資料在 `zip-vlm`／`zip-rl`」的指示改指向主 checkout（操作指南 §1／§3.5、三份 handover、`rl-traps-and-facts.md` #22、repo 根 `AGENTS.md` §10.5 一句）；有日期的歷史紀錄不動。
 - **服務改從主 checkout 起**：`zip-vlm` 的 app 與 ollama `down`，改由 `ml-workshop/thread-the-grid` 的 `python start.py` 起，兩個容器的 `/models` 都改掛主 checkout。
   驗收與收尾時同一把尺、結果逐列相同：頁面 5/5 200、`acceptance.py` 45 列 41 解（沒解的 4 列與基準相同：RL 在 puzzle_01 放棄、RL 7×7 回 400、ACO／MC 7×7 放棄）、`vision_check` 全新 6/6＋held-out 4/4（[`artifacts/wrap-up-round-2/main-checkout-*.json`](reports/artifacts/wrap-up-round-2/)）。
 - **踩到的坑：base image 標籤會漂**：`python:3.11-slim-trixie` 在 Docker Hub 上已換 digest（本機 `9534e5a8…` → 遠端 `da047cb8…`），

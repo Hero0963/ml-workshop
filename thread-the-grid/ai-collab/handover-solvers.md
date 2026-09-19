@@ -103,7 +103,7 @@ Svelte 編輯器現在開啟時打 `GET /api/solver/list`（直接由 `SOLVER_EN
 （這個預算是牆鐘，別人佔著 CPU 時量出來會被壓低）——**號誌是 `free` 時**：改成 `busy solvers <時間>` →
 `PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py served <dataset 目錄>`（8 個 worker）→ 改回 `free`，
 結果寫進 `pso-served.json`。
-資料集只在跑過 RL 的 worktree 裡（例如 `zip-rl` 的 `datasets/rl_datasets_v2/seed20300000_n20000_456`）。
+資料集不進版控：在主 checkout 的 `datasets/rl_datasets_v2/seed20300000_n20000_456`（2026-09-20 從 `zip-rl` 搬來；全新 clone 沒有）。
 PSO 已經不上線，所以這個數字**只影響紀錄，不影響服務**。
 
 ### 5.3 可以做但沒有人要求的
@@ -123,8 +123,8 @@ PSO 已經不上線，所以這個數字**只影響紀錄，不影響服務**。
 - ⚠ **測試裡一定要 monkeypatch `HEURISTIC_TIME_BUDGET_SECONDS`**，否則上線的啟發式的
   參數化測試會把測試套件拖長 30 秒。現成範例在 `src/app/tests/test_solver_api.py`。
 - ⚠ **`models/` 不進版控**：新開的 worktree 沒有它 ⇒ RL solver 回 503（正確行為），
-  `src/core/tests/rl/test_solver_service.py` 的端到端測試會 skip。要完整測九種，從 `zip-rl` 複製
-  `models/rl_a2/bc_multi_456_e6`（14 MB）過來——`zip-solvers` 在 2026-09-12 做 API 往返（報告 §9）前已經複製了。
+  `src/core/tests/rl/test_solver_service.py` 的端到端測試會 skip。要完整測九種，把
+  `models/rl_a2/bc_multi_456_e6`（14 MB）放進來：從 GitHub Release 下載（[`model-weights.md`](model-weights.md) §5.1），或從主 checkout 複製。
 
 ## 7. 怎麼驗證你沒弄壞它
 
@@ -143,7 +143,7 @@ cd src/custom_components/puzzle_editor/frontend; npm ci; npm run build; cd ../..
 uv run uvicorn src.app.main:app --port 7452          # 另一個終端機
 PYTHONPATH=. uv run python ai-collab/reports/artifacts/svelte-solver-list/drive_editor.py <repo 外的暫存目錄>
 
-# PSO 在 RL held-out 4×4／6×6 上的分數（資料集只在跑過 RL 的 worktree 裡，例如 zip-rl）
+# PSO 在 RL held-out 4×4／6×6 上的分數（資料集在主 checkout 的 datasets/rl_datasets_v2/，不進版控）
 PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py raw <dataset 目錄>     # 約 2 分鐘，決定性
 PYTHONPATH=. uv run python ai-collab/reports/artifacts/pso-score/measure_pso.py served <dataset 目錄>  # 8 個 worker，先看號誌
 ```

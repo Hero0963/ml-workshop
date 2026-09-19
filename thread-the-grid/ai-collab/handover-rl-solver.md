@@ -10,8 +10,8 @@
 > ★★ **2026-09-19 session 在「實驗做一半」時收尾**（本人要求收尾交接）。**先讀 §0，它就是接手要做的事。**
 > 訓練與批次評估**開跑前仍要拿本人當次授權**；唯讀的事（讀程式、讀 `logs/`、寫文件、`pytest`／`ruff`）不用問。
 >
-> ⚠ **要讀就讀 `zip-rl` 這份**：本檔在每個 worktree 都有一份，別的 worktree 拿到的是那條分支
-> 上次 commit 的版本（`zip-vlm` 的副本停在 2026-08-15，還在說「A2 尚未開始」）。
+> ⚠ **2026-09-20 起分支與 worktree 都收掉了，只剩 `main`**：`main` 上這份就是最新的；`zip-rl` 的 `models/`、`datasets/`、`logs/` 已搬進主 checkout
+> `ml-workshop/thread-the-grid/`。（以前的陷阱：每個 worktree 各有一份本檔，別的 worktree 拿到的是舊版。）
 > 姊妹 track：[`handover-vlm-parser.md`](handover-vlm-parser.md)
 
 ---
@@ -347,7 +347,7 @@ e8 0.8863／e9 0.8891／e10 0.8891。⚠ **只能用來排除明顯太弱的 epo
 
 ## 4. 環境與驗證（照做就能開工）
 
-worktree `D:\it_project\github_sync\zip-rl` 已存在且已 `uv sync`。從零重建：
+worktree `D:\it_project\github_sync\zip-rl` 已在 2026-09-20 收掉（資料在主 checkout `ml-workshop/thread-the-grid/`）。要重開：
 
 ```powershell
 cd D:\it_project\github_sync\ml-workshop

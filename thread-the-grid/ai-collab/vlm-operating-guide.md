@@ -36,7 +36,7 @@
 > **A 就是 `AGENTS.md` 記載的開發跑法，建議用它。**
 
 ```powershell
-cd D:\it_project\github_sync\zip-vlm\thread-the-grid
+cd D:\it_project\github_sync\ml-workshop\thread-the-grid
 docker compose -f docker-compose.ollama.yml up -d
 uv run python -m src.app.main
 ```
@@ -135,10 +135,10 @@ curl.exe -X POST http://localhost:7440/api/vision/solve `
 
 ### 步驟 0：確認服務都在
 
-> ⚠ **路徑要對**：這條 track 的東西全在 **`zip-vlm`** 這個 worktree，不是主工作樹 `ml-workshop`。
+> ⚠ **路徑要對**：2026-09-20 起只剩主 checkout `ml-workshop`；`zip-vlm` 等 worktree 已收掉，被忽略的資料（`datasets/`、`models/`、`logs/`）都搬進了主 checkout。
 
 ```powershell
-cd D:\it_project\github_sync\zip-vlm\thread-the-grid
+cd D:\it_project\github_sync\ml-workshop\thread-the-grid
 docker ps                                    # 要看到 threadgrid_ollama_server 是 Up
 docker exec threadgrid_ollama_server ollama list    # 要看到 threadgrid-qwen35-4b-p4c:f16
 uv run python -m src.app.main                # 另開一個視窗讓它一直跑
@@ -196,14 +196,9 @@ puzzle_06.png 7x7  0  True  0
 
 ### 測資 B：合成 held-out（本機 `datasets/vl/`，不進版控）
 
-> ⚠ **找不到這個資料夾？多半是看錯 worktree。** `datasets/` 不進版控，所以它**只存在於當初建它的那個 worktree**：
->
-> | Worktree | `datasets/vl/main_6x6/images/` |
-> |---|---|
-> | `D:\it_project\github_sync\zip-vlm\thread-the-grid` | ✅ 8,000 個檔案 |
-> | `D:\it_project\github_sync\ml-workshop\thread-the-grid` | ⚠ `datasets/` 存在但是空的 |
->
-> 這次所有的產出（`datasets/`、`models/`、`logs/`）都在 **`zip-vlm`** 這一邊。
+> ⚠ **找不到這個資料夾？** `datasets/` 不進版控，所以它**只存在於產生它的那台機器、那個 checkout**。
+> 原本在 `zip-vlm` worktree；2026-09-20 收掉 worktree 時搬進了主 checkout `ml-workshop\thread-the-grid`（8,000 個檔案）。
+> 全新 clone 沒有它——要測就用下面的測資 C 自己出。
 
 **`main_6x6` 共 8,000 張，前 7,800 張是訓練資料、最後 200 張（`007800`–`007999`）是模型沒看過的 held-out。**
 只測 held-out，測前面等於在測訓練資料。
