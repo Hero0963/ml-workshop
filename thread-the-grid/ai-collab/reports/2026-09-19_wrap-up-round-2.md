@@ -97,7 +97,7 @@
 | `zip-vlm/thread-the-grid/.env` 的 `OLLAMA_MODEL_NAME` 改成新標籤（只改那一行）| 改回舊標籤（兩個都在）|
 | `zip_ollama_server` 停止（未刪）；本 session 建的 `zip-app-zip-vlm` 兩個容器已 `compose down` | — |
 | 3 張過時截圖移到 `soft-delete/20260919-191902/` | 從那裡搬回 |
-| 舊資料夾 `zip-vlm/linkedin-zip-challenge/` 只剩 4.8 GB 的 `.venv` | 本人關掉 VS Code 與 Claude 後自行刪除 |
+| 舊資料夾 `zip-vlm/linkedin-zip-challenge/` 只剩 4.8 GB 的 `.venv` | 2026-09-20 隨 `zip-vlm` 移進 `soft-delete/`（見 §5.1）|
 | Gradio 升級（本人 `uv lock`）| `git revert` 該 commit 的 `uv.lock` |
 | **2026-09-19 晚～09-20**：`ml-workshop/linkedin-zip-challenge/` 殘留的被忽略檔（51 個測試紀錄、`zip_puzzles/cod_dataset_20251028_124358`、一個出題 log）搬進 `ml-workshop/thread-the-grid/` 同位置 | 搬回；舊資料夾現在真的只剩 `.venv` 與快取 |
 | HF 下載核對用的 `models/hf-verify/`（9.3 GB）與 Ollama 標籤 `:hfcheck` → `ml-workshop/soft-delete/20260919-205102/` | 見該資料夾的 `RESTORE.txt` |
@@ -109,19 +109,25 @@
 | 本機 8 條、遠端 7 條已合併分支刪除（SHA 在 [dev_log](../dev_log.md) 2026-09-20）| `git branch <名稱> <SHA>`；遠端再 `git push origin <名稱>` |
 | 舊的停止容器 `zip_ollama_server`、`zip-app-zip-infra-zip-challenge-app-1` 只停不刪 | 本人要清再 `docker rm` |
 
-### 5.1 留給本人：移除 `zip-vlm`（本 session 的工作目錄在裡面，Windows 不准搬）
+### 5.1 移除 `zip-vlm`（2026-09-20 完成）
 
-`feat/thread-the-grid-round-2` 已合併進 `main`，`zip-vlm` 裡被忽略的資料也都搬走了，剩下的只有兩份 `.venv`、快取、`frontend/dist` 與 `zip-vlm/soft-delete/`（第一輪軟刪除的 3 張截圖）。
-關掉這個 Claude Code 視窗與 VS Code 之後：
+當時 session 的工作目錄在 `zip-vlm` 裡，Windows 不准搬，所以留到下一個 session 從主 checkout 執行：
+
+| 步驟 | 結果 |
+|---|---|
+| 開工前確認 | `zip-vlm` 工作區乾淨；`feat/thread-the-grid-round-2` ＝ `main` ＝ `origin/main` ＝ `3b25e79` |
+| 軟刪除 | 整個搬進 `ml-workshop/soft-delete/20260920-013136/zip-vlm/`（23 個頂層項目、70,587 個檔），還原方式寫在同資料夾的 `RESTORE.txt`。main 沒有的只有一份 solver 測試 log（`log_20260919T164039_556504Z.log`），跟著留在那裡 |
+| git | `git worktree prune`、`git branch -d feat/thread-the-grid-round-2` ⇒ `worktree list` 只剩 `ml-workshop [main]`，`branch -a` 只剩 `main`／`origin/main` |
+| **沒搬走的** | 空資料夾 `zip-vlm\linkedin-zip-challenge\`（0 個檔）：Docker Desktop 的 `com.docker.backend` 工作目錄就是它（讀程序 PEB 查到），被當成工作目錄的資料夾 Windows 不准搬 |
+
+重啟 Docker Desktop（從開始選單開，不要從終端機）之後，把空殼搬進同一個資料夾：
 
 ```powershell
-$ts = Get-Date -Format 'yyyyMMdd-HHmmss'
-New-Item -ItemType Directory -Force "D:\it_project\github_sync\ml-workshop\soft-delete\$ts" | Out-Null
-Move-Item D:\it_project\github_sync\zip-vlm "D:\it_project\github_sync\ml-workshop\soft-delete\$ts\zip-vlm"
-git -C D:\it_project\github_sync\ml-workshop worktree prune
-git -C D:\it_project\github_sync\ml-workshop branch -d feat/thread-the-grid-round-2
-git -C D:\it_project\github_sync\ml-workshop worktree list     # 應只剩 ml-workshop [main]
+Move-Item D:\it_project\github_sync\zip-vlm D:\it_project\github_sync\ml-workshop\soft-delete\20260920-013136\zip-vlm-empty-shell
 ```
+
+**教訓**：PowerShell 5.1 的 `Move-Item` 搬資料夾時，整包改名失敗會改成逐項搬，所以報錯代表「搬了一半」而不是「沒動」，要兩邊加總檔數核對（本次 33,989 ＋ 36,598 ＝ 70,587）。
+從某個資料夾的終端機啟動的常駐程式會繼承工作目錄並把它鎖住——常駐程式從開始選單啟動。
 
 之後 `ml-workshop/soft-delete/` 底下的東西都可以由本人永久刪除來釋放空間；舊 `.gitignore` 裡 `linkedin-zip-challenge/...` 那幾條規則，等 `ml-workshop/linkedin-zip-challenge/` 刪掉後就能拿掉。
 
