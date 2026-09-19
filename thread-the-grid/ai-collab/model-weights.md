@@ -1,13 +1,16 @@
-# 模型權重：現況、提供方式的提案、取得步驟
+# 模型權重：放在哪、怎麼發佈的、怎麼取得
 
-> 2026-09-19 收尾時寫。**兩個模型都不在版控裡**，所以陌生人 `git clone` 下來，
-> 讀圖（VLM）與 RL solver 預設都用不了——服務照樣起得來，只是這兩個功能分別回 503。
-> 本檔回答三件事：**現在缺什麼**、**建議怎麼提供**（要本人帳號，本 session 沒有代上傳）、**拿到之後怎麼裝**。
-> 查證日期 2026-09-19；外部規格的出處附在各段。
+> 2026-09-19 收尾時寫。**兩個模型都不在版控裡**（一個 9.1 GB、一個無法逐位重生），改由外部託管：
 >
-> **2026-09-19 第二輪進度**：專案改名 `thread-the-grid`，模型標籤與要發佈的檔名改成 `threadgrid-…`（本機匯出檔沿用舊檔名，位元組相同）。
-> RL 已建成 GitHub **draft** release `thread-the-grid-models-v1`（未公開；附件下載回來 SHA-256 相符、匿名存取 404）。
-> VLM 的上傳資料夾已備妥：`models/hf-release/threadgrid-qwen35-4b-p4c-gguf/`（兩個 GGUF、Modelfile、model card、LoRA adapter、Qwen 的 LICENSE），**等本人登入 Hugging Face**。
+> | 模型 | 公開位置（2026-09-19 公開）|
+> |---|---|
+> | RL policy `bc_multi_456_e6`（14 MB）| GitHub Release [`thread-the-grid-models-v1`](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1) |
+> | VLM `threadgrid-qwen35-4b-p4c:f16`（9.1 GB）| Hugging Face [`Hero0963/threadgrid-qwen35-4b-p4c-gguf`](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) |
+>
+> 沒下載權重的 clone 服務照樣起得來，只是讀圖與 RL solver 分別回 503。
+> 本檔回答：**為什麼放這兩個地方**（§3）、**怎麼發佈與驗收的**（§4）、**使用者怎麼裝**（§5）、**裝好怎麼驗**（§6）。
+> 查證日期 2026-09-19；外部規格的出處附在各段。
+> 專案 2026-09-19 改名 `thread-the-grid`，模型標籤與發佈的檔名是 `threadgrid-…`（本機匯出檔沿用舊檔名，位元組相同）。
 
 ---
 
@@ -62,7 +65,7 @@
 |---|---|---|---|
 | **GitHub Release** | ✅ 每檔 < 2 GiB、不限頻寬 | ❌ 8.42 GB 超過單檔上限，要切檔 | **RL 採用** |
 | **Hugging Face model repo** | 可以，但為 14 MB 多開一個平台不划算 | ✅ 模型的標準發佈處；可放 model card、授權、兩個 GGUF、Modelfile、LoRA adapter | **VLM 採用** |
-| Ollama 官方 registry（`ollama push`）| — | 使用者一行 `ollama pull` 最方便，而且 push 的是**同一份 manifest** | **可選鏡像**（要 ollama.com 帳號）|
+| Ollama 官方 registry（`ollama push`）| — | 使用者一行 `ollama pull` 最方便，而且 push 的是**同一份 manifest** | **不做**（本人 2026-09-19 定案，理由見 §4.3）|
 | `ollama run hf.co/<user>/<repo>` 直拉 | — | ⚠ **不採用**：官方文件沒保證 mmproj 會一起抓，且 template 會從 GGUF metadata 另外挑一個 ⇒ 和我們驗證過的那個模型**不等價**，而且錯的方式是安靜的（200 回空盤）| 不採用 |
 | Git LFS 進版控 | — | ❌ 每個 clone 都得拉大檔；本 repo 紅線是「大檔不進版控」 | 不採用 |
 | 讓使用者自己訓 | ⚠ 資料集不能逐位重生（§2.1）| ❌ 要付費 Colab L4、合併、轉檔，一整套 | 只當後備 |
@@ -75,22 +78,25 @@ GitHub Release 每檔 < 2 GiB、每個 release 最多 1000 個檔、不限總量
 
 ---
 
-## 4. 給作者：怎麼發佈（要本人帳號；以下佔位符 `<…>` 都還不存在）
+## 4. 給作者：怎麼發佈的（2026-09-19 已完成）
 
-### 4.1 RL → GitHub Release（✅ 2026-09-19 已建 draft，待本人同意後公開）
+流程是「先非公開 → 下載回來驗 → 本人看過才公開」，兩邊都照這個順序走。
+
+### 4.1 RL → GitHub Release（✅ 2026-09-19 公開）
 
 ```powershell
-# 已做：資產名稱加前綴（這是 monorepo，release 是整個 repo 共用的），先建成 draft
+# 資產名稱加前綴（這是 monorepo，release 是整個 repo 共用的），先建成 draft
 gh release create thread-the-grid-models-v1 <暫存資料夾>\threadgrid-rl-bc_multi_456_e6.zip `
   --draft --target main --title "thread-the-grid model weights v1" --notes-file <notes.md>
 
-# 本人看過之後才做：公開（這一步才會建立 tag）
+# 本人看過之後才做：公開（這一步才會建立 tag；tag 指向 main 的 80e91c5）
 gh release edit thread-the-grid-models-v1 --draft=false
 ```
 
-### 4.2 VLM → Hugging Face
+### 4.2 VLM → Hugging Face（✅ 2026-09-19 公開）
 
-已備妥在 `zip-vlm` worktree 的 `thread-the-grid/models/hf-release/threadgrid-qwen35-4b-p4c-gguf/`（大檔是 hardlink，不佔兩份空間）：
+上傳的資料夾是 `thread-the-grid/models/hf-release/threadgrid-qwen35-4b-p4c-gguf/`（不進版控；大檔是 hardlink，不佔兩份空間）。
+**model card 的原稿就是這個資料夾裡的 `README.md`**，要改 model card 改這份再上傳：
 
 | 上傳到 HF 的檔 | 本機來源 |
 |---|---|
@@ -100,6 +106,7 @@ gh release edit thread-the-grid-models-v1 --draft=false
 | `README.md`（model card）| 已寫：base 與授權（Apache-2.0）、訓練資料是**自產合成圖**、用法（**prompt 必須逐字照訓練時的，裡面仍寫著 Zip**）、驗證數字、限制 |
 | `LICENSE` | 從 Qwen 官方 repo 下載的 Apache-2.0 全文（含 Qwen 的著作權聲明）|
 | `adapter/adapter_model.safetensors`（155,126,928 bytes，SHA-256 `92331a9e…a889`）＋ `adapter_config.json` | `models/colab_finetune/p4c_qwen35_4b_zip_checkpoints/checkpoint-975/`（給想自己合併或續訓的人；本人定案一起上傳）|
+| `examples/input-6x6-red-walls.png`、`examples/solution-6x6-red-walls.png` | model card 的 Worked example 用圖（`illustrations/ui/acceptance-vlm-input-6x6.png` 與 [`vlm-walkthrough/solution.png`](reports/artifacts/vlm-walkthrough/)）|
 
 `Modelfile`（**只有兩行**，路徑相對於 Modelfile 所在目錄；這樣建出來的 manifest 才會和驗證過的那個相同）：
 
@@ -109,50 +116,67 @@ FROM ./threadgrid-qwen35-4b-p4c-mmproj-f16.gguf
 ```
 
 ```powershell
-hf auth login                                   # 本人在自己的終端機做，token 不進對話
-hf repo create <hf-user>/threadgrid-qwen35-4b-p4c-gguf --type model --private
-hf upload <hf-user>/threadgrid-qwen35-4b-p4c-gguf models/hf-release/threadgrid-qwen35-4b-p4c-gguf .
+cd thread-the-grid
+uv run hf auth login        # 在自己的終端機做，token 不要貼進對話（見下方教訓）
+uv run hf repo create Hero0963/threadgrid-qwen35-4b-p4c-gguf --private
+uv run hf upload Hero0963/threadgrid-qwen35-4b-p4c-gguf models/hf-release/threadgrid-qwen35-4b-p4c-gguf .
+# 本人看過之後才公開。huggingface_hub 0.36 的 CLI 沒有改可見度的指令，用 Python API：
+uv run python -c "from huggingface_hub import HfApi; HfApi().update_repo_settings('Hero0963/threadgrid-qwen35-4b-p4c-gguf', private=False)"
+uv run hf auth logout       # 發佈完就登出，並到 huggingface.co/settings/tokens 刪掉這把 token
 ```
 
-⚠ **發佈後務必做一次「從零取得」驗收**（§5 ＋ §6），再把 README 的「Model weights」一節從「尚未發佈」改成實際網址。
+- 一律 `uv run hf`：直接打 `hf` 可能跑到別的 venv 的舊版（2026-09-19 就抓到舊資料夾 `.venv` 的 `hf`）。
+- 免費帳號的不公開空間 100 GB、公開空間 best-effort（[HF Docs: Storage limits](https://huggingface.co/docs/hub/storage-limits)），9.3 GB 不收費。
+- **教訓**：2026-09-19 這把 token 被貼進了對話，因此發佈後立刻登出並作廢。下次在自己的終端機登入，
+  並用一個用途一把、權限最小的 token（[HF Docs: User access tokens](https://huggingface.co/docs/hub/security-tokens)）。
 
-### 4.3（可選）Ollama registry 鏡像
+### 4.3 Ollama registry 鏡像：本人定案不做（2026-09-19）
 
-```powershell
-docker exec threadgrid_ollama_server ollama cp threadgrid-qwen35-4b-p4c:f16 <ollama-user>/threadgrid-qwen35-4b-p4c:f16
-docker exec threadgrid_ollama_server ollama push <ollama-user>/threadgrid-qwen35-4b-p4c:f16
-```
+只省使用者一行指令（`ollama pull` 取代 `hf download` ＋ `ollama create`），卻要再開 ollama.com 帳號、登記容器公鑰、
+維持兩處同步，而且流程未實測。HF 已足夠。
 
-要先在 ollama.com 註冊並加入容器裡 Ollama 的公鑰（`/root/.ollama/id_ed25519.pub`）。**未實測。**
+### 4.4 發佈前後的驗收紀錄（2026-09-19）
+
+| 檢查 | 結果 |
+|---|---|
+| 上傳到 private repo | 9.25 GB、4 分 48 秒（平均約 222 Mbps）；匿名存取回 401 |
+| 從 HF 下載回來核對 | 7 個檔 SHA-256 全與原檔相同（兩個 GGUF 與 adapter 等於 §2.2 的值）|
+| 用下載檔 `ollama create` 成另一個標籤 | manifest 的 config 與兩層 layer digest 與服務中的 `:f16` **完全相同**（`2291240b…`／`4c2081c3…`／`fcbb7d29…`），Ollama 回報 `using existing layer` ⇒ 張量重排是決定性的，§5.2 的預期 digest 已實測成立 |
+| `vision_check.py`（同收尾的尺）| 全新 6 張（seed 919000000）**6/6**、held-out 4 張 **4/4**，版面／牆／解標準答案盤三項全對：[`hf-download-vision-*.json`](reports/artifacts/wrap-up-round-2/) |
+| 公開後匿名存取 | HF 頁面、API、README 200；三個大檔 range 讀取 206 且檔頭正確；GitHub 附件 200、14,095,177 bytes、SHA-256 `653efaa5…0a28` 相符 |
+| model card 渲染 | 用 Chrome 開公開頁面截圖逐段看過，Worked example 的兩張圖正常顯示 |
 
 ---
 
 ## 5. 給使用者：拿到權重之後怎麼裝
 
-### 5.1 RL（發佈後）
+### 5.1 RL
 
 ```bash
 cd thread-the-grid
 mkdir -p models/rl_a2/bc_multi_456_e6/checkpoints
-gh release download thread-the-grid-models-v1 --repo Hero0963/ml-workshop \
-   -p threadgrid-rl-bc_multi_456_e6.zip -O models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip
+curl -L -o models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip \
+   https://github.com/Hero0963/ml-workshop/releases/download/thread-the-grid-models-v1/threadgrid-rl-bc_multi_456_e6.zip
 sha256sum models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip   # 必須等於 §2.1 的值
 ```
 
+用 `curl` 是因為它不用登入（2026-09-19 匿名下載實測，SHA-256 相符）；已登入 `gh` 的話，
+`gh release download thread-the-grid-models-v1 --repo Hero0963/ml-workshop -p threadgrid-rl-bc_multi_456_e6.zip` 也行。
+
 **不用重啟**：`models/` 是唯讀掛進 app 容器的，檔案一出現，下一個 RL 請求就會載入（2026-09-19 在全新 clone 上實測）。
 
-### 5.2 VLM（發佈後）
+### 5.2 VLM
 
 ```bash
 cd thread-the-grid
-hf download <hf-user>/threadgrid-qwen35-4b-p4c-gguf --local-dir models/vlm
+uv run hf download Hero0963/threadgrid-qwen35-4b-p4c-gguf --local-dir models/vlm   # 不用登入
 # ollama 容器把這個 checkout 的 ./models 唯讀掛在 /models，所以直接在容器裡匯入：
 docker exec threadgrid_ollama_server ollama create threadgrid-qwen35-4b-p4c:f16 -f /models/vlm/Modelfile
 docker exec threadgrid_ollama_server ollama show threadgrid-qwen35-4b-p4c:f16   # 應看到 vision 與 Projector
 ```
 
-預期匯入後的 model blob 是 `sha256:fcbb7d29…`（同一版 Ollama 的張量重排應該是決定性的——**未實測**）。
-不相符也不代表壞了：用 `gguf_compare.py` 比張量，或直接跑 §6 的 `vision_check.py`，那才是權威驗收。
+匯入後的 model blob 應該是 `sha256:fcbb7d29…`（Ollama 0.32.13 上 2026-09-19 實測：從 HF 下載的檔匯入，三個 digest 與服務中的模型完全相同，見 §4.4）。
+換了 Ollama 版本而不相符也不代表壞了：用 `gguf_compare.py` 比張量，或直接跑 §6 的 `vision_check.py`，那才是權威驗收。
 
 `.env` 的預設值本來就是 `OLLAMA_MODEL_NAME=threadgrid-qwen35-4b-p4c:f16`、`VISION_PROMPT_VARIANT=finetune`，不用改。
 ⚠ ollama 容器的 `./models` 是「**當初起它的那個 checkout**」的；多個 checkout 時，把檔放進那一個（`docker inspect threadgrid_ollama_server` 看 Mounts）。
@@ -173,7 +197,7 @@ python start.py      # 會說 RL 權重找到了沒、Ollama 裡有沒有 .env �
 
 ---
 
-## 7. 發佈之前的後備
+## 7. 不下載權重時的後備（例如沒有 GPU、或 HF 暫時連不上）
 
 | 功能 | 後備 | 代價 |
 |---|---|---|

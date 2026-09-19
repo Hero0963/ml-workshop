@@ -20,15 +20,15 @@
 |---|---|---|
 | **出題**（程序化生成，保證有解）| ✅ 直接可用 | 收尾驗收用它現場生成 4／5／6×6 並全部解出 |
 | **編輯盤面讓 AI 解**（Gradio 互動編輯、Svelte 畫布）| ✅ 直接可用；9 種 solver | 5 個頁面 200、9 種 solver 經 HTTP 驗收（§2）|
-| **上傳截圖讓 VLM 解** | ⚠ **程式可用，但權重要另外取得**（9.1 GB，未上傳）| 有權重時：全新合成 6 張＋held-out 4 張 **10/10 全對** |
-| **多種 solver** | ✅ 3 種精確解＋5 種啟發式直接可用；**RL solver 要另外取得 14 MB 權重** | 無權重回 503（明確訊息），放入權重不必重啟即可解題 |
+| **上傳截圖讓 VLM 解** | ✅ 程式可用；權重（9.1 GB）要另外下載，2026-09-19 已放 [Hugging Face](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) | 有權重時：全新合成 6 張＋held-out 4 張 **10/10 全對** |
+| **多種 solver** | ✅ 3 種精確解＋5 種啟發式直接可用；**RL solver 要另外下載 14 MB 權重**（2026-09-19 已放 [GitHub Release](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1)）| 無權重回 503（明確訊息），放入權重不必重啟即可解題 |
 
 | 亮點 | 結論一句話 |
 |---|---|
 | **VLM（微調）** | 目標是「解我們自己做的圖」：**達成**。合成 held-out 200/200，收尾時再用全新生成的圖驗一次 10/10 |
 | **RL solver** | 目標門檻（best-of-32：4×4 ≥ 0.90、6×6 ≥ 0.85）**達成**：0.9953／0.9465。但最好的模型是**模仿學習**訓的，不是正牌 RL；**單次嘗試到不了 100%**，原因與後續路線在 RL 子報告 |
 
-**沒做完、而且需要本人動手的只有一件**：把兩個模型的權重上傳（要 GitHub／Hugging Face 帳號）。步驟已寫好（§5）。
+**當時沒做完、需要本人動手的只有一件**：把兩個模型的權重上傳。**2026-09-19 第二輪已完成並公開**（[`model-weights.md`](../model-weights.md) §4）。
 
 ---
 
@@ -254,7 +254,7 @@
 
 | | 項目 | 為什麼沒做 | 下一步 |
 |---|---|---|---|
-| 🔑 | **上傳兩個模型的權重**（2026-09-19 第二輪：RL 已是 draft release、VLM 資料夾備妥待本人登入 HF）| 要本人的 GitHub／Hugging Face 帳號，屬對外發佈 | 照 [`model-weights.md`](../model-weights.md) §4 做，再做一次 §6 的「從零取得」驗收，最後改 README 的「Model weights」一節 |
+| ✅ | **上傳兩個模型的權重**——2026-09-19 第二輪已公開：RL → [GitHub Release](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1)、VLM → [Hugging Face](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) | 要本人的 GitHub／Hugging Face 帳號，屬對外發佈 | 驗收紀錄在 [`model-weights.md`](../model-weights.md) §4.4 |
 | ✅ | **主機端埠轉發的兩項驗收**（`start.py` 輪詢、Svelte 瀏覽器按解題）——2026-09-19 第二輪已補驗 | 本機 `.wslconfig` 是 mirrored 模式，Docker 埠轉發失效（§2.2）| 暫時把 `networkingMode=mirrored` 註解掉 → `wsl --shutdown` → 重跑 `python start.py` 與 `ai-collab/reports/artifacts/svelte-solver-list/drive_editor.py` → 改回來 |
 | | RL 半截的實驗：嚴格尺 BC vs ExIt、6×6 seed 雜訊、ExIt 第二輪 | 本人要求停止實驗 | [`handover-rl-solver.md`](../handover-rl-solver.md) §0.3（指令與成本都在）|
 | | RL 的評分腳本不在版控（`hi-collab/scratch/probe_cross_size.py` 等）| 私人工作區；搬進來要先清理 | 二次開發者目前**無法從 repo 重現 best-of-N 數字**；本報告的 `acceptance.py` 只驗服務行為，不是那把尺 |

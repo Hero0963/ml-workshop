@@ -2,7 +2,7 @@
 
 > **新 session 的第一站。** 每次工作告一段落就更新這裡（現況一句話、下一步順序、進度日誌加一列）。
 > 架構與啟動方式看 [project_guide.md](project_guide.md)、完整開發歷程看 [dev_log.md](dev_log.md)、規範看 [../AGENTS.md](../AGENTS.md)。
-> 最後更新：2026-09-19（**收尾第二輪：改名 thread-the-grid**）
+> 最後更新：2026-09-20（**權重公開、分支與 worktree 收掉只留 main**）
 
 ## ★★ 2026-09-19 收尾第二輪（先讀這一段）
 
@@ -11,8 +11,9 @@
 | | 狀態 |
 |---|---|
 | 驗證 | ✅ pytest 344 passed／8 xfailed；瀏覽器對 Docker：Gradio 20/20、Svelte 12/12、9 solver 9/9 |
-| RL 權重 | 🔶 GitHub draft release `thread-the-grid-models-v1`（未公開，SHA-256 已核對）|
-| VLM 權重 | 🔶 上傳資料夾與 model card 已備妥，**等本人登入 Hugging Face** |
+| RL 權重 | ✅ **2026-09-19 公開**：GitHub Release [`thread-the-grid-models-v1`](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1)（匿名下載 SHA-256 相符）|
+| VLM 權重 | ✅ **2026-09-19 公開**：Hugging Face [`Hero0963/threadgrid-qwen35-4b-p4c-gguf`](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf)（下載回來匯入與服務中的模型 digest 相同、`vision_check` 10/10）；model card 附紅牆截圖的完整示範（[vlm-walkthrough](reports/artifacts/vlm-walkthrough/)）|
+| 分支與 worktree | 2026-09-20 收掉，只留 `main`（刪除前的 SHA 記在 [dev_log](dev_log.md) 2026-09-20）|
 
 ## ★ 2026-09-19：專案收尾（第一輪）
 
@@ -22,11 +23,11 @@
 | | 收尾時的狀態 |
 |---|---|
 | 出題、編輯盤面、9 種 solver | ✅ 全新 clone ＋ `python start.py` 直接可用（2026-09-19 全新 clone 實測）|
-| VLM 讀截圖 | ✅ 目標「解我們自己做的圖」達成（全新生成 6 張＋held-out 4 張 10/10）；⚠ **權重 9.1 GB 未發佈** |
-| RL solver | ✅ 門檻達成（best-of-32：4×4 0.9953、6×6 0.9465）；⚠ **權重 14 MB 未發佈**；單次嘗試到不了 100%，原因與後續路線見 [RL 收尾報告](reports/2026-09-19_rl-where-next.md) |
+| VLM 讀截圖 | ✅ 目標「解我們自己做的圖」達成（全新生成 6 張＋held-out 4 張 10/10）；權重 9.1 GB 已放 Hugging Face（2026-09-19）|
+| RL solver | ✅ 門檻達成（best-of-32：4×4 0.9953、6×6 0.9465）；權重 14 MB 已放 GitHub Release（2026-09-19）；單次嘗試到不了 100%，原因與後續路線見 [RL 收尾報告](reports/2026-09-19_rl-where-next.md) |
 | Docker | ✅ 修掉六個陌生人會撞到的問題（Python 3.9、沒有 GPU、ARM、lockfile、浮動標籤、模型缺席提示），見 [deployment-guide](deployment-guide.md) §10 |
-| 權重怎麼提供 | 📋 提案：RL → GitHub Release、VLM → Hugging Face（[model-weights.md](model-weights.md)）；**要本人帳號，未上傳** |
-| 沒做完的 | 收尾報告 §10：權重上傳、主機端埠轉發兩項驗收（本機 WSL mirrored 模式測不到）、RL 半截的對照、評分腳本不在版控、ARM 未實測 |
+| 權重怎麼提供 | ✅ RL → GitHub Release、VLM → Hugging Face，2026-09-19 公開（[model-weights.md](model-weights.md)）|
+| 沒做完的 | 收尾報告 §10：RL 半截的對照、評分腳本不在版控、ARM 未實測（權重上傳與主機端埠轉發兩項已在第二輪補完）|
 
 GPT-6 等級 computer-use agent 會怎麼解 Zip：[survey](reports/2026-09-19_computer-use-agents-and-zip.md)。
 
@@ -57,7 +58,7 @@ GPT-6 等級 computer-use agent 會怎麼解 Zip：[survey](reports/2026-09-19_c
 | VL 圖片解析（`src/core/vl_models/`） | ✅✅ **已完成並接進產品（2026-08-29 P4d/P5/P6）**：微調模型由本機 Ollama 服務（`threadgrid-qwen35-4b-p4c:f16`），`POST /api/vision/solve` ＋ Gradio `Solve` 分頁（Upload screenshot）＋ Svelte 的 Read screenshot（2026-09-19）。合成 held-out 重現 **200/200**（與 Colab 逐位元組相同、快 6.5 倍）；**六張真實截圖端到端 5/6、牆 F1 0.972**。操作見 [vlm-operating-guide.md](vlm-operating-guide.md) |
 | 環境復原驗證（9 個月未動） | ✅ **2026-08-08 完成**：46 tests passed、ruff 全綠 |
 | **全新 clone 驗收** | ✅ **2026-09-19**：冷建置 88 秒、容器內 331 passed、9 種 solver 經 HTTP 驗收、讀圖 10/10、無 GPU 故障注入不中止（[收尾報告](reports/2026-09-19_project-wrap-up.md) §2）。主機端埠轉發兩項 2026-09-19 第二輪補驗通過（改回 WSL NAT 後）|
-| **模型權重發佈** | 🔶 **進行中**：RL 已是 draft release、VLM 待本人登入 HF。步驟：[model-weights.md](model-weights.md) |
+| **模型權重發佈** | ✅ **2026-09-19 公開**：RL → GitHub Release、VLM → Hugging Face；先非公開、下載驗證、本人看過才公開。紀錄：[model-weights.md](model-weights.md) §4.4 |
 
 ## 下一步（歷程紀錄；2026-09-19 起停止開發，未來工作見[收尾報告](reports/2026-09-19_project-wrap-up.md) §10）
 

@@ -106,18 +106,32 @@ Neither model is in version control: the vision model is 9.1 GB, and the RL poli
 only 14 MB, cannot be regenerated bit for bit (its training data is procedurally generated with
 a wall-clock timeout, so a rerun produces a different set of puzzles).
 
-| Model | Size | Status (2026-09-19) | Without it |
+| Model | Size | Where (published 2026-09-19) | Without it |
 |---|---|---|---|
-| RL policy `bc_multi_456_e6` | 14 MB | **Not yet published.** Planned as a GitHub release asset of this repository. | `RL (behaviour cloning)` answers 503; every other solver works |
-| Vision model `threadgrid-qwen35-4b-p4c:f16` | 9.1 GB (two GGUF files) | **Not yet published.** Planned as a Hugging Face model repository. | `/api/vision/solve` answers 503 |
+| RL policy `bc_multi_456_e6` | 14 MB | GitHub release [`thread-the-grid-models-v1`](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1) | `RL (behaviour cloning)` answers 503; every other solver works |
+| Vision model `threadgrid-qwen35-4b-p4c:f16` | 9.1 GB (two GGUF files) | Hugging Face [`Hero0963/threadgrid-qwen35-4b-p4c-gguf`](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) | `/api/vision/solve` answers 503 |
 
-Once published, installing them is a download each — the RL file goes to
-`models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip` (no restart needed), the two GGUF
-files are imported into the Ollama container with a two-line Modelfile. The exact commands, the
-checksums, and why the vision model must **not** be pulled through `ollama run hf.co/...` are in
-[`ai-collab/model-weights.md`](./ai-collab/model-weights.md).
+Installing them is a download each, no account needed:
 
-Fallbacks until then: train the RL policy yourself (generate a dataset, then about five minutes
+```bash
+cd thread-the-grid
+
+# RL policy: picked up by the next request, no restart needed
+mkdir -p models/rl_a2/bc_multi_456_e6/checkpoints
+curl -L -o models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip \
+  https://github.com/Hero0963/ml-workshop/releases/download/thread-the-grid-models-v1/threadgrid-rl-bc_multi_456_e6.zip
+
+# Vision model: two GGUF files plus a two-line Modelfile, imported into the Ollama container
+uv run hf download Hero0963/threadgrid-qwen35-4b-p4c-gguf --local-dir models/vlm
+docker exec threadgrid_ollama_server ollama create threadgrid-qwen35-4b-p4c:f16 -f /models/vlm/Modelfile
+```
+
+The checksums, how to check the result, and why the vision model must **not** be pulled through
+`ollama run hf.co/...` are in [`ai-collab/model-weights.md`](./ai-collab/model-weights.md). The
+model card on Hugging Face includes a worked example: one screenshot, the exact request, the
+model's verbatim reply, and the solved route.
+
+Without the downloads: train the RL policy yourself (generate a dataset, then about five minutes
 of GPU training — see `ai-collab/model-weights.md` §7; it will be a different model with close but
 not identical numbers), or point `.env` at the un-finetuned `qwen3.5:4b-q8_0` with
 `VISION_PROMPT_VARIANT=sized` — it reads numbers and layout well but misses walls (wall F1 about

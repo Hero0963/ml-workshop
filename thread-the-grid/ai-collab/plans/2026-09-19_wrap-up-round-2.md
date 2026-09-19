@@ -28,7 +28,7 @@
 | 3 | 授權 | LICENSE、README 授權一節、`package.json` license 欄位一致 | ✅ 官方 Apache-2.0 全文（sha256 `cfc7749b…3d30`）；README 中英授權一節；排除 puzzle_01–06、cat、bird |
 | 4 | 改名 | 無舊名殘留（允許清單除外）；`.gitignore` 仍排除 `models/` 等大檔；pytest、ruff、`start.py` 全過 | ✅ 資料夾已搬（259 個追蹤檔全到、11 個新檔）；新 `.venv` 344 passed；容器 `threadgrid-app-zip-vlm-*`、`threadgrid_ollama_server`；舊 `.gitignore` 規則刻意保留（主 checkout 還沒搬）；舊資料夾只剩 `.venv` |
 | 5 | 截圖＋端到端 | 新 UI 截圖逐張目視；Svelte e2e 9 種 solver 過裁判 | ✅ 對 Docker（7440）：Gradio 20/20、Svelte 10/10、9 solver 9/9＋不可解 3/3；5 張截圖逐張看過（途中抓到並修掉「上傳模式露出編輯器」）；紀錄在 `reports/artifacts/wrap-up-round-2/` |
-| 6 | 權重發佈 | draft／private 上傳 → 下載核對 SHA-256 → 匯入 → `vision_check.py` 過 → 本人同意後公開 | 🔶 RL：draft release `thread-the-grid-models-v1` 已建、下載 SHA 相符、匿名 404；VLM：暫存資料夾 `models/hf-release/threadgrid-qwen35-4b-p4c-gguf/` 已備妥，**待本人 `hf auth login`** |
+| 6 | 權重發佈 | draft／private 上傳 → 下載核對 SHA-256 → 匯入 → `vision_check.py` 過 → 本人同意後公開 | ✅ 2026-09-19 兩邊都公開：RL → GitHub Release `thread-the-grid-models-v1`、VLM → HF `Hero0963/threadgrid-qwen35-4b-p4c-gguf`；private 時下載 7 檔 SHA 全相符、匯入 digest 與服務中相同、`vision_check` 10/10；公開後匿名下載驗過（`model-weights.md` §4.4）|
 | 7 | 文件 | README、model-weights、收尾報告、部署指南、roadmap、dev_log、memory | ✅（權重網址待公開後補）；第二輪報告 `reports/2026-09-19_wrap-up-round-2.md` |
 | 8 | commit | 當次授權 | 本人授權「commit ＋ push，main 本機與 remote 都最新」；HF 放最後 |
 

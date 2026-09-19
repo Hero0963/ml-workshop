@@ -93,16 +93,30 @@ RL solver 回 `503` 並指出缺哪個 checkpoint；讀截圖回 `503` 並說出
 兩個模型都**不在版控裡**：視覺模型有 9.1 GB；RL 策略雖然只有 14 MB，但**無法逐位元重生**
 （訓練資料是程序化生成的，出題器用牆鐘逾時，重跑會得到另一包題目）。
 
-| 模型 | 大小 | 狀態（2026-09-19）| 缺了會怎樣 |
+| 模型 | 大小 | 放在哪（2026-09-19 公開）| 缺了會怎樣 |
 |---|---|---|---|
-| RL 策略 `bc_multi_456_e6` | 14 MB | **尚未發佈**。預計放本 repo 的 GitHub Release | `RL (behaviour cloning)` 回 503，其他 solver 正常 |
-| 視覺模型 `threadgrid-qwen35-4b-p4c:f16` | 9.1 GB（兩個 GGUF）| **尚未發佈**。預計放 Hugging Face model repo | `/api/vision/solve` 回 503 |
+| RL 策略 `bc_multi_456_e6` | 14 MB | GitHub Release [`thread-the-grid-models-v1`](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1) | `RL (behaviour cloning)` 回 503，其他 solver 正常 |
+| 視覺模型 `threadgrid-qwen35-4b-p4c:f16` | 9.1 GB（兩個 GGUF）| Hugging Face [`Hero0963/threadgrid-qwen35-4b-p4c-gguf`](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) | `/api/vision/solve` 回 503 |
 
-發佈之後各自只要下載一次：RL 檔放到 `models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip`（**不用重啟**）；
-兩個 GGUF 用兩行的 Modelfile 匯入 Ollama 容器。確切指令、校驗值，以及**為什麼視覺模型不能用 `ollama run hf.co/...` 直接拉**，
-都在 [`ai-collab/model-weights.md`](./ai-collab/model-weights.md)。
+各自下載一次就好，不用註冊帳號：
 
-在那之前的後備：RL 可以自己訓練（先生成資料集，再用 GPU 訓練約 5 分鐘，見 `ai-collab/model-weights.md` §7；會是另一個模型，數字接近但不會相同）；讀圖可以把 `.env` 改成未微調的
+```bash
+cd thread-the-grid
+
+# RL 策略：放進去下一個請求就會載入，不用重啟
+mkdir -p models/rl_a2/bc_multi_456_e6/checkpoints
+curl -L -o models/rl_a2/bc_multi_456_e6/checkpoints/model_final.zip \
+  https://github.com/Hero0963/ml-workshop/releases/download/thread-the-grid-models-v1/threadgrid-rl-bc_multi_456_e6.zip
+
+# 視覺模型：兩個 GGUF 加一個兩行的 Modelfile，匯入 Ollama 容器
+uv run hf download Hero0963/threadgrid-qwen35-4b-p4c-gguf --local-dir models/vlm
+docker exec threadgrid_ollama_server ollama create threadgrid-qwen35-4b-p4c:f16 -f /models/vlm/Modelfile
+```
+
+校驗值、裝好怎麼驗，以及**為什麼視覺模型不能用 `ollama run hf.co/...` 直接拉**，都在 [`ai-collab/model-weights.md`](./ai-collab/model-weights.md)。
+Hugging Face 上的 model card 附了一個完整示範：一張截圖、實際送出的請求、模型的原始回覆、解出來的路徑。
+
+不下載權重的後備：RL 可以自己訓練（先生成資料集，再用 GPU 訓練約 5 分鐘，見 `ai-collab/model-weights.md` §7；會是另一個模型，數字接近但不會相同）；讀圖可以把 `.env` 改成未微調的
 `qwen3.5:4b-q8_0` 配 `VISION_PROMPT_VARIANT=sized`——數字與版面讀得好，但會漏牆（牆 F1 約 0.44）。
 
 ---

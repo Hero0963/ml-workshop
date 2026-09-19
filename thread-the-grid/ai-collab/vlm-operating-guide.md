@@ -264,6 +264,93 @@ uv run python -m src.core.vl_models.score_predictions ai-collab/reports/artifact
 
 ---
 
+## 3.6 ★ 看一次模型實際收到什麼、回了什麼（2026-09-19 實跑）
+
+**白話**：API 只給你最後的盤面和路徑。想確認「模型本身真的讀懂了圖」，要看中間三樣東西：
+**送進去的圖和 prompt**、**模型原封不動的回覆**、**回覆解析成盤面後能不能解**。
+
+測資是本人用編輯器畫的一張 6×6：[`illustrations/ui/acceptance-vlm-input-6x6.png`](../illustrations/ui/acceptance-vlm-input-6x6.png)。
+它比訓練資料難一點——**編輯器把牆畫成紅色**（`Index.svelte` 的 `ctx.strokeStyle = "red"`），而 8,000 張訓練圖全是黑牆，prompt 也寫著「thick black bar」。
+
+![輸入：6×6、十個號碼、五道紅牆](../illustrations/ui/acceptance-vlm-input-6x6.png)
+
+腳本直接呼叫 app 用的那幾個函式（`build_prompt` → `default_backend` → `parse_puzzle_image` → CP-SAT → `is_solution`），
+只多一個 httpx 攔截器，把**真正送出去的 HTTP 請求**印出來：
+
+```powershell
+$app = "threadgrid-app-<checkout>-threadgrid-app-1"      # docker ps 看實際名稱
+$dir = "ai-collab/reports/artifacts/vlm-walkthrough"
+docker cp "$dir/vlm_demo.py" "${app}:/tmp/vlm_demo.py"
+docker cp "$dir/reference.json" "${app}:/tmp/reference.json"
+docker cp illustrations/ui/acceptance-vlm-input-6x6.png "${app}:/tmp/input.png"
+docker exec -w /app -e PYTHONPATH=/app $app uv run python /tmp/vlm_demo.py /tmp/input.png /tmp/solution.png /tmp/reference.json
+```
+
+完整輸出：[`vlm-walkthrough/output.txt`](reports/artifacts/vlm-walkthrough/output.txt)。重點四段：
+
+**① 圖**：615 × 616 PNG、28,511 bytes，**不縮放**，整張轉 base64 送出。
+
+**② prompt**（`finetune` 版，逐字；和訓練時一模一樣，所以還寫著 Zip）：
+
+```text
+Read this Zip puzzle screenshot and reply with ONLY a JSON object.
+"layout" is a 2D array of two-character strings: "  " for an empty cell, "xx" for a blocked cell, and a zero-padded number such as "01" for a waypoint.
+"walls" is a list of {"cell1": [row, col], "cell2": [row, col]} objects, one per thick black bar drawn on a grid line between two neighbouring cells. Report every wall you can see and do not invent any.
+```
+
+**③ 實際送出的請求**（攔截到的，只把 base64 截短）：app 走的是 Ollama 的 **OpenAI 相容端點** `/v1/chat/completions`，不是 `/api/chat`。
+
+```json
+POST http://host.docker.internal:11435/v1/chat/completions
+{
+  "messages": [{"role": "user", "content": [
+      {"type": "text", "text": "Read this Zip puzzle screenshot ...（上面那段 prompt）"},
+      {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgo...（共 38,038 字元）"}}
+  ]}],
+  "model": "threadgrid-qwen35-4b-p4c:f16",
+  "reasoning_effort": "none",
+  "seed": 42,
+  "stream": false,
+  "temperature": 0.0
+}
+```
+
+- `temperature 0` ＋ 固定 `seed` ⇒ 同一張圖每次問都該得到同一個答案：**實測兩次回覆逐字相同**。
+- `reasoning_effort: "none"` 關掉推理：/v1 會忽略頂層的 `think` 欄位，這才是有效的開關（`backends.py` 模組說明）。
+
+**④ 模型原封不動的回覆**（模型已載入時 6.7 秒；閒置被卸載後重載約 16 秒）：
+
+```json
+{
+  "layout": [
+    ["  ", "02", "  ", "  ", "  ", "07"],
+    ["  ", "01", "  ", "  ", "  ", "  "],
+    ["  ", "  ", "  ", "05", "06", "  "],
+    ["  ", "  ", "  ", "  ", "  ", "  "],
+    ["  ", "03", "04", "  ", "  ", "  "],
+    ["10", "  ", "  ", "  ", "09", "08"]
+  ],
+  "walls": [
+    {"cell1": [0, 3], "cell2": [0, 4]},
+    {"cell1": [2, 2], "cell2": [2, 3]},
+    {"cell1": [2, 4], "cell2": [2, 5]},
+    {"cell1": [3, 0], "cell2": [3, 1]},
+    {"cell1": [3, 2], "cell2": [4, 2]}
+  ]
+}
+```
+
+**結果**：解析器沒有警告；與人工判讀（[`reference.json`](reports/artifacts/vlm-walkthrough/reference.json)）比，版面逐格、5 道牆**全部相同**；
+CP-SAT 解出 36 格路徑、`is_solution` 通過。綠字是第幾步，號碼 1→10 依序落在第 1、10、16、17、20、21、24、31、32、36 步：
+
+![解題結果](reports/artifacts/vlm-walkthrough/solution.png)
+
+⚠ **怎麼解讀**：一張圖只證明「做得到」，不證明「紅牆都讀得對」；而且對照答案是人工判讀的，不是出題器的標籤——
+比較獨立的證據是「讀出來的盤面解得開」（讀錯一道牆或一個號碼，盤面多半就無解，見 §4.1）。
+同一個示範也放在 [Hugging Face model card](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) 的 Worked example。
+
+---
+
 ## 4. ★ 看懂 `solvable` 與 `warnings`（最重要的一節）
 
 ### 4.1 `solvable: false` ＝ **一定讀錯了**，不是「這題很難」

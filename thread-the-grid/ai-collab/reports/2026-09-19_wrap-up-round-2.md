@@ -1,4 +1,4 @@
-# 收尾第二輪報告 — 改名 thread-the-grid、UI 整併、授權、權重發佈準備（2026-09-19）
+# 收尾第二輪報告 — 改名 thread-the-grid、UI 整併、授權、權重發佈（2026-09-19）
 
 > 第一輪總帳：[`2026-09-19_project-wrap-up.md`](2026-09-19_project-wrap-up.md)。本輪的逐步紀錄與已定案決策：
 > [`../plans/2026-09-19_wrap-up-round-2.md`](../plans/2026-09-19_wrap-up-round-2.md)。所有數字都是本輪實測。
@@ -18,7 +18,7 @@
 | **授權** | ✅ 子專案層 Apache-2.0（官方全文）；README 中英授權一節 |
 | **改名** | ✅ `linkedin-zip-challenge` → `thread-the-grid`，內部前綴 `threadgrid`；README 不提 LinkedIn |
 | **驗證** | ✅ `pytest` **344 passed, 8 xfailed**；瀏覽器對 Docker（7440）：Gradio **20/20**、Svelte **12/12**、9 solver **9/9**＋不可解 3/3 |
-| **權重** | 🔶 RL：GitHub **draft** release 已建、下載 SHA-256 相符、未公開；VLM：上傳資料夾與 model card 已備妥，**等本人登入 Hugging Face** |
+| **權重** | ✅ **2026-09-19 兩個都公開**：RL → [GitHub Release](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1)、VLM → [Hugging Face](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf)；公開前下載回來驗過（§4）|
 
 ---
 
@@ -69,14 +69,20 @@
 
 ---
 
-## 4. 權重發佈狀態
+## 4. 權重發佈（2026-09-19 公開）
 
-| 模型 | 狀態 | 下一步 |
+| 模型 | 公開位置 | 公開前後的驗收 |
 |---|---|---|
-| RL `bc_multi_456_e6`（14 MB）| GitHub draft release `thread-the-grid-models-v1`，附件 `threadgrid-rl-bc_multi_456_e6.zip`，下載 SHA-256 `653efaa5…0a28` 與原檔相同，匿名存取 404 | 本人同意後 `gh release edit --draft=false` |
-| VLM（9.1 GB）| `models/hf-release/threadgrid-qwen35-4b-p4c-gguf/`：兩個 GGUF（hardlink，SHA-256 與既有紀錄相同）、Modelfile、model card、LoRA adapter、Qwen 的 LICENSE | 本人 `hf auth login` → private repo 上傳 → 下載核對、匯入、`vision_check.py` → 本人同意後公開 |
+| RL `bc_multi_456_e6`（14 MB）| GitHub Release [`thread-the-grid-models-v1`](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1)（tag 指向 `80e91c5`）| draft 時下載 SHA-256 相符、匿名 404；公開後匿名下載 200、14,095,177 bytes、SHA-256 `653efaa5…0a28` 相符 |
+| VLM（9.1 GB）| Hugging Face [`Hero0963/threadgrid-qwen35-4b-p4c-gguf`](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf)（GGUF ×2、Modelfile、model card、LoRA adapter、LICENSE、示範圖 ×2）| private 時：下載回來 7 個檔 SHA-256 全相符；用下載檔 `ollama create` 出來的 manifest 與服務中的 `:f16` digest **完全相同**；`vision_check` 全新 6/6＋held-out 4/4。公開後：匿名讀取頁面／API／大檔檔頭都正常；Chrome 截圖看過 model card |
 
-完整步驟：[`../model-weights.md`](../model-weights.md)。
+- **VLM 真的能做事的示範**：本人用編輯器畫的一張 6×6（**紅色**的牆——訓練資料全是黑牆）走一次 app 的讀圖路徑，
+  版面與 5 道牆全對、CP-SAT 解開、獨立驗證器通過；temperature 0 ＋ seed 42 下重跑回覆逐字相同。
+  輸入、實際送出的請求、原始回覆、解題圖都在 [`artifacts/vlm-walkthrough/`](artifacts/vlm-walkthrough/)，也放進了 model card 的 Worked example。
+- **順手修正**：model card 原本寫 app 走 Ollama 的 `/api/chat`，攔截實際請求後發現是 `/v1/chat/completions`（`default_backend()` 用 OpenAI 相容那條），已改正。
+- 本人定案 **不做** Ollama registry 鏡像（多一個帳號、多一處要同步，只省使用者一行指令）。
+
+完整步驟與驗收表：[`../model-weights.md`](../model-weights.md) §4。
 
 ---
 
@@ -93,6 +99,31 @@
 | 3 張過時截圖移到 `soft-delete/20260919-191902/` | 從那裡搬回 |
 | 舊資料夾 `zip-vlm/linkedin-zip-challenge/` 只剩 4.8 GB 的 `.venv` | 本人關掉 VS Code 與 Claude 後自行刪除 |
 | Gradio 升級（本人 `uv lock`）| `git revert` 該 commit 的 `uv.lock` |
+| **2026-09-19 晚～09-20**：`ml-workshop/linkedin-zip-challenge/` 殘留的被忽略檔（51 個測試紀錄、`zip_puzzles/cod_dataset_20251028_124358`、一個出題 log）搬進 `ml-workshop/thread-the-grid/` 同位置 | 搬回；舊資料夾現在真的只剩 `.venv` 與快取 |
+| HF 下載核對用的 `models/hf-verify/`（9.3 GB）與 Ollama 標籤 `:hfcheck` → `ml-workshop/soft-delete/20260919-205102/` | 見該資料夾的 `RESTORE.txt` |
+| 本人截圖從 OneDrive **複製**到 `illustrations/ui/acceptance-vlm-input-6x6.png`（搬移時從 OneDrive 刪除原檔被拒，原檔仍在）| — |
+| 各 worktree 被忽略的資料（`models`／`datasets`／`logs`／測試紀錄／`hi-collab`）搬進主 checkout，249 次、0 衝突 | 搬移清單在當次 scratchpad 的 `consolidate-log.json`；要還原逐項搬回 |
+| 主 checkout 的舊 `.env` → `ml-workshop/soft-delete/20260920-002301/`，換成 `zip-vlm` 的 `.env` | 見 `RESTORE.txt` |
+| `zip-infra`／`zip-rl`／`zip-solvers` → `ml-workshop/soft-delete/20260920-003330/`，`git worktree prune` | 見 `RESTORE.txt`（可搬回或 `git worktree add` 重建）|
+| `zip-vlm` 的 app 與 ollama 容器 `down`（volume `linkedin-zip-challenge_ollama_data` 保留），改從主 checkout `python start.py` | — |
+| 本機 8 條、遠端 7 條已合併分支刪除（SHA 在 [dev_log](../dev_log.md) 2026-09-20）| `git branch <名稱> <SHA>`；遠端再 `git push origin <名稱>` |
+| 舊的停止容器 `zip_ollama_server`、`zip-app-zip-infra-zip-challenge-app-1` 只停不刪 | 本人要清再 `docker rm` |
+
+### 5.1 留給本人：移除 `zip-vlm`（本 session 的工作目錄在裡面，Windows 不准搬）
+
+`feat/thread-the-grid-round-2` 已合併進 `main`，`zip-vlm` 裡被忽略的資料也都搬走了，剩下的只有兩份 `.venv`、快取、`frontend/dist` 與 `zip-vlm/soft-delete/`（第一輪軟刪除的 3 張截圖）。
+關掉這個 Claude Code 視窗與 VS Code 之後：
+
+```powershell
+$ts = Get-Date -Format 'yyyyMMdd-HHmmss'
+New-Item -ItemType Directory -Force "D:\it_project\github_sync\ml-workshop\soft-delete\$ts" | Out-Null
+Move-Item D:\it_project\github_sync\zip-vlm "D:\it_project\github_sync\ml-workshop\soft-delete\$ts\zip-vlm"
+git -C D:\it_project\github_sync\ml-workshop worktree prune
+git -C D:\it_project\github_sync\ml-workshop branch -d feat/thread-the-grid-round-2
+git -C D:\it_project\github_sync\ml-workshop worktree list     # 應只剩 ml-workshop [main]
+```
+
+之後 `ml-workshop/soft-delete/` 底下的東西都可以由本人永久刪除來釋放空間；舊 `.gitignore` 裡 `linkedin-zip-challenge/...` 那幾條規則，等 `ml-workshop/linkedin-zip-challenge/` 刪掉後就能拿掉。
 
 ---
 

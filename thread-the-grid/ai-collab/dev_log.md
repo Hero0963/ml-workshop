@@ -4,6 +4,54 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-09-20
+
+### 權重公開、VLM 讀圖示範、分支與 worktree 收到只剩 main（branch `feat/thread-the-grid-round-2`, worktree `zip-vlm`；2026-09-19 晚到 09-20）
+
+**本人當次指示**：做收尾計畫第 6 步（HF 上傳與權重公開）；拿本人的一張截圖驗證 VLM「真的能做事」並印出 input／prompt／output；
+示範補進 model card 與操作指南、腳本與輸出存進 artifacts；開發完把 branch／worktree 收掉**只留 main**（本機＋遠端）。
+
+- **權重公開**（2026-09-19）：HF 先建 private repo 上傳（9.25 GB、4 分 48 秒）→ 下載回來 7 檔 SHA-256 全相符 →
+  用下載檔 `ollama create` 出來的 manifest 與服務中的 `:f16` **digest 完全相同**（張量重排是決定性的，之前標「未實測」）→
+  `vision_check` 全新 6/6＋held-out 4/4 → 本人看過 model card 與 release notes 後兩邊公開 → 匿名存取驗過（GitHub 附件 SHA-256 相符）。
+  驗收表在 [`model-weights.md`](model-weights.md) §4.4。本人定案**不做** Ollama registry 鏡像。
+- **token 的教訓**：HF token 被貼進對話 ⇒ 發佈完 `hf auth logout`，本人到 HF 刪掉。下次在自己的終端機登入、一個用途一把最小權限 token。
+- **model card 寫錯一處**：原本說 app 走 Ollama `/api/chat`；攔截實際請求才發現 `default_backend()` 走的是 `/v1/chat/completions`（OpenAI 相容）。已改正並補上 Worked example。
+- **VLM 示範**（[`artifacts/vlm-walkthrough/`](reports/artifacts/vlm-walkthrough/)）：本人用編輯器畫的 6×6，**牆是紅色**（訓練資料全是黑牆）。
+  走 app 自己的函式、在 httpx 層攔下真正送出的請求：版面與 5 道牆全對、CP-SAT 解開、`is_solution` 通過；
+  temperature 0 ＋ seed 42 下隔幾小時重跑，回覆逐字相同。一張圖只證明做得到，不證明紅牆都讀得對。寫進操作指南 §3.6 與 model card。
+- **前一個 session 說錯的**：「`ml-workshop\linkedin-zip-challenge\` 只剩 `.venv` 和快取」——其實還有 51 個測試紀錄、一包 5 題資料、一個出題 log（都被 git 忽略，改名時沒搬）⇒ 已搬進 `thread-the-grid/`。
+  **盤點被忽略的檔要用 `git status --ignored`**，不要憑印象；主 checkout 也因此被發現**幾乎沒有大檔**（models 只有 10 MB）、`.env` 是舊的。
+- **只留 main**（2026-09-20）：
+  1. worktree 裡被忽略的資料搬進主 checkout（同一顆 D 槽，改名即搬）：`models`／`datasets`／`logs`／測試紀錄／`hi-collab`，**249 次搬移、0 衝突**；
+     3 個重複的 RL checkpoint（與搬過去的逐位元組相同）留原地。主 checkout 的舊 `.env`（`openbmb/minicpm-o2.6`、缺 `VISION_PROMPT_VARIANT`）軟刪除，換成 `zip-vlm` 那份。
+  2. `zip-infra`／`zip-rl`／`zip-solvers` 整個軟刪除到 `ml-workshop/soft-delete/20260920-003330/`（剩 `.venv`、快取、重複檔、各自的 `soft-delete/`；`RESTORE.txt` 寫了怎麼搬回或重建成 worktree），再 `git worktree prune`。
+     它們沒 commit 的改動先逐行比對過，**全部已在 main**。
+  3. 刪除的分支（全部是 `main` 的祖先，SHA 留在這裡，要找回用 `git branch <名稱> <SHA>`）：
+
+     | 分支 | SHA | 刪除位置 |
+     |---|---|---|
+     | `dev-hero` | `08224dc` | 本機＋遠端 |
+     | `feat/rl-a2-training` | `bb02394` | 本機＋遠端 |
+     | `feat/rl-ppo-finetune` | `a8c3626` | 本機＋遠端 |
+     | `feat/vlm-parser` | `7d2df9d` | 本機＋遠端 |
+     | `feat/expose-heuristic-solvers` | `b72d371` | 本機 |
+     | `feat/infra-slim-image` | `babc1cb` | 本機 |
+     | `feat/rl-exit` | `ab6634b` | 本機 |
+     | `feat/rl-masked-ppo` | `5cc58bf` | 本機 |
+     | `chore/ai-collab-linkedin-zip` | `8f1c051` | 遠端 |
+     | `fix/session-brief-status-parse` | `8417f36` | 遠端 |
+     | `research/board-game-rl` | `da52f66` | 遠端 |
+     | `feat/thread-the-grid-round-2` | 本次 commit | 合併進 main 後刪遠端；本機要等 `zip-vlm` 移除後 |
+
+  4. **`zip-vlm` 留給本人**：這個 session 的工作目錄就在裡面，Windows 不准搬。步驟見 [第二輪報告](reports/2026-09-19_wrap-up-round-2.md) §5。
+- **服務改從主 checkout 起**：`zip-vlm` 的 app 與 ollama `down`，改由 `ml-workshop/thread-the-grid` 的 `python start.py` 起，兩個容器的 `/models` 都改掛主 checkout。
+  驗收與收尾時同一把尺、結果逐列相同：頁面 5/5 200、`acceptance.py` 45 列 41 解（沒解的 4 列與基準相同：RL 在 puzzle_01 放棄、RL 7×7 回 400、ACO／MC 7×7 放棄）、`vision_check` 全新 6/6＋held-out 4/4（[`artifacts/wrap-up-round-2/main-checkout-*.json`](reports/artifacts/wrap-up-round-2/)）。
+- **踩到的坑：base image 標籤會漂**：`python:3.11-slim-trixie` 在 Docker Hub 上已換 digest（本機 `9534e5a8…` → 遠端 `da047cb8…`），
+  主 checkout 第一次 build 整條快取失效、要重下 torch，當時網路約 0.1 MB/s ⇒ 中止。改用 `zip-vlm` 的現成 image：先在容器裡逐檔比對
+  **116 個程式檔與主 checkout 相同**（忽略 CRLF），再 `docker tag` 成 `threadgrid-app-ml-workshop-threadgrid-app`、`start.py --no-build`。
+  **未修**：`.devcontainer/Dockerfile` 的 Python base 仍是浮動標籤（Node 與 Ollama 第一輪已釘），要可重現就改釘 digest。
+
 ## 2026-09-19
 
 ### 收尾第二輪：改名 thread-the-grid、UI 整併、授權、權重發佈準備（branch `feat/thread-the-grid-round-2`, worktree `zip-vlm`）
