@@ -1,0 +1,74 @@
+{
+  "format_version": 1,
+  "dataset": "seed20300000_n20000_456",
+  "split": "test",
+  "puzzles": 5932,
+  "puzzles_per_size": {
+    "4": 1931,
+    "5": 2001,
+    "6": 2000
+  },
+  "content_sha256": "5cb7515f49498f86bddc149a8d9712b76a3686a933f1496ee0470d39b4623344",
+  "source_pickle_sha256": "8f6214d06389cd67d5a1816f1f43c985f8ecea8fc6df3d5391a29ce39d5b2a36",
+  "source_manifest": {
+    "generated_at": "2026-09-11T15:56:05.501868+00:00",
+    "sizes": [
+      4,
+      5,
+      6
+    ],
+    "count_per_size": 20000,
+    "base_seed": 20260815,
+    "split": [
+      0.8,
+      0.1,
+      0.1
+    ],
+    "timeout_per_attempt": 0.5,
+    "total_generated": 60000,
+    "total_requested": 60000,
+    "per_size": {
+      "4": {
+        "generated": 19299,
+        "requested": 20000,
+        "duplicates_dropped": 701,
+        "retried": 0,
+        "walls": 9919,
+        "split_sizes": {
+          "train": 15439,
+          "val": 1929,
+          "test": 1931
+        }
+      },
+      "5": {
+        "generated": 19996,
+        "requested": 20000,
+        "duplicates_dropped": 4,
+        "retried": 507,
+        "walls": 10013,
+        "split_sizes": {
+          "train": 15996,
+          "val": 1999,
+          "test": 2001
+        }
+      },
+      "6": {
+        "generated": 20000,
+        "requested": 20000,
+        "duplicates_dropped": 0,
+        "retried": 70,
+        "walls": 9851,
+        "split_sizes": {
+          "train": 16000,
+          "val": 2000,
+          "test": 2000
+        }
+      }
+    },
+    "content_sha256": {
+      "test": "5cb7515f49498f86bddc149a8d9712b76a3686a933f1496ee0470d39b4623344",
+      "train": "c42440d9ab70e4b83f420f972b8a241ece5bfedb2e0f219c40c70e0b9966f837",
+      "val": "f9c962901680da150b4f699a60e9e98a1f861942ceb48034a2ce3861c9d0a36a"
+    }
+  }
+}
