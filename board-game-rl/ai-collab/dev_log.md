@@ -57,3 +57,25 @@
   - vs Random 的敗率是 neural approximation 的本質限制，可透過增加 Random 對手比例改善
   - Best model 儲存用 `<=`（不嚴格大於），確保後期更穩定的模型能覆蓋早期版本
 - **下一步**: 見 `ai-collab/handover.md`
+
+## 2026-09-24: 暫停 5.5 個月後重新接手 + M1 純 MCTS 規劃
+- **任務**: 複習 Stage 1、重新建立基線、修掉過時文件、規劃下一步
+- **進度**:
+  - 在 worktree `claude/board-game-rl-review-4ded4f` 跑 `uv sync --locked`：成功（Python 3.13.4、torch `2.11.0+cpu`、gradio 6.9.0）
+  - 基線：原本 28 個測試全過；`pytest` 不在 `pyproject.toml`，乾淨環境要用 `uv run --with pytest pytest`
+  - **補 Q-Learning 測試** `tests/agents/test_q_learning_agent.py`（12 個）：正規化、D4 對稱查表、Bellman 更新、存讀檔、已提交 Q-table 對 Alpha-Beta 不輸的回歸測試 → 共 40 passed
+  - `scripts/count_states.py` 重跑：合法盤面 5,478（對弈中 4,520）、棋局 255,168、Alpha-Beta 從空盤面走 48,383 個節點
+  - 新增 `ai-collab/roadmap.md`（現況＋下一步的唯一正本，SessionStart 簡報會讀它）、`ai-collab/notes/`（討論與決策）、`ai-collab/plans/`
+  - `handover.md` 的「下一步」改指向 roadmap；`commands.txt` 測試數與重點任務更新；`rules.md` 文件結構補上新資料夾
+  - M1 計畫書 `ai-collab/plans/2026-09-24_m1-pure-mcts.md`（本人確認，今天的目標是「能跟 MCTS 下棋」）
+  - **M1 S1**：`games/base.py`（`GameRules` Protocol）＋ `games/tic_tac_toe/rules.py`（tuple 版規則）；差分測試 1,000 盤與 engine 一致
+  - **M1 S2**：`agents/mcts_agent.py`（UCT ＋ 隨機推演）；每秒約 67,000 次模擬；突變測試確認戰術測試抓得到視角寫反
+  - **M1 S5**：API 與 Gradio 接上 MCTS（暫定 2,000 次模擬）；在瀏覽器實際下一盤，MCTS 抓到人類漏擋的線獲勝 → 全套 69 passed
+  - 討論「同一套 API、兩種前端」（仿 thread-the-grid 的 Gradio＋Svelte）：評估記在 notes §6，本人決定列為 future work（`handover.md`）
+  - 問答記進 notes §7：7860 是本機 `.venv` 直接跑的 Gradio（非 Docker）；MCTS 的 backpropagation 是統計量回填、不是梯度，附 seed 3 的逐層追蹤
+  - **收尾**：本人實際在 Gradio 跟 MCTS 下完棋，今天的目標達成；`handover.md` 補「下次開工」步驟（從 S3 接續）
+- **關鍵決策**（理由見 `ai-collab/notes/2026-09-24-review-and-m1-decisions.md`）:
+  - 順序固定為純 MCTS → AlphaZero → 換遊戲，一次只改一個變數；純 MCTS 有 Alpha-Beta 當完美裁判
+  - 井字遊戲已被窮舉，MCTS 不可能贏過 Alpha-Beta 快取；M1 的目標是做對、量曲線、看懂弱點
+  - 盤面用 `tuple` 不用 numpy：9 格時列合法步 281 ns vs 1,449 ns（`timeit` 實測）
+- **下一步**: 見 `ai-collab/roadmap.md`

@@ -142,7 +142,7 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 | 要動哪裡 | 先讀 |
 |---------|------|
 | 路徑謎題 thread-the-grid（solver／API／Gradio／Svelte／RL／VL） | `thread-the-grid/AGENTS.md` → `ai-collab/roadmap.md` |
-| 井字遊戲 RL（Q-Learning／DQN／Alpha-Beta／UI） | `board-game-rl/ai-collab/rules.md` ＋ `project_guide.md` |
+| 井字遊戲 RL（Q-Learning／DQN／Alpha-Beta／UI） | `board-game-rl/ai-collab/roadmap.md` → `rules.md` ＋ `project_guide.md` |
 | Karpathy 教材（tokenizer／nanoGPT） | `deep-learning-karpathy/ai-collab/rules.md` ＋ `handover.md` |
 | 語言學習助理 | `lingua-tutor/README.md` ＋ `dev_log.md` |
 | RL notebook 教材 | `more_simple_reinforcement_learning/readme.md` |

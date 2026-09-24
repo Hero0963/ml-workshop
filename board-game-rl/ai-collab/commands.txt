@@ -1,15 +1,17 @@
 # Onboarding Commands (上手指南)
-# Last Updated: 2026-03-28
+# Last Updated: 2026-09-24
 
 ---
 
 ## For AI Agent (給 AI 助手的初始 Prompt)
 
 ### 第一步：了解規範與架構
+0. 去看 ai-collab/roadmap.md，了解現況與下一步（第一站）
 1. 去看 ai-collab/rules.md，了解核心合作開發模式
 2. 去看 ai-collab/project_guide.md，了解專案架構
 3. 去看 ai-collab/dev_log.md，了解最新開發進度
-4. 去看 ai-collab/handover.md，了解交接狀態與下一步
+4. 去看 ai-collab/handover.md，了解已完成功能與環境確認清單
+4b. 去看 ai-collab/notes/，了解過去討論與決策的來龍去脈
 
 ### 第二步：建立心智模型
 5. 去看 pyproject.toml，了解 Python 依賴
@@ -19,21 +21,17 @@
 
 ### 第三步：環境檢查
 9. 確認 Python 3.13 + uv 已安裝
-10. 執行 `uv sync` 確認依賴正確
-11. 執行 `uv run pytest tests/ -v` 確認 12 個測試通過
-12. 確認 models/q_table.json 與 models/alphabeta_cache.json 存在
+10. 執行 `uv sync --locked` 確認依賴正確（依 lockfile，不重新解析版本）
+11. 執行 `uv run pytest tests/ -v` 確認測試全過（2026-09-24：40 passed）
+    - `pytest` 列入 dev 相依之前，改用 `uv run --with pytest pytest tests/ -v`
+12. 確認 models/q_table.json、models/alphabeta_cache.json、models/dqn_model.pth 存在
 
 ### 第四步：確認最新狀態
 13. 去看 git branch name 以及 git log
 14. 綜合以上資訊，向 Developer 回報並詢問下一步
 
-### 當前重點任務 (2026-03-28)
-- **分支**：`research/board-game-rl`（已 merge 至 main）
-- **狀態**：Q-Learning 不敗達成，文件完備
-- **TODO**：
-  1. DQN (Deep Q-Network) — 將查表法升級為神經網路
-  2. MCTS (蒙地卡羅樹搜尋) — AlphaZero 核心
-  3. 新遊戲擴充 — Connect Four 或圍棋
+### 當前重點任務
+- 正本在 `ai-collab/roadmap.md` 的「下一步」，本檔不重複維護
 
 ---
 
@@ -65,7 +63,7 @@ uv run python scripts/train_q_learning.py
 # 預計算 Alpha-Beta 快取
 uv run python scripts/precompute_alphabeta.py
 
-# 測試
+# 測試（pytest 列入 dev 相依之前：uv run --with pytest pytest tests/ -v）
 uv run pytest tests/ -v
 
 # Docker 啟動 (含 FastAPI + Gradio)

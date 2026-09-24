@@ -121,9 +121,10 @@
 4. **Git 操作**：Agent 須獲得 Developer 明確授權才能 commit/push，禁止 force push
 
 ### 文件更新
-- 每次功能開發完成後，即時更新 `ai-collab/dev_log.md`
+- 每次功能開發完成後，即時更新 `ai-collab/dev_log.md` 與 `ai-collab/roadmap.md`（現況＋下一步）
 - 架構或功能異動時，更新 `ai-collab/project_guide.md`
-- 新 Agent 接手時，閱讀 `ai-collab/handover.md`
+- 討論過的取捨、被否決的選項、當時的理由，整理進 `ai-collab/notes/`（做中學：解釋是交付物）
+- 新 Agent 接手時，先讀 `ai-collab/roadmap.md`，再讀 `ai-collab/handover.md`
 
 ---
 
@@ -131,18 +132,24 @@
 
 ```
 ai-collab/
+├── roadmap.md         # 現況、下一步、已定案決策 (新 session 第一站)
 ├── rules.md           # 開發規範 (本文件)
 ├── project_guide.md   # 專案指南 (架構、功能、啟動方式)
 ├── dev_log.md         # 開發日誌 (功能開發過程記錄)
-├── handover.md        # 交接文件 (新 Agent 上手指南 + 下一步)
+├── handover.md        # 交接文件 (已完成功能、已知限制、環境確認清單)
+├── notes/             # 做中學筆記：討論、決策取捨、被否決的選項
+├── plans/             # 里程碑計畫書：步驟、done 條件、風險
 └── reports/           # 訓練報告與實驗紀錄
     └── training_report_YYYY-MM-DD.md
 ```
 
 | 文件 | 用途 | 更新時機 |
 |------|------|----------|
+| `roadmap.md` | 現況與下一步的唯一正本 | 每完成一件事 |
 | `rules.md` | AI 協作規範 | 規範變更時 |
 | `project_guide.md` | 專案架構與測試指南 | 架構變更/功能異動時 |
 | `dev_log.md` | 開發過程記錄 | 每次功能開發完成後 |
 | `handover.md` | 交接文件 | 每次開發階段結束時 |
+| `notes/` | 討論與決策紀錄（分工見 `notes/README.md`）| 每次有取捨的討論之後 |
+| `plans/` | 里程碑計畫書 `YYYY-MM-DD_<主題>.md` | 開新里程碑時；進行中逐步勾選 |
 | `reports/` | 訓練報告 | 每次訓練完成後 (腳本自動產出) |
