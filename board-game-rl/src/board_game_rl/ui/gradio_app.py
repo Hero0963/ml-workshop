@@ -181,6 +181,8 @@ if __name__ == "__main__":
         gr.Markdown("# 🏆 Board Game RL 訓練場")
         with gr.Tab("🆚 Alpha-Beta (完美大師)"):
             create_tic_tac_toe_ui("Alpha-Beta Pruning (完美大師)")
+        with gr.Tab("🆚 MCTS (蒙地卡羅樹搜尋)"):
+            create_tic_tac_toe_ui("MCTS (蒙地卡羅樹搜尋)")
         with gr.Tab("🆚 DQN (深度Q)"):
             create_tic_tac_toe_ui("DQN (深度Q網路)")
         with gr.Tab("🆚 Q-Learning (小Q)"):

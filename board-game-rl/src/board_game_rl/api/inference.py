@@ -8,15 +8,22 @@ from pathlib import Path
 import numpy as np
 
 from board_game_rl.agents.dqn_agent import DQNAgent
+from board_game_rl.agents.mcts_agent import MCTSAgent
 from board_game_rl.agents.q_learning_agent import QLearningAgent
 from board_game_rl.agents.random_agent import RandomAgent
 from board_game_rl.games.tic_tac_toe.alphabeta_agent import AlphaBetaAgent
 from board_game_rl.games.tic_tac_toe.engine import TicTacToeEngine
+from board_game_rl.games.tic_tac_toe.rules import TicTacToeRules
 from board_game_rl.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_agent_cache: dict[str, DQNAgent | QLearningAgent | AlphaBetaAgent | RandomAgent] = {}
+# Provisional: replace with the measured threshold from the simulation sweep (M1 S3).
+MCTS_SIMULATIONS = 2_000
+
+Agent = DQNAgent | QLearningAgent | AlphaBetaAgent | RandomAgent | MCTSAgent
+
+_agent_cache: dict[str, Agent] = {}
 
 _MODELS_DIR = Path(__file__).parent.parent.parent.parent / "models"
 
@@ -29,9 +36,7 @@ def _resolve_model_path(filename: str) -> Path:
     return _MODELS_DIR / filename
 
 
-def _get_agent(
-    agent_type: str, player: int
-) -> DQNAgent | QLearningAgent | AlphaBetaAgent | RandomAgent:
+def _get_agent(agent_type: str, player: int) -> Agent:
     """Return a cached agent instance, creating and loading on first access."""
     cache_key = f"{agent_type}:{player}"
 
@@ -58,6 +63,10 @@ def _get_agent(
             )
     elif "Random" in agent_type:
         agent = RandomAgent()
+    elif "MCTS" in agent_type:
+        agent = MCTSAgent(
+            TicTacToeRules(), player=player, n_simulations=MCTS_SIMULATIONS
+        )
     else:
         agent = AlphaBetaAgent(player=player)
 

@@ -25,9 +25,15 @@ def test_agent_cache_separates_by_player():
 def test_get_optimal_move_returns_valid_action():
     """Verify get_optimal_move returns a legal action index on an empty board."""
     empty_board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    for agent_type in ["Alpha-Beta", "Q-Learning", "Random"]:
+    for agent_type in ["Alpha-Beta", "Q-Learning", "Random", "MCTS"]:
         action = get_optimal_move(empty_board, current_player=1, agent_type=agent_type)
         assert 0 <= action <= 8
+
+
+def test_get_optimal_move_mcts_blocks_as_second_player():
+    """The API must hand MCTS the right side to play: O blocks X's top row."""
+    board = [[1, 1, 0], [0, -1, 0], [0, 0, 0]]
+    assert get_optimal_move(board, current_player=-1, agent_type="MCTS") == 2
 
 
 def test_get_optimal_move_no_legal_actions():

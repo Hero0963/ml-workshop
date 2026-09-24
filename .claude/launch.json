@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "board-game-rl-gradio",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "--directory",
+        "board-game-rl",
+        "--locked",
+        "python",
+        "src/board_game_rl/ui/gradio_app.py"
+      ],
+      "port": 7860
+    }
+  ]
+}
