@@ -120,6 +120,8 @@ thread-the-grid/
 | `train_maskable_ppo.py` | 執行一個 goal：`uv run python -m src.core.rl.train_maskable_ppo --goal goal2_6x6` |
 | `train_behaviour_cloning.py` | ★ **服務中的模型就是它訓的**（行為克隆；`--checkpoint-every-epoch`、`--extra-solutions` 給 ExIt 用）|
 | `collect_solutions.py` | ExIt 的收集步驟：用現有策略抽樣、驗證、收集別條解 |
+| `score_policy.py` | ★ **報告裡所有 best-of-N 數字的量尺**：`score`（deterministic ＋ best-of-N）、`table`（產出報告用的 Markdown 列）|
+| `eval_set.py` | 把資料集的一個 split 凍結成 repo 裡的 JSON（`rl_eval_sets/`），並用內容 digest 驗證 |
 | `solver_service.py` | 唯一的服務端檔案；`RUN_ID_BY_SIZE` 指定服務哪個 checkpoint |
 | `generate_dataset_v2.py` | 決定性資料集產生器（**保留 solution path**，反向 curriculum 與行為克隆需要） |
 | `baselines.py` | masked random ／ greedy 兩個對照組與共用評估器 |

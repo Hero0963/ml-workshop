@@ -257,7 +257,7 @@
 | ✅ | **上傳兩個模型的權重**——2026-09-19 第二輪已公開：RL → [GitHub Release](https://github.com/Hero0963/ml-workshop/releases/tag/thread-the-grid-models-v1)、VLM → [Hugging Face](https://huggingface.co/Hero0963/threadgrid-qwen35-4b-p4c-gguf) | 要本人的 GitHub／Hugging Face 帳號，屬對外發佈 | 驗收紀錄在 [`model-weights.md`](../model-weights.md) §4.4 |
 | ✅ | **主機端埠轉發的兩項驗收**（`start.py` 輪詢、Svelte 瀏覽器按解題）——2026-09-19 第二輪已補驗 | 本機 `.wslconfig` 是 mirrored 模式，Docker 埠轉發失效（§2.2）| 暫時把 `networkingMode=mirrored` 註解掉 → `wsl --shutdown` → 重跑 `python start.py` 與 `ai-collab/reports/artifacts/svelte-solver-list/drive_editor.py` → 改回來 |
 | | RL 半截的實驗：嚴格尺 BC vs ExIt、6×6 seed 雜訊、ExIt 第二輪 | 本人要求停止實驗 | [`handover-rl-solver.md`](../handover-rl-solver.md) §0.3（指令與成本都在）|
-| | RL 的評分腳本不在版控（`hi-collab/scratch/probe_cross_size.py` 等）| 私人工作區；搬進來要先清理 | 二次開發者目前**無法從 repo 重現 best-of-N 數字**；本報告的 `acceptance.py` 只驗服務行為，不是那把尺 |
+| ✅ | **RL 的評分量尺進版控**——2026-09-24：`src/core/rl/score_policy.py`（評分迴圈不變）＋ 凍結測試集 `rl_eval_sets/seed20300000_n20000_456_test`（`src/core/rl/eval_set.py`，內容 digest 與原資料集相同）| 原本在私人工作區，且資料集不在版控、重生會是另一包題目 | 對拍已發表的 `strict_bc_multi_456_sweep_e4`（6×6）**逐位相同**；⚠ 只能重現嚴格尺（2026-09-19 以後）的數字。細節見 [`dev_log.md`](../dev_log.md) 2026-09-24 |
 | | ARM 主機（Apple Silicon）| 沒有機器 | compose 已釘 `linux/amd64`，理論上走模擬能跑，**未實測** |
 | | 沒有 GPU 時的讀圖 | Ollama 容器預約 NVIDIA GPU | CPU 推論未測 |
 | | VLM 評估集變難 | 已飽和，但本人定案先不做 | handover-vlm §6 |

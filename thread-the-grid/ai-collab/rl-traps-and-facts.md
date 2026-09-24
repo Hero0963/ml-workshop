@@ -343,6 +343,8 @@
     `hi-collab/scratch/probe_cross_size.py` 寫的是 `logs/rl_probes/cross_size_<run id>_<size>_<split>.json`
     ⇒ 重評 `bc_multi_456` 就會蓋掉當初發表那份。**包一層 `probe_to.py` 改輸出目錄**
     （`logs/rl_probes/rescore_20260912/` 就是這樣來的），不要先覆蓋再後悔。
+    **2026-09-24 已從根本修掉**：版控裡的 `src/core/rl/score_policy.py` 遇到同名產物**直接拒絕**（要 `--label` 或明確 `--overwrite`），
+    另有 `--output-dir` 可改輸出目錄。
 26. **★ shell 繼承來的 `VIRTUAL_ENV` 會指向別的 worktree 的 venv。** 2026-09-12 在 `zip-rl` 實際遇到：
     `VIRTUAL_ENV` 指著 `zip-vlm/thread-the-grid/.venv`，每個 `uv run` 都印
     `warning: VIRTUAL_ENV=... does not match the project environment path .venv and will be ignored`。
@@ -350,7 +352,8 @@
     一律 `uv run`（陷阱 #2 的第二個理由）。
 27. **★★ GPU 預算卡的是 probe 並行數：同時只能 1 個。** probe 一次只餵一個觀測，一個約佔 40% GPU 時間（`nvidia-smi pmon`）；
     2 個 = 84–88%、5 個 ＋ 訓練 = 98%（2026-09-19 實測，兩次都先停再修）。CPU 從來不是瓶頸。
-    用 `../hi-collab/scratch/probe_queue.ps1` 排隊（它也會等正在跑的 BC 訓練）。
+    用 `../hi-collab/scratch/probe_queue.ps1` 排隊（它也會等正在跑的 BC 訓練），或用 `score_policy` 一個接一個跑
+    （2026-09-24 重測：單一 probe GPU 36–39%、整機 CPU 0–3%）。
 28. **★ `powershell -File x.ps1 -Epochs 6,2,3` 會把 `6,2,3` 當成一個字串**（`[int[]]` 讀成 623）⇒ 用 `-Command "& x.ps1 ..."`。
 29. **★ 停掉背景的「依序訓練」迴圈要先殺父 shell**：只殺子行程，迴圈會直接開下一個 run（2026-09-19 連開了兩次）。
     用子行程的 `ParentProcessId` 找到那個 `powershell.exe`。

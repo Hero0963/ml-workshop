@@ -51,15 +51,21 @@
 ### 0.3 沒做完——接手依序做（都要先拿授權）
 
 GPU 預算：**同時只能跑 1 個 probe**（一個 probe 約佔 40% GPU 時間；2 個就 85%，超過 75% 上限）。
-`../hi-collab/scratch/probe_queue.ps1` 會自動排隊（也會等正在跑的 BC 訓練）。
+**2026-09-24 起評分量尺在版控裡**：`src/core/rl/score_policy.py`（從私人的 `probe_cross_size.py` 搬進來，評分迴圈不變；重跑 `strict_bc_multi_456_sweep_e4` 逐位相同），
+題目用凍結在 repo 的 `rl_eval_sets/seed20300000_n20000_456_test`（`src/core/rl/eval_set.py`）。
+一個接一個跑就自然只有 1 個 probe；私人的 `../hi-collab/scratch/probe_queue.ps1` 仍可用來排隊（它也會等正在跑的 BC 訓練）。
 
 1. **嚴格尺的 BC vs ExIt 對照**（最重要，約 8.5 分鐘／點，10 點約 85 分鐘）：
    ```powershell
    cd thread-the-grid
-   powershell -NoProfile -ExecutionPolicy Bypass -Command "& ../hi-collab/scratch/probe_queue.ps1 -Jobs bc_multi_456_sweep:6,exit_r1_e6k32:6,exit_r1_e6k32:10,bc_multi_456_sweep:2,exit_r1_e6k32:2,bc_multi_456_sweep:5,exit_r1_e6k32:5,exit_r1_e6k32:8,bc_multi_456_sweep:10 -LabelPrefix strict"
-   uv run python ../hi-collab/scratch/summarise_probes.py strict_bc_multi_456_sweep_e4 strict_exit_r1_e6k32_e4 ...
+   foreach ($job in "bc_multi_456_sweep:6","exit_r1_e6k32:6","exit_r1_e6k32:10","bc_multi_456_sweep:2","exit_r1_e6k32:2","bc_multi_456_sweep:5","exit_r1_e6k32:5","exit_r1_e6k32:8","bc_multi_456_sweep:10") {
+       $run, $epoch = $job.Split(":")
+       uv run python -m src.core.rl.score_policy score --run-id $run --checkpoint "model_epoch_$epoch" `
+           --label "strict_${run}_e$epoch" --size 6 --eval-set rl_eval_sets/seed20300000_n20000_456_test
+   }
+   uv run python -m src.core.rl.score_policy table strict_bc_multi_456_sweep_e4 strict_exit_r1_e6k32_e4 --size 6
    ```
-   ⚠ 一定要用 `-Command "& ..."`，**不要用 `-File`**：`-File` 會把 `a:4,b:6` 當成一個字串。
+   ⚠ 用私人的 `probe_queue.ps1` 的話一定要 `-Command "& ..."`，**不要用 `-File`**：`-File` 會把 `a:4,b:6` 當成一個字串。
 2. **seed 雜訊**（6×6 從來沒量過）：BC 與 ExIt 各多 2 個 seed（27182818、31415926），每次訓練約 10 分鐘 ＋ probe 贏家 epoch 約 8.5 分鐘，合計約 75 分鐘：
    ```powershell
    uv run python -m src.core.rl.train_behaviour_cloning --goal goal3_multi --run-id bc_multi_456_sweep_s27182818 --seed 27182818 --epochs 10 --eval-episodes 0 --checkpoint-every-epoch
@@ -68,7 +74,7 @@ GPU 預算：**同時只能跑 1 個 probe**（一個 probe 約佔 40% GPU 時�
    ⚠ 2026-09-19 收尾時這組是**中途停掉**的（BC s27182818 跑到 4 個 epoch，另兩個剛開始）。三個不完整的 run 目錄
    （`logs/rl_a2/` 與 `models/rl_a2/` 各三個）**已軟刪除**到 `zip-rl/soft-delete/20260919-024456/thread-the-grid/…`
    ⇒ 直接用同名 run id 重跑即可。（`bc_progress.jsonl` 是附加寫入，留著舊目錄會把新紀錄接在舊的後面。）
-3. **贏家補 4×4／5×5 的嚴格 best-of-32** ＋ 多樣性 probe（`../hi-collab/scratch/probe_diversity.py run_id:model_epoch_N`）做機制對照。
+3. **贏家補 4×4／5×5 的嚴格 best-of-32**（`score_policy score ... --size 4`／`--size 5`）＋ 多樣性 probe（`../hi-collab/scratch/probe_diversity.py run_id:model_epoch_N`，**仍是私人腳本**）做機制對照。
 4. **要不要把服務模型換成 ExIt 版由本人決定**（`solver_service.py` 的 `RUN_ID_BY_SIZE` 不屬於本 track）。
 5. **ExIt 第二輪**：用第一輪的贏家當收集者重跑 `collect_solutions.py`，再訓練一次——這才是真正的「迭代」。
 
@@ -393,6 +399,8 @@ uv run python -m src.core.rl.generate_dataset_v2 --count 1700 --sizes 4,5,6 --ti
 | `src/core/rl/train_maskable_ppo.py` | PPO 訓練：`GridScalarExtractor`、curriculum callback、checkpoint、評估 |
 | `src/core/rl/train_behaviour_cloning.py` | **2026-09-05 新增**。監督式暖啟動，產出與 PPO **同架構、可互換**的 checkpoint（BC 是**第三個** env 建構點，見陷阱 #24）。2026-09-19 加了 `--checkpoint-every-epoch`、`--extra-solutions`（ExIt 的重標籤：每題每 epoch 從已知合法解均勻抽一條，用獨立亂數，不動打亂順序）、`--eval-episodes 0`（跳過結尾約 10 分鐘的評估）|
 | `src/core/rl/collect_solutions.py` | **2026-09-19 新增**。ExIt 的收集步驟：批次抽樣（1,024 局並行、一次前向）、每條解再用 `calculate_fitness_score` 獨立驗一次、寫出「≠ 資料集那條」的別條解 |
+| `src/core/rl/score_policy.py` | **2026-09-24 從私人 probe 搬進版控**。量尺：每題 1 局 deterministic ＋ 最多 N 局抽樣、解出即停，一趟讀出所有 best-of-N；同名產物拒絕覆蓋。重跑已發表產物逐位相同 |
+| `src/core/rl/eval_set.py` | **2026-09-24 新增**。把 split 凍結成 `rl_eval_sets/<資料集>_<split>/`（`manifest.json`＋`samples.jsonl`），用原資料集的 `content_sha256` 驗證 |
 | `src/core/rl/solver_service.py` | **2026-09-12 新增。唯一的服務端**：checkpoint 載入（lazy＋快取）、`puzzle` → env、best-of-N rollout。缺模型 503、尺寸不支援 400 |
 | `src/core/solvers/registry.py` | **solver 清單的唯一正本**（API／截圖端點／Gradio 都 import 它）|
 | `src/core/rl/baselines.py` | masked random／greedy 對照組 ＋ `evaluate()`。**評估 env 只能從 `make_eval_env()` 建** |

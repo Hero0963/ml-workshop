@@ -4,6 +4,39 @@
 > For the current status and next steps, read [roadmap.md](roadmap.md) instead — this file is the full archive.
 > Add one entry per development session, dated `## YYYY-MM-DD`.
 
+## 2026-09-24
+
+### RL 評分量尺搬進版控、凍結測試集、GRPO／搜尋／input 問答、路線 B 立項（branch `claude/repo-dev-progress-check-faf56d`，worktree `.claude/worktrees/repo-dev-progress-check-faf56d`）
+
+**本人當次指示**：把 GRPO 的問答整理進文件；路線 B（VLM ＋ GRPO 讀圖解題）要做、硬體本人解決，記進文件；
+「把 RL 評分腳本整理好搬進版控」全部交辦（範圍、要不要公開測試集都由 agent 決定）。
+
+- **問答紀錄** [`notes/2026-09-24-qa-grpo-search-and-input.md`](notes/2026-09-24-qa-grpo-search-and-input.md)：
+  GRPO 對小 CNN 幫助很小（它解的兩個問題我們只有「critic 學不起來」一個，EV ≈ −0.005；多樣性崩與長程規劃它不處理）；
+  AlphaZero 用 MCTS 不用 alpha-beta（一手，arXiv:1712.01815），我們的盲目回溯／前瞻都量過沒用，缺的是可解性 value；
+  input 設計合理且不是瓶頸，唯一值得改的「綁死 8×8」要跟網路架構一起改；端對端讀圖解題做產品不划算、做研究值得。
+- **路線 B 立項**：roadmap 最上面一節＋「已定案」表第一列；助理 memory 另記一份。**尚未開工**；restart plan 的框架資訊是 2026-08-15 的，開工前要重查。
+- **量尺進版控**：`src/core/rl/score_policy.py`（`probe_best_of_n`＋`probe_cross_size` 合併，`eval_checkpoint_det` 變 `--max-attempts 0`、
+  `summarise_probes` 變 `table` 子命令；評分迴圈不變）。私人腳本原封不動留在 `hi-collab/scratch/`（其中 8 支的程式碼路徑還寫死改名前的 `linkedin-zip-challenge/logs/`，照舊指令跑會把產物寫到舊目錄）。
+  順手修掉陷阱 #25：同名產物直接拒絕，要 `--label` 或 `--overwrite`。
+- **測試集凍結進 repo**：只搬腳本不夠——資料集不在版控、重生會是另一包題目（牆鐘逾時），陌生人照樣重現不了。
+  `src/core/rl/eval_set.py` 把 `seed20300000_n20000_456` 的 test split 匯出成 `rl_eval_sets/seed20300000_n20000_456_test/`
+  （`manifest.json`＋`samples.jsonl`，5,932 題：4×4 1,931／5×5 2,001／6×6 2,000，2.18 MB；JSON 不用 pickle，因為 pickle 載入會執行程式碼）。
+  驗證兩道：用原 manifest 的 `content_sha256`（`5cb7515f4949…`，由 `generate_dataset_v2.split_digest` 重算）相符；逐物件與原 pickle 完全相同（連牆的端點順序）。
+- **`train_maskable_ppo.model_policy` 加 `deterministic` 參數**（預設 `True`，既有呼叫端不變），評分與訓練共用一條路。
+- **對拍（換一支腳本＝換尺，所以必驗）**：用新量尺、從**凍結的 JSON** 讀題，重跑已發表的
+  `cross_size_strict_bc_multi_456_sweep_e4_6x6_test.json`（`bc_multi_456_sweep` 的 `model_epoch_4`，6×6 2,000 題，seed 20260815，GPU）⇒
+  deterministic 0.5495、best-of-1／2／4／8／16／32 ＝ 0.380／0.5615／0.7225／0.8505／0.9245／0.9605、**連逐次直方圖都逐位相同**（427 秒，原本 481 秒）。
+  一次同時證明了三件事：評分迴圈沒換尺、凍結檔與原 pickle 等價（題目與順序）、`manual_seed` 在建網路之前的順序保住了。
+  新產物在 scratchpad（不進 `logs/`，免得多一份同名產物）；比對程式見本次 session。
+- **兩個順帶釐清的事**：① 已發表的 best-of-N **不含** deterministic 那一局（抽樣嘗試從第 1 次算起），和 `solver_service`（第 1 次就是 argmax）不同——寫進 `score_policy` docstring 並有測試釘住；
+  ② 新量尺只有**嚴格尺**（env 2026-09-19 起只剩嚴格），2026-09-19 以前的寬鬆尺數字**無法**用它重現，產物多記一欄 `judge`。
+- **基線的 2 個失敗不是程式壞了**：worktree 沒有 `.env` ⇒ `ollama_model_name` 是空字串 ⇒ `test_vision_api` 兩個斷言失敗；照 AGENTS §10.5 複製 `.env` 後 343 passed。
+- **Docker 映像只複製 `src/`**，不含 `rl_eval_sets/` ⇒ 保護凍結檔的測試在檔案不存在時 skip（比照 `test_solver_service` 沒有 checkpoint 就 skip）。
+- **驗證**：`uv run pytest` **357 passed, 1 skipped, 8 xfailed**（新增 14 個；skip 是 worktree 沒有 `models/`）；`ruff check`／`ruff format --check` 綠；repo 根 pre-commit 通過。
+  資源取樣：probe 跑時 GPU 36–39%、整機 CPU 0–3%。
+- **沒做**：`probe_diversity.py` 等其他探針仍在私人工作區；handover §0.3 的半截實驗沒跑（沒授權）。
+
 ## 2026-09-20
 
 ### 權重公開、VLM 讀圖示範、分支與 worktree 收到只剩 main（branch `feat/thread-the-grid-round-2`, worktree `zip-vlm`；2026-09-19 晚到 09-20）

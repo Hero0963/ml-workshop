@@ -226,3 +226,5 @@ uv run python ../hi-collab/scratch/summarise_probes.py strict_bc_multi_456_sweep
 ```
 
 ⚠ 評分與彙整腳本在 `hi-collab/scratch/`（不進版控）——沿用它是因為已發表的基準就是它產的，換一支等於換尺。
+**2026-09-24 註**：兩支已搬進版控成 `src/core/rl/score_policy.py`（`score`／`table` 子命令），題目凍結在 `rl_eval_sets/`；
+用它重跑本報告的 `strict_bc_multi_456_sweep_e4`（6×6）**逐位相同**，所以是同一把尺。現行指令見 [`handover-rl-solver.md`](../handover-rl-solver.md) §0.3。

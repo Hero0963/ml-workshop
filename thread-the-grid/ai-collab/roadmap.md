@@ -2,7 +2,23 @@
 
 > **新 session 的第一站。** 每次工作告一段落就更新這裡（現況一句話、下一步順序、進度日誌加一列）。
 > 架構與啟動方式看 [project_guide.md](project_guide.md)、完整開發歷程看 [dev_log.md](dev_log.md)、規範看 [../AGENTS.md](../AGENTS.md)。
-> 最後更新：2026-09-20（**權重公開、分支與 worktree 收掉只留 main**）
+> 最後更新：2026-09-24（**本人決定要做路線 B；RL 評分量尺搬進版控**）
+
+## ★★★ 2026-09-24：本人決定要做「路線 B」——VLM ＋ GRPO 讀圖解題（尚未開工）
+
+本人 2026-09-24 明示：**這條要做，硬體由本人想辦法解決。** 討論經過與理由在
+[問答紀錄](notes/2026-09-24-qa-grpo-search-and-input.md)（Q1 GRPO、Q6 端對端）。
+
+| | |
+|---|---|
+| 是什麼 | 讓多模態模型直接讀盤面、自己推理出路徑，**用本專案的判定器當獎勵**做 GRPO（RLVR）。原始設計：[restart plan](reports/2026-08-15_rl-restart-plan.html) §7「路線 B」|
+| 為什麼做 | 做中學。GRPO 的兩個賣點（省掉和 policy 一樣大的 critic、只有結尾有獎勵）在這裡**全部成立**；在小 CNN 那條路上它幫助很小（問答紀錄 Q1）|
+| 不取代什麼 | 產品路徑維持「VLM 讀圖 → 精確解 solver」；路線 B 是研究題目（問答紀錄 Q6）|
+| 硬體 | **本人負責**。已知限制：本機 16 GB；Unsloth 的 Sudoku GRPO notebook 要 A100（見「已定案」DiffusionGemma 那一列）|
+| ⚠ 開工前必須重查 | restart plan 的框架資訊是 **2026-08-15** 的（Unsloth GRPO／GSPO 支援度、vLLM 對視覺 LoRA 的限制、各家族有哪些尺寸）——**版本與支援度一律回一手來源重查**，不沿用 |
+| 起手建議（restart plan 當時的建議，開工時再確認）| ① **先純文字、後圖片**（答錯時才分得出是看錯還是不會解）② **從 4×4 起步**（7×7 一開始必然全 0 分）③ reward 用部分分數階梯（格式、相鄰、不穿牆、不重複、依序、走滿）④ 起點模型可考慮已微調的 `threadgrid-qwen35-4b-p4c`（讀圖已經會；**未評估，只是候選**）|
+| done 條件（草案）| restart plan：「**4×4 上把通關率從 baseline 顯著拉高**」，不是「解出 7×7」|
+| 前置 | ✅ RL 評分量尺已進版控（`src/core/rl/score_policy.py`，2026-09-24），best-of-N 的記帳方式有一份共用實作 |
 
 ## ★★ 2026-09-19 收尾第二輪（先讀這一段）
 
@@ -27,7 +43,7 @@
 | RL solver | ✅ 門檻達成（best-of-32：4×4 0.9953、6×6 0.9465）；權重 14 MB 已放 GitHub Release（2026-09-19）；單次嘗試到不了 100%，原因與後續路線見 [RL 收尾報告](reports/2026-09-19_rl-where-next.md) |
 | Docker | ✅ 修掉六個陌生人會撞到的問題（Python 3.9、沒有 GPU、ARM、lockfile、浮動標籤、模型缺席提示），見 [deployment-guide](deployment-guide.md) §10 |
 | 權重怎麼提供 | ✅ RL → GitHub Release、VLM → Hugging Face，2026-09-19 公開（[model-weights.md](model-weights.md)）|
-| 沒做完的 | 收尾報告 §10：RL 半截的對照、評分腳本不在版控、ARM 未實測（權重上傳與主機端埠轉發兩項已在第二輪補完）|
+| 沒做完的 | 收尾報告 §10：RL 半截的對照、ARM 未實測（權重上傳與主機端埠轉發兩項已在第二輪補完；**評分量尺 2026-09-24 已進版控**：`src/core/rl/score_policy.py` ＋ 凍結測試集 `rl_eval_sets/`，對拍已發表產物逐位相同）|
 
 GPT-6 等級 computer-use agent 會怎麼解 Zip：[survey](reports/2026-09-19_computer-use-agents-and-zip.md)。
 
@@ -421,6 +437,7 @@ GPT-6 等級 computer-use agent 會怎麼解 Zip：[survey](reports/2026-09-19_c
 
 | 決策 | 理由 |
 |------|------|
+| **★★ 路線 B（VLM ＋ GRPO 讀圖解題）要做，硬體本人解決** | **2026-09-24 本人明示**。研究題目，不取代「VLM 讀圖 → 精確解」的產品路徑。**agent 不要再以「本機 16 GB 跑不動」為理由否決它**——硬體是本人的決定；agent 要做的是把各方案的需求查清楚（一手來源、標查證日期）。見本檔最上面一節 |
 | **★ 這個 side project 的產出是「做中學」，不是單純的指標** | 2026-09-05 本人明確定案（restart plan §8 早已寫過同樣的定位：「不是為了比 CP-SAT 快或準（不會贏），是為了學 masking／PPO／curriculum／MCTS／RLVR」）。**實務後果**：① 沒達標**不等於**失敗，「知道為什麼沒達標」本身就是產出；② 為了衝分數而犧牲可解釋性的做法（例如同時改多個變數、只保留贏的那次、拿訓練期高分當成績）**與目標相反**；③ **設計理由與機制解釋要落盤**（進 `reports/`），不能只留在對話裡——它和數字同等是交付物 |
 | **RL 暫停，不是放棄** | 2025-10-15。根因是 **deterministic policy loop**：距離型 reward shaping 造成「獎勵陷阱」，即使把權重從 0.1 降到 0.01 仍會讓策略卡在小迴圈。訓練期看起來好只是 ε-greedy 的隨機性意外把 agent 撞出迴圈。**不要再靠調 reward 權重硬解**，要先補理論 |
 | **模型世代選擇由「尺寸」決定，不是由「效能」決定** | 2026-08-15 一手查證（Ollama registry 探測＋library 頁）：**Qwen3.6 最小 27B、Qwen3.7 無開放權重、Qwen3.8 只有 27B**，27B 在 Q4 約 17GB **超過本機 16GB**；**Qwen3.5 是唯一有 0.8B／2B／4B／9B 小尺寸的世代**。Gemma 4 同理——vision 微調官方只支援 E2B／E4B。**所以不是「3.5 比較好」，是新世代沒出跑得動的尺寸。** ⚠ 前一份 survey 報告寫「Qwen3.8 權重尚未上架」，該權重已於 2026-08-14/15 上架（僅 27B），結論不變但該句已過期 |
