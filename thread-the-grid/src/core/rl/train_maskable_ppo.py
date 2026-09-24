@@ -544,13 +544,20 @@ def starting_curriculum(goal: Goal, init_from: str | None) -> CurriculumState:
 
 
 def model_policy(
-    model: MaskablePPO,
+    model: MaskablePPO, deterministic: bool = True
 ) -> Callable[[PuzzleEnvV2, np.random.Generator], int]:
-    """Wraps a trained model as a `baselines.PolicyFn` so scoring shares one code path."""
+    """Wraps a trained model as a `baselines.PolicyFn` so scoring shares one code path.
+
+    `deterministic=False` samples from the masked distribution. That draw comes from torch's
+    global generator, not from the `rng` a `PolicyFn` is handed, so a sampled score is only
+    reproducible under the same `torch.manual_seed` (`score_policy` sets it).
+    """
 
     def policy(env: PuzzleEnvV2, rng: np.random.Generator) -> int:
         action, _ = model.predict(
-            env.observation(), deterministic=True, action_masks=env.action_masks()
+            env.observation(),
+            deterministic=deterministic,
+            action_masks=env.action_masks(),
         )
         return int(action)
 
