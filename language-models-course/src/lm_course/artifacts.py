@@ -51,7 +51,9 @@ def course_tokens(tokenizer: BPETokenizer) -> tuple[np.ndarray, np.ndarray]:
 
 def base_model_config(**overrides) -> GPTConfig:
     """The lab 06 model: nanochat-style, 4 layers, width 256, context 256 (about 5M params)."""
-    base = dict(vocab_size=VOCAB_SIZE, context_length=256, n_layer=4, n_head=4, d_model=256)
+    base = dict(
+        vocab_size=VOCAB_SIZE, context_length=256, n_layer=4, n_head=4, d_model=256
+    )
     return nanochat_style_config(**(base | overrides))
 
 

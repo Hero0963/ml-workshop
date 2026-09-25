@@ -108,7 +108,7 @@ $$X \leftarrow aX + b(XX^\top)X + c(XX^\top)^2X, \qquad (a, b, c) = (3.4445,\ -4
 | 最佳化器 | Adam | AdamW | **Muon**（矩陣）＋ AdamW（其餘） | §2.5 |
 | 精度 | fp32／fp16 | bf16 混合精度 | bf16，speedrun 用 **fp8** | 第 08 課 |
 
-nanochat 還有一批較新的小技巧（value embeddings、每層可學的 residual 係數、把前一個 token 的 embedding「抹」進來的 smear、只看局部的滑動視窗層…），多來自 modded-nanogpt 的速度競賽；本課程的 `nanochat_style_config` 只實作表中的核心部分。
+nanochat 還有一批較新的小技巧（value embeddings、每層可學的 residual 係數、把前一個 token 的 embedding「抹」進來的 smear、只看局部的滑動視窗層…），多來自 modded-nanogpt 的速度競賽。本課程的 `nanochat_style_config` 只實作表中的架構開關（RMSNorm 無參數、RoPE、ReLU²、無 bias、不綁 embedding、QK-norm、soft-cap）；初始化沿用 GPT-2 的方式，最佳化器則在 `build_optimizer` 另外選。
 
 **nanochat 的單一旋鈕**：模型寬度 $d = 64 \times$ 層數、head 維度 128，學習率依 $1/\sqrt{d}$ 調整，訓練 token 數由「資料／參數比」決定（`base_train.py` 預設 12，speedrun 用 8；Chinchilla 的經驗值約 20，第 07 課）。使用者只需選 `--depth`，其餘自動算出。
 

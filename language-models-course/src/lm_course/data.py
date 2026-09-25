@@ -162,7 +162,9 @@ class Analogy:
     relation: str
 
 
-def _person_sentence(rng: random.Random, word: str, female: bool, role: str | None) -> str:
+def _person_sentence(
+    rng: random.Random, word: str, female: bool, role: str | None
+) -> str:
     pronoun, possessive = ("she", "her") if female else ("he", "his")
     templates = [
         f"the {word} said that {pronoun} was tired",
