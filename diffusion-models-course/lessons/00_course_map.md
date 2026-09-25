@@ -87,7 +87,7 @@ uv run pytest                # 基線：全部測試應該通過
 然後用 VS Code（或 Jupyter）打開 `notebooks/`，kernel 選本子專案的 `.venv`。
 MNIST 第一次用到時會自動下載到 `data/`（約 60 MB，已在 `.gitignore`）。
 
-**硬體**：所有實驗都能在 CPU 上跑。notebook 裡的輸出是在 4 核心雲端 CPU 上實跑的結果：2D 實驗每個約 1–2 分鐘，MNIST 實驗每個約 10–20 分鐘。
+**硬體**：所有實驗都能在 CPU 上跑。notebook 裡的輸出是在 4 核心雲端 CPU 上實跑的結果：不訓練影像模型的實驗（02–05、09）每個不到 4 分鐘，MNIST 實驗（06–08、10）每個 7–30 分鐘，最久的是 Lab 06（訓練約 16 分鐘，加上 1000 步取樣）。
 有 GPU 的話，把每個 notebook 開頭的步數常數調大，品質會明顯變好；更長的訓練用 `scripts/train_mnist.py`（用法見 [`../README.md`](../README.md)）。
 
 ## 程式碼怎麼讀

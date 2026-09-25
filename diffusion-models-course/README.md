@@ -44,8 +44,9 @@ uv run pytest
 Then open any notebook in `notebooks/` with the `.venv` of this project as the kernel.
 MNIST is downloaded to `data/` on first use (about 60 MB, ignored by git).
 
-**Hardware.** Every lab runs on a CPU. Measured on a 4-core cloud CPU: the 2D labs train in
-about a minute, the MNIST labs in 10-20 minutes. With a GPU, raise the step counts at the top of
+**Hardware.** Every lab runs on a CPU. Measured on a 4-core cloud CPU: the labs without image
+training finish in under 4 minutes, the MNIST labs in 7-30 minutes (lab 06 is the longest: about
+16 minutes of training plus 1000-step sampling). With a GPU, raise the step counts at the top of
 each notebook, or use the scripts for longer runs:
 
 ```bash
