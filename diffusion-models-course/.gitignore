@@ -1,0 +1,6 @@
+# Downloaded datasets (MNIST is fetched by torchvision on first use)
+data/
+# Model weights and generated images from the labs and scripts
+checkpoints/
+outputs/
+*.pt
