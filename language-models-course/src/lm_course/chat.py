@@ -127,6 +127,12 @@ QUESTION_TEMPLATES = [
     "Please compute {a} + {b}.",
     "How much is {a} plus {b}?",
 ]
+# the answer style the user asks for (lesson 11 §2.4, lab 11 §3)
+STYLE_SUFFIX = {
+    "direct": "",
+    "steps": " Think step by step.",
+    "tool": " Use the calculator.",
+}
 
 
 @dataclass(frozen=True)
@@ -138,26 +144,47 @@ class AdditionProblem:
     def answer(self) -> int:
         return self.a + self.b
 
-    def question(self, rng: random.Random | None = None) -> str:
+    def question(self, style: str = "direct", rng: random.Random | None = None) -> str:
         template = (rng or random.Random(self.a * 7919 + self.b)).choice(
             QUESTION_TEMPLATES
         )
-        return template.format(a=self.a, b=self.b)
+        return template.format(a=self.a, b=self.b) + STYLE_SUFFIX[style]
 
-    def conversation(
-        self, use_tool: bool = False, rng: random.Random | None = None
-    ) -> list[Message]:
-        if use_tool:
-            reply: str | list[dict] = [
+    def steps(self) -> str:
+        """Column addition written out digit by digit, least significant digit first:
+        "7 + 5 = 12, write 2 carry 1. 4 + 8 + 1 = 13, write 3 carry 1. ..."."""
+        width = max(len(str(self.a)), len(str(self.b)))
+        a_digits = str(self.a).zfill(width)[::-1]
+        b_digits = str(self.b).zfill(width)[::-1]
+        parts, carry = [], 0
+        for i, (x, y) in enumerate(zip(a_digits, b_digits)):
+            total = int(x) + int(y) + carry
+            lhs = f"{x} + {y}" if i == 0 else f"{x} + {y} + {carry}"
+            parts.append(f"{lhs} = {total}, write {total % 10} carry {total // 10}.")
+            carry = total // 10
+        if carry:
+            parts.append(f"Write the carry {carry}.")
+        return " ".join(parts)
+
+    def reply(self, style: str = "direct") -> str | list[dict]:
+        if style == "direct":
+            return f"{self.a} + {self.b} = {self.answer}."
+        if style == "steps":
+            return f"{self.steps()} So {self.a} + {self.b} = {self.answer}."
+        if style == "tool":
+            return [
                 {"type": "python", "text": f"{self.a}+{self.b}"},
                 {"type": "python_output", "text": str(self.answer)},
-                {"type": "text", "text": f"The answer is {self.answer}."},
+                {"type": "text", "text": f"{self.a} + {self.b} = {self.answer}."},
             ]
-        else:
-            reply = f"{self.a} + {self.b} = {self.answer}. The answer is {self.answer}."
+        raise ValueError(f"unknown style {style!r}")
+
+    def conversation(
+        self, style: str = "direct", rng: random.Random | None = None
+    ) -> list[Message]:
         return [
-            {"role": "user", "content": self.question(rng)},
-            {"role": "assistant", "content": reply},
+            {"role": "user", "content": self.question(style, rng)},
+            {"role": "assistant", "content": self.reply(style)},
         ]
 
 
@@ -180,7 +207,7 @@ def addition_problems(
 
 
 def extract_answer(text: str) -> int | None:
-    """The last integer in a reply ("... The answer is 42." -> 42)."""
+    """The last integer in a reply ("... So 19 + 23 = 42." -> 42)."""
     numbers = re.findall(r"-?\d+", text)
     return int(numbers[-1]) if numbers else None
 

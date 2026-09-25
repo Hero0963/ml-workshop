@@ -1,5 +1,6 @@
 # tests/test_chat_and_rl.py
 import math
+import re
 
 import pytest
 import torch
@@ -38,7 +39,7 @@ def test_only_assistant_tokens_are_trained(tok: BPETokenizer) -> None:
     ids, mask = render_conversation(tok, conversation)
     trained = tok.decode([i for i, m in zip(ids, mask) if m])
     context = tok.decode([i for i, m in zip(ids, mask) if not m])
-    assert trained == "12 + 30 = 42. The answer is 42.<|assistant_end|>"
+    assert trained == "12 + 30 = 42.<|assistant_end|>"
     assert context.startswith("<|bos|><|user_start|>") and context.endswith(
         "<|assistant_start|>"
     )
@@ -46,12 +47,11 @@ def test_only_assistant_tokens_are_trained(tok: BPETokenizer) -> None:
 
 def test_tool_output_is_context_but_the_call_is_trained(tok: BPETokenizer) -> None:
     ids, mask = render_conversation(
-        tok, AdditionProblem(12, 30).conversation(use_tool=True)
+        tok, AdditionProblem(12, 30).conversation(style="tool")
     )
     trained = tok.decode([i for i, m in zip(ids, mask) if m])
     assert (
-        trained
-        == "<|python_start|>12+30<|python_end|>The answer is 42.<|assistant_end|>"
+        trained == "<|python_start|>12+30<|python_end|>12 + 30 = 42.<|assistant_end|>"
     )
     assert "<|output_start|>42<|output_end|>" in tok.decode(ids)
 
@@ -86,9 +86,22 @@ def test_addition_problems_answers_and_rewards() -> None:
     held_out = addition_problems(20, 2, seed=1, exclude={(p.a, p.b) for p in problems})
     assert not {(p.a, p.b) for p in held_out} & {(p.a, p.b) for p in problems}
     p = AdditionProblem(19, 23)
-    assert addition_reward(p, "19 + 23 = 42. The answer is 42.") == 1.0
-    assert addition_reward(p, "The answer is 41.") == 0.0
+    assert addition_reward(p, "19 + 23 = 42.") == 1.0
+    assert addition_reward(p, "19 + 23 = 41.") == 0.0
+    assert addition_reward(p, p.reply("steps")) == 1.0
     assert extract_answer("no digits") is None
+
+
+@pytest.mark.parametrize("a, b", [(47, 85), (3, 83), (999, 1), (0, 0), (560, 72)])
+def test_step_by_step_reply_is_correct_column_addition(a: int, b: int) -> None:
+    p = AdditionProblem(a, b)
+    steps = p.steps()
+    written = [int(d) for d in re.findall(r"write (\d)", steps)]
+    carry = re.search(r"Write the carry (\d)", steps)
+    digits = written + ([int(carry.group(1))] if carry else [])
+    assert int("".join(str(d) for d in reversed(digits))) == a + b
+    assert p.question("steps").endswith("Think step by step.")
+    assert p.question("tool").endswith("Use the calculator.")
 
 
 def test_calculator_is_safe() -> None:
