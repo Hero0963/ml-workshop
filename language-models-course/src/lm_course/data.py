@@ -162,11 +162,9 @@ class Analogy:
     relation: str
 
 
-def _person_sentence(rng: random.Random, word: str, female: bool, role: str) -> str:
+def _person_sentence(rng: random.Random, word: str, female: bool, role: str | None) -> str:
     pronoun, possessive = ("she", "her") if female else ("he", "his")
     templates = [
-        f"the {word} {role}",
-        f"every day the {word} {role} because {pronoun} likes it",
         f"the {word} said that {pronoun} was tired",
         f"{pronoun} is a {word} and {possessive} home is here",
         f"the {word} smiled and {pronoun} waved",
@@ -196,6 +194,11 @@ def _person_sentence(rng: random.Random, word: str, female: bool, role: str) -> 
             f"the {word} pays {possessive} bills",
         ]
     )
+    if role is not None:
+        templates += [
+            f"the {word} {role}",
+            f"every day the {word} {role} because {pronoun} likes it",
+        ]
     sentence = rng.choice(templates)
     return f"{sentence} {rng.choice(FILLER)}" if rng.random() < 0.3 else sentence
 
@@ -223,12 +226,15 @@ def _country_sentence(
     return rng.choice(templates)
 
 
-def toy_world_corpus(num_sentences: int = 200_000, seed: int = 0) -> list[list[str]]:
+def toy_world_corpus(
+    num_sentences: int = 200_000, seed: int = 0, with_roles: bool = True
+) -> list[list[str]]:
     """Sentences about people and countries whose co-occurrence statistics encode known relations.
 
     Gender is carried by the pronouns next to a word, royalty by palace/crown words, a capital by
     "city" words plus its country's language: exactly the kind of structure that shows up as
-    vector offsets in word2vec (lesson 02 §2.5).
+    vector offsets in word2vec (lesson 02 §2.5). ``with_roles=False`` drops the contexts that
+    tell, e.g., "son" from "boy" apart, which makes some analogies unanswerable.
     """
     rng = random.Random(seed)
     sentences = []
