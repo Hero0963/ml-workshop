@@ -4,7 +4,7 @@
 > `CLAUDE.md` 只用 `@AGENTS.md` 載入本檔，不另外維護內容。
 > **子專案有自己的正本**：進某個子專案工作，以該子專案的 `AGENTS.md` 為準（見 §8）。
 > 適用對象：AI coding agent（Claude Code／Codex／Gemini CLI…）與本人。
-> Last Updated: 2026-09-19
+> Last Updated: 2026-09-25
 
 ---
 
@@ -17,6 +17,7 @@
 |--------|--------|----------|
 | `thread-the-grid/` | ★ **最大最活躍**。一筆畫路徑謎題（依序經過號碼、走滿每一格；靈感來自網路上的 Zip 遊戲；2026-09-19 前叫 `linkedin-zip-challenge`）：9 種 solver ＋ FastAPI ＋ Gradio ＋ Svelte 編輯器 ＋ **微調 VLM 讀圖解題** ＋ **RL solver**（都已上線）。**2026-09-19 收尾、停止開發**（見子專案 `ai-collab/reports/2026-09-19_project-wrap-up.md`） | `AGENTS.md` ＋ `ai-collab/` |
 | `board-game-rl/` | 井字遊戲 RL：Q-Learning／Alpha-Beta／DQN ＋ FastAPI ＋ Gradio，DDD 分層 | `ai-collab/` |
+| `diffusion-models-course/` | 擴散模型自學課程（2026-09-25 建立）：12 課繁中講義 ＋ 9 本已執行的實驗 notebook ＋ 有測試的參考實作（DDPM／DDIM／score／CFG／flow matching／DiT），CPU 可跑 | `ai-collab/` |
 | `deep-learning-karpathy/` | Karpathy 教材重現：minBPE tokenizer ＋ nanoGPT | `ai-collab/` |
 | `lingua-tutor/` | 語言學習助理：STT 轉錄與評分 | `dev_log.md` |
 | `more_simple_reinforcement_learning/` | RL 演算法 notebook 教材（8 章：Q-Learning → SAC／TD3） | `readme.md` |
@@ -103,6 +104,7 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 | `ml-workshop/.venv` | 3.9 | 只裝 devtools（`pre-commit`、`pytest`），跑 repo 級 lint 用 |
 | `thread-the-grid/.venv` | 3.11 | 該子專案（鎖 `torch==2.4.1` ＋ cu121 index） |
 | `board-game-rl/.venv` | 3.13 | 該子專案 |
+| `diffusion-models-course/.venv` | 3.12 | 該子專案（torch／torchvision 走 cu126 explicit index） |
 | `lingua-tutor/`、`more_simple_reinforcement_learning/`、`notes/` | 各自 | 各自 |
 
 **三條硬規則**
@@ -111,7 +113,7 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 2. **`thread-the-grid` 刻意不進 root uv workspace。** 根 `pyproject.toml` 的 `[tool.uv.workspace] members` 只有 `deep-learning-karpathy`。原因：它鎖 Python 3.11 ＋ `torch==2.4.1`／`cu121` 自訂 index，與根的 3.9 衝突；**不要為了「統一」把它加進 workspace**。
 3. **新增套件由本人手動執行 `uv add`**，Agent 只負責通知要裝什麼、為什麼。
 
-**環境確定性**：子專案應有 `.python-version` 讓 `uv sync` 決定性挑版本。目前 `thread-the-grid`（3.11）與 `board-game-rl`（3.13）有；其餘待補。
+**環境確定性**：子專案應有 `.python-version` 讓 `uv sync` 決定性挑版本。目前 `thread-the-grid`（3.11）、`board-game-rl`（3.13）與 `diffusion-models-course`（3.12）有；其餘待補。
 
 ## 6. 驗證與交付
 
@@ -143,6 +145,7 @@ repo 根的 `scripts/`、`main.py` 是零星工具，不屬於任何子專案。
 |---------|------|
 | 路徑謎題 thread-the-grid（solver／API／Gradio／Svelte／RL／VL） | `thread-the-grid/AGENTS.md` → `ai-collab/roadmap.md` |
 | 井字遊戲 RL（Q-Learning／DQN／Alpha-Beta／UI） | `board-game-rl/ai-collab/roadmap.md` → `rules.md` ＋ `project_guide.md` |
+| 擴散模型課程（講義／實驗／參考實作） | `diffusion-models-course/ai-collab/roadmap.md` → `project_guide.md` |
 | Karpathy 教材（tokenizer／nanoGPT） | `deep-learning-karpathy/ai-collab/rules.md` ＋ `handover.md` |
 | 語言學習助理 | `lingua-tutor/README.md` ＋ `dev_log.md` |
 | RL notebook 教材 | `more_simple_reinforcement_learning/readme.md` |

@@ -17,6 +17,10 @@ Grid path puzzles — one line through every cell, visiting the numbered waypoin
 
 Reinforcement learning on board games (Tic-Tac-Toe): Q-Learning, Alpha-Beta and DQN agents behind a FastAPI + Gradio play interface. See its [project guide](./board-game-rl/ai-collab/project_guide.md).
 
+### [Diffusion Models Course](./diffusion-models-course/README.md)
+
+A self-study course on diffusion models, from DDPM derivations through score-based SDEs, DDIM, classifier-free guidance and flow matching to diffusion transformers and a 2026 research map. Twelve lessons (Traditional Chinese), executed lab notebooks that run on a CPU, and a tested reference implementation. Start with the [course map](./diffusion-models-course/lessons/00_course_map.md).
+
 ### [Deep Learning Karpathy](./deep-learning-karpathy/README.md)
 
 Tutorials reproducing Andrej Karpathy's material: GPT tokenizers (minBPE) and nanoGPT. See its [README](./deep-learning-karpathy/README.md) for details.
