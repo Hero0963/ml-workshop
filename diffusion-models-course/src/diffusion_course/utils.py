@@ -2,10 +2,16 @@
 """Small helpers shared by the labs and scripts."""
 
 import random
+import sys
+from pathlib import Path
 
 import numpy as np
 import torch
+from loguru import logger
 from torch import nn
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints"
 
 
 def get_device() -> torch.device:
@@ -29,3 +35,9 @@ def count_parameters(model: nn.Module) -> int:
 def broadcast_to(values: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
     """Reshape a per-sample vector of shape (B,) so it broadcasts against x of shape (B, ...)."""
     return values.reshape(-1, *([1] * (x.dim() - 1)))
+
+
+def notebook_logging() -> None:
+    """Plain one-line log messages on stdout, so notebook outputs stay readable."""
+    logger.remove()
+    logger.add(sys.stdout, format="{message}")

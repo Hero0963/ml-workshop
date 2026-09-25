@@ -2,6 +2,7 @@
 import pytest
 import torch
 
+from diffusion_course.evaluation import DigitClassifier, judge_samples
 from diffusion_course.models import TinyDiT, ToyMLP, UNet, build_model
 
 
@@ -51,3 +52,14 @@ def test_dit_unpatchify_inverts_patchify_layout() -> None:
 def test_build_model_rejects_unknown_architecture() -> None:
     with pytest.raises(ValueError):
         build_model("vae")
+
+
+def test_judge_samples_reports_confidence_diversity_and_accuracy() -> None:
+    classifier = DigitClassifier().eval()
+    images = torch.randn(20, 1, 28, 28)
+    report = judge_samples(
+        classifier, images, requested=torch.zeros(20, dtype=torch.long)
+    )
+    assert set(report) == {"confidence", "class_entropy", "accuracy"}
+    assert 0.1 <= report["confidence"] <= 1.0
+    assert 0.0 <= report["class_entropy"] <= 1.0

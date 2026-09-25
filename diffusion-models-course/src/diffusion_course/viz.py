@@ -59,13 +59,23 @@ def plot_vector_field(
     limit: float = TOY_LIMIT,
     resolution: int = 21,
     title: str = "",
+    normalize: bool = False,
 ) -> None:
-    """Draw arrows of field_fn (N, 2) -> (N, 2) on a regular grid."""
+    """Draw arrows of field_fn (N, 2) -> (N, 2) on a regular grid.
+
+    normalize: draw unit-length arrows (direction only) -- scores near a sharp mode are
+        so long that they would otherwise dwarf every other arrow.
+    """
     axis = torch.linspace(-limit, limit, resolution)
     xs, ys = torch.meshgrid(axis, axis, indexing="xy")
     grid = torch.stack([xs.flatten(), ys.flatten()], dim=1)
     with torch.no_grad():
         arrows = field_fn(grid).cpu()
+    scaling = {}
+    if normalize:
+        arrows = arrows / arrows.norm(dim=1, keepdim=True).clamp(min=1e-8)
+        spacing = 2 * limit / (resolution - 1)
+        scaling = {"angles": "xy", "scale_units": "xy", "scale": 1 / (0.8 * spacing)}
     ax.quiver(
         grid[:, 0],
         grid[:, 1],
@@ -73,6 +83,7 @@ def plot_vector_field(
         arrows[:, 1],
         color="tab:purple",
         alpha=0.8,
+        **scaling,
     )
     ax.set_xlim(-limit, limit)
     ax.set_ylim(-limit, limit)

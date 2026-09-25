@@ -18,10 +18,9 @@ from diffusion_course.flow_matching import flow_sample
 from diffusion_course.guidance import ClassifierFreeGuidance
 from diffusion_course.schedules import NoiseSchedule
 from diffusion_course.training import load_checkpoint
-from diffusion_course.utils import get_device, set_seed
+from diffusion_course.utils import PROJECT_ROOT, get_device, set_seed
 from diffusion_course.viz import new_axes, show_images
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SAMPLES_PER_CLASS = 8
 UNCONDITIONAL_SAMPLES = 64
 IMAGE_SHAPE = (1, 28, 28)

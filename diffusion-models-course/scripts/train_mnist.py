@@ -25,9 +25,13 @@ from diffusion_course.guidance import drop_labels
 from diffusion_course.models import build_model
 from diffusion_course.schedules import NoiseSchedule
 from diffusion_course.training import save_checkpoint, train
-from diffusion_course.utils import count_parameters, get_device, set_seed
+from diffusion_course.utils import (
+    CHECKPOINT_DIR,
+    count_parameters,
+    get_device,
+    set_seed,
+)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LABEL_DROP_PROB = 0.1
 
 
@@ -84,9 +88,7 @@ def main() -> None:
 
     suffix = "_cond" if args.conditional else ""
     out = args.out or (
-        PROJECT_ROOT
-        / "checkpoints"
-        / f"{args.dataset}_{args.method}_{args.arch}{suffix}.pt"
+        CHECKPOINT_DIR / f"{args.dataset}_{args.method}_{args.arch}{suffix}.pt"
     )
     save_checkpoint(
         out,

@@ -14,7 +14,9 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+from diffusion_course.utils import PROJECT_ROOT
+
+DATA_DIR = PROJECT_ROOT / "data"
 
 TOY_DATASETS = ("swiss_roll", "moons", "checkerboard", "gaussian_mixture")
 TOY_NOISE_STD = 0.05
