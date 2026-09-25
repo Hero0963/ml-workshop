@@ -95,7 +95,7 @@ $n$ 張卡各有一份模型，各處理 $B/n$ 筆資料，梯度做 all-reduce�
 
 $$\frac{1}{n}\sum_{k=1}^{n} \nabla \frac{1}{B/n}\sum_{i \in \text{shard}_k} \ell_i = \nabla \frac{1}{B}\sum_{i=1}^{B}\ell_i \tag{8.4}$$
 
-**數學上和單卡大 batch 完全相同**（Lab 08 §5 驗證）。代價是每步的通訊：ring all-reduce 每張卡約傳送 $2 \times$ 參數大小的資料，可與 backward 重疊。
+**數學上和單卡大 batch 完全相同**（Lab 08 §4 驗證）。代價是每步的通訊：ring all-reduce 每張卡約傳送 $2 \times$ 參數大小的資料，可與 backward 重疊。
 
 ### 2.6 切分模型狀態：ZeRO 與 FSDP
 

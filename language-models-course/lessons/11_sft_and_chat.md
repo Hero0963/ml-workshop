@@ -89,7 +89,7 @@ Transformer 產生每個 token 的計算量是固定的（$L$ 層）。「直接
 | 「…? Think step by step.」 | `7 + 5 = 12, write 2 carry 1. 4 + 8 + 1 = 13, write 3 carry 1. Write the carry 1. So 47 + 85 = 132.` |
 | 「…? Use the calculator.」 | 呼叫 `<|python_start|>47+85<|python_end|>`，再寫 `47 + 85 = 132.` |
 
-同一個模型、同樣的 SFT，三種格式的正確率差很多（Lab 11 §3）——這是第 12 課 RLVR 與 2025 年「推理模型」的起點：寫出更長的推理，是用推論時的算力換正確率。
+同一個模型、同樣的 SFT，三種格式的正確率差很多（Lab 11 §4）——這是第 12 課 RLVR 與 2025 年「推理模型」的起點：寫出更長的推理，是用推論時的算力換正確率。
 
 ### 2.5 工具使用
 

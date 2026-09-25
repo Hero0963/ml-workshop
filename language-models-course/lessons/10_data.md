@@ -106,7 +106,7 @@ benchmark 的題目常出現在網路上，進而進入訓練資料。檢查方�
 
 ### 2.7 合成資料
 
-TinyStories 本身就是合成資料（GPT-3.5／4 生成）；Phi 系列用「教科書風格」的合成資料訓練小模型（Gunasekar 等人 2023）。優點是可控；風險是分布變窄、錯誤被放大，模型只在自己生成的資料上反覆訓練會逐漸退化（Shumailov 等人 2023 稱為 model collapse）。Lab 10 §6 會看到 TinyStories 的另一個特徵：故事之間高度相似。
+TinyStories 本身就是合成資料（GPT-3.5／4 生成）；Phi 系列用「教科書風格」的合成資料訓練小模型（Gunasekar 等人 2023）。優點是可控；風險是分布變窄、錯誤被放大，模型只在自己生成的資料上反覆訓練會逐漸退化（Shumailov 等人 2023 稱為 model collapse）。Lab 10 §5 會看到 TinyStories 的另一個特徵：故事之間高度相似。
 
 ---
 
