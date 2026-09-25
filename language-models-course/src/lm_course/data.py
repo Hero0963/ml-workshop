@@ -110,6 +110,19 @@ GENDER_PAIRS = [
     ("husband", "wife"),
     ("nephew", "niece"),
 ]
+# a context only this pair appears in, so that e.g. "son" and "boy" are not interchangeable
+ROLES = {
+    "king": "rules the whole kingdom",
+    "prince": "rides a white horse",
+    "man": "drives a big truck",
+    "boy": "plays with toy cars",
+    "father": "reads stories to the children",
+    "son": "helps the old parents",
+    "brother": "shares a bedroom with siblings",
+    "uncle": "visits the family on holidays",
+    "husband": "wears a wedding ring",
+    "nephew": "sends letters to the relatives",
+}
 ROYAL = {"king", "queen", "prince", "princess"}
 YOUNG = {"prince", "princess", "boy", "girl", "son", "daughter", "nephew", "niece"}
 COUNTRIES = [
@@ -149,9 +162,11 @@ class Analogy:
     relation: str
 
 
-def _person_sentence(rng: random.Random, word: str, female: bool) -> str:
+def _person_sentence(rng: random.Random, word: str, female: bool, role: str) -> str:
     pronoun, possessive = ("she", "her") if female else ("he", "his")
     templates = [
+        f"the {word} {role}",
+        f"every day the {word} {role} because {pronoun} likes it",
         f"the {word} said that {pronoun} was tired",
         f"{pronoun} is a {word} and {possessive} home is here",
         f"the {word} smiled and {pronoun} waved",
@@ -159,21 +174,27 @@ def _person_sentence(rng: random.Random, word: str, female: bool) -> str:
     ]
     if word in ROYAL:
         templates += [
-            f"the {word} lives in the palace",
-            f"the {word} wears a golden crown",
-            f"the {word} rules the kingdom",
-            f"the royal {word} sat on the throne",
+            f"the {word} lives in {possessive} palace",
+            f"the {word} wears {possessive} golden crown",
+            f"the {word} rules {possessive} kingdom",
+            f"the royal {word} sat on {possessive} throne",
         ]
     else:
         templates += [
-            f"the {word} walks to the market",
-            f"the {word} works in the village",
-            f"the {word} cooks dinner at home",
+            f"the {word} walks to the market with {possessive} basket",
+            f"the {word} works in {possessive} village",
+            f"the {word} cooks dinner in {possessive} kitchen",
         ]
     templates += (
-        [f"the young {word} plays in the garden", f"the {word} goes to school"]
+        [
+            f"the young {word} plays in {possessive} garden",
+            f"the {word} goes to {possessive} school",
+        ]
         if word in YOUNG
-        else [f"the old {word} reads the newspaper", f"the {word} pays the bills"]
+        else [
+            f"the old {word} reads {possessive} newspaper",
+            f"the {word} pays {possessive} bills",
+        ]
     )
     sentence = rng.choice(templates)
     return f"{sentence} {rng.choice(FILLER)}" if rng.random() < 0.3 else sentence
@@ -196,6 +217,8 @@ def _country_sentence(
         f"{country} is a neighbor of {other[0]}",
         f"she learned {language} before moving to {country}",
         f"the {language} language is spoken in {capital}",
+        f"{language} is the language of {country}",
+        f"the people of {country} speak {language} at home",
     ]
     return rng.choice(templates)
 
@@ -213,7 +236,9 @@ def toy_world_corpus(num_sentences: int = 200_000, seed: int = 0) -> list[list[s
         if rng.random() < 0.5:
             male, female = rng.choice(GENDER_PAIRS)
             is_female = rng.random() < 0.5
-            text = _person_sentence(rng, female if is_female else male, is_female)
+            text = _person_sentence(
+                rng, female if is_female else male, is_female, ROLES[male]
+            )
         else:
             text = _country_sentence(rng, *rng.choice(COUNTRIES))
         sentences.append(text.split())
