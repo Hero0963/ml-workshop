@@ -1,0 +1,6 @@
+# Downloaded datasets and pretrained weights (fetched on first use)
+data/
+# Model weights and generated files from the labs and scripts
+checkpoints/
+outputs/
+*.pt
