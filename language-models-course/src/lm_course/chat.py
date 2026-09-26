@@ -228,6 +228,30 @@ STORY_TEMPLATES = ["Tell me a story about a {t}.", "Write a short story with a {
                    "Can you tell me a story about a {t}?"]  # fmt: skip
 
 
+# topics never used to build SFT data: a check that RL generalizes (lab 12)
+HELD_OUT_TOPICS = [
+    "frog",
+    "kite",
+    "apple",
+    "star",
+    "duck",
+    "train",
+    "doll",
+    "horse",
+    "shoe",
+    "bike",
+]
+
+
+def story_request(topic: str) -> list[Message]:
+    return [{"role": "user", "content": f"Tell me a story about a {topic}."}]
+
+
+def mentions_topic(topic: str, reply: str) -> float:
+    """Reward for lab 12: 1 if the reply uses the topic word (or its plural), else 0."""
+    return 1.0 if re.search(rf"\b{re.escape(topic)}s?\b", reply.lower()) else 0.0
+
+
 def story_conversations(
     stories: list[str], max_words: int = 120, seed: int = 0
 ) -> list[list[Message]]:

@@ -6,16 +6,20 @@ import pytest
 import torch
 
 from lm_course.chat import (
+    HELD_OUT_TOPICS,
     SPECIAL_TOKENS,
+    STORY_TOPICS,
     AdditionProblem,
     ChatEngine,
     addition_problems,
     addition_reward,
     calculator,
     extract_answer,
+    mentions_topic,
     render_conversation,
     render_for_completion,
     sft_batch,
+    story_request,
 )
 from lm_course.model import GPT, llama_style_config
 from lm_course.rl import (
@@ -102,6 +106,13 @@ def test_step_by_step_reply_is_correct_column_addition(a: int, b: int) -> None:
     assert int("".join(str(d) for d in reversed(digits))) == a + b
     assert p.question("steps").endswith("Think step by step.")
     assert p.question("tool").endswith("Use the calculator.")
+
+
+def test_topic_reward() -> None:
+    assert mentions_topic("cat", "The Cats played.") == 1.0
+    assert mentions_topic("cat", "A category of things.") == 0.0
+    assert not set(HELD_OUT_TOPICS) & set(STORY_TOPICS)
+    assert story_request("kite")[0]["content"] == "Tell me a story about a kite."
 
 
 def test_calculator_is_safe() -> None:
@@ -195,6 +206,12 @@ def test_completion_logprobs_match_a_manual_computation(tok: BPETokenizer) -> No
         )[0]
     expected = [full[2, 6], full[3, 7], full[4, 8]]
     torch.testing.assert_close(logprobs[1].detach(), torch.stack(expected))
+    hot, _ = completion_logprobs(model, prompt, completions, pad_id=0, temperature=2.0)
+    with torch.no_grad():
+        full_hot = torch.log_softmax(
+            model(torch.tensor([prompt + completions[1]])) / 2.0, dim=-1
+        )[0]
+    torch.testing.assert_close(hot[1, 0].detach(), full_hot[2, 6])
 
 
 def test_dpo_loss() -> None:
@@ -209,3 +226,4 @@ def test_pass_at_k() -> None:
     assert pass_at_k(10, 10, 1) == 1.0
     assert pass_at_k(10, 3, 1) == pytest.approx(0.3)
     assert pass_at_k(10, 3, 2) == pytest.approx(1 - (7 * 6) / (10 * 9))
+    assert pass_at_k(10, 3.0, 2) == pass_at_k(10, 3, 2)  # a sum of 0/1 rewards

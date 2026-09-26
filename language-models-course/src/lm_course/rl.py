@@ -19,12 +19,18 @@ from lm_course.model import GPT
 
 
 def completion_logprobs(
-    model: GPT, prompt: list[int], completions: list[list[int]], pad_id: int
+    model: GPT,
+    prompt: list[int],
+    completions: list[list[int]],
+    pad_id: int,
+    temperature: float = 1.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """log p(token | everything before it) for every completion token, and a mask.
 
     Returns (logprobs, mask), both (num_completions, max_completion_length); the mask is 0 on
     padding. All completions share one prompt, so they are processed as one batch.
+    ``temperature`` must match the one the completions were sampled with: the policy being
+    trained is the tempered distribution softmax(logits / temperature).
     """
     device = next(model.parameters()).device
     length = max(len(c) for c in completions)
@@ -39,7 +45,7 @@ def completion_logprobs(
     batch, mask = batch.to(device), mask.to(device)
     # keep only the positions whose next token is a completion token
     logits = model(batch[:, :-1])[:, len(prompt) - 1 :]
-    logprobs = F.log_softmax(logits.float(), dim=-1)
+    logprobs = F.log_softmax(logits.float() / temperature, dim=-1)
     targets = batch[:, len(prompt) :]
     return logprobs.gather(-1, targets[..., None]).squeeze(-1) * mask, mask
 
@@ -94,7 +100,9 @@ def dpo_loss(
 
 def pass_at_k(n: int, c: int, k: int) -> float:
     """P(at least one of k samples is correct), estimated from n samples with c correct:
-    1 - C(n - c, k) / C(n, k) (Chen et al. 2021)."""
+    1 - C(n - c, k) / C(n, k) (Chen et al. 2021). ``c`` may be a float count (a sum of 0/1
+    rewards)."""
+    n, c = int(n), int(round(c))
     if n - c < k:
         return 1.0
     return 1.0 - math.comb(n - c, k) / math.comb(n, k)
