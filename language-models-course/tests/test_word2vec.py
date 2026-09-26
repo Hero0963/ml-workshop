@@ -125,6 +125,16 @@ def test_toy_world_is_deterministic_and_covers_every_analogy_word() -> None:
         assert {q.a, q.b, q.c, q.d} <= words
 
 
+def test_toy_world_roles_are_what_tell_son_from_boy() -> None:
+    def contexts(corpus: list[list[str]], word: str) -> set[str]:
+        return {w for sentence in corpus if word in sentence for w in sentence} - {word}
+
+    with_roles = toy_world_corpus(20_000, seed=0)
+    without = toy_world_corpus(20_000, seed=0, with_roles=False)
+    assert contexts(with_roles, "son") != contexts(with_roles, "boy")
+    assert contexts(without, "son") == contexts(without, "boy")
+
+
 def test_words_from_text() -> None:
     assert words_from_text("Lily's dog ran! It was 3 o'clock.") == [
         "lily's",

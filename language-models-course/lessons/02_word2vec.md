@@ -87,7 +87,7 @@ $$\frac{P(k \mid \text{king})}{P(k \mid \text{queen})} \approx \frac{P(k \mid \t
 
 （例如 $k$ = he、she、his、her 時比例很極端，$k$ = crown 時兩邊都約等於 1），那麼在 log 空間裡「king − queen」和「man − woman」就是同一個位移。**向量的線性結構，來自共現機率比值的一致性**。
 
-它也說明了類比什麼時候會失敗：語料裡如果 son 和 boy 的上下文完全相同，模型根本分不出兩者，「king : queen :: son : ?」答 girl 也無可厚非（Lab 02 §2 會親眼看到）。另外，(2.6) 排除 $a, b, c$ 本身很關鍵：不排除的話，答案常常就是 $c$（Nissim 等人 2020 對此有詳細批評）。
+它也說明了類比什麼時候會失敗：語料裡如果 son 和 boy 的上下文完全相同，模型根本分不出兩者，「king : queen :: son : ?」答 niece 或 girl 也無可厚非（Lab 02 §2 會親眼看到）。另外，(2.6) 排除 $a, b, c$ 本身很關鍵：不排除的話，答案常常就是 $c$（Nissim 等人 2020 對此有詳細批評）。
 
 ### 2.6 SGNS 其實在分解一個矩陣（Levy & Goldberg 2014）
 

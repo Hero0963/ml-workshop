@@ -244,9 +244,8 @@ def toy_world_corpus(
         if rng.random() < 0.5:
             male, female = rng.choice(GENDER_PAIRS)
             is_female = rng.random() < 0.5
-            text = _person_sentence(
-                rng, female if is_female else male, is_female, ROLES[male]
-            )
+            role = ROLES[male] if with_roles else None
+            text = _person_sentence(rng, female if is_female else male, is_female, role)
         else:
             text = _country_sentence(rng, *rng.choice(COUNTRIES))
         sentences.append(text.split())
