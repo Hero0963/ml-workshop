@@ -21,6 +21,7 @@ SUBPROJECTS = [
     "thread-the-grid",
     "board-game-rl",
     "diffusion-models-course",
+    "language-models-course",
     "deep-learning-karpathy",
     "lingua-tutor",
     "more_simple_reinforcement_learning",

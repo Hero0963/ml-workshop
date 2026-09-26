@@ -21,6 +21,10 @@ Reinforcement learning on board games (Tic-Tac-Toe): Q-Learning, Alpha-Beta and 
 
 A self-study course on diffusion models, from DDPM derivations through score-based SDEs, DDIM, classifier-free guidance and flow matching to diffusion transformers and a 2026 research map. Twelve lessons (Traditional Chinese), executed lab notebooks that run on a CPU, and a tested reference implementation. Start with the [course map](./diffusion-models-course/lessons/00_course_map.md).
 
+### [Language Models Course](./language-models-course/README.md)
+
+A self-study course on language models that integrates word2vec, GPT-2, Stanford CS336, nanochat and text embedding models: n-gram baselines, word2vec, byte-level BPE, a configurable GPT that loads OpenAI's GPT-2 weights, pretraining with Muon, scaling laws, systems, inference, data pipelines, SFT with tool use, GRPO and DPO, and contrastive embedding models, plus a 2026 frontier map. Sixteen lessons (Traditional Chinese), executed lab notebooks that run on a CPU, and a tested reference implementation. Start with the [course map](./language-models-course/lessons/00_course_map.md).
+
 ### [Deep Learning Karpathy](./deep-learning-karpathy/README.md)
 
 Tutorials reproducing Andrej Karpathy's material: GPT tokenizers (minBPE) and nanoGPT. See its [README](./deep-learning-karpathy/README.md) for details.
