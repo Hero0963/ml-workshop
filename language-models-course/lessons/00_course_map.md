@@ -79,7 +79,7 @@ graph TD
 | 週 | 課 | 重點 |
 |---|---|---|
 | 1 | 00–03 | 機率與評估指標、word2vec、BPE（實驗都在 2 分鐘內） |
-| 2 | 04–06 | Transformer、GPT-2、預訓練（Lab 06 約 25 分鐘，**後面四個實驗都要用它的模型**） |
+| 2 | 04–06 | Transformer、GPT-2、預訓練（Lab 06 約 40 分鐘，其中預訓練 27 分鐘，**後面四個實驗都要用它的模型**） |
 | 3 | 07–10 | scaling laws、系統、推論、資料 |
 | 4 | 11–15 | SFT、RL、embedding、評估、前沿 |
 
@@ -116,7 +116,7 @@ uv run pytest                # 基線：全部測試應該通過（需要網路�
 | GPT-2 124M 的 `vocab.json`、`merges.txt` | 1.5 MB | Lab 03、05 | Modified MIT |
 | GPT-2 124M 的 `model.safetensors` | 548 MB | Lab 05 | Modified MIT |
 
-**硬體**：所有實驗都能在 CPU 上跑。notebook 裡的輸出是在 4 核心雲端 CPU 上實跑的結果；最久的是 Lab 06（預訓練約 25 分鐘）。有 GPU 就把 notebook 開頭的步數調大，或用 `scripts/pretrain.py` 做更長的訓練。
+**硬體**：所有實驗都能在 CPU 上跑。notebook 裡的輸出是在 4 核心雲端 CPU 上實跑的結果；最久的是 Lab 06（約 40 分鐘，其中預訓練 27 分鐘）。有 GPU 就把 notebook 開頭的步數調大，或用 `scripts/pretrain.py` 做更長的訓練。
 
 ## 程式碼怎麼讀
 

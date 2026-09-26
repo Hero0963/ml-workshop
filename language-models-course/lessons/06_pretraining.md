@@ -118,7 +118,7 @@ nanochat 還有一批較新的小技巧（value embeddings、每層可學的 res
 - **很快掉到 unigram 程度**：模型先學會「哪些 token 常見」，接著學 bigram、再學更長的結構。
 - **train 與 val 的差距**：資料重複多次後，差距變大代表開始背訓練資料。
 - **尖峰**：學習率太大或數值問題；裁剪與 QK-norm、soft-cap 都是在抑制它。
-- **最後的急降**：WSD／cosine 的遞減段，loss 往往明顯再掉一截——「退火」讓權重停在谷底。
+- **最後的急降**：WSD／cosine 的遞減段，loss 往往明顯再掉一截——「退火」讓權重停在谷底。這一截是**相對於不降學習率的曲線**而言；單看一條曲線不一定看得出來（Lab 06 的 1,500 步就看不出轉折，練習 9 把它量出來）。
 
 ---
 
@@ -159,6 +159,7 @@ nanochat 還有一批較新的小技巧（value embeddings、每層可學的 res
 6. 把學習率乘 3 或除以 3，loss 曲線怎麼變？
 7. 拿掉梯度裁剪（`grad_clip=None`），有沒有出現尖峰？
 8. 用 `scripts/pretrain.py --steps 3000` 訓練更久，bits-per-byte 還能降多少？
+9. 把排程換成「暖身後固定學習率」（`schedule=lambda step, total, warmup: min(1.0, (step + 1) / warmup)`），和 WSD 比較第 900 步（WSD 開始遞減）之後的驗證 loss：遞減段到底帶來多少？
 
 ## 6. 延伸閱讀
 
