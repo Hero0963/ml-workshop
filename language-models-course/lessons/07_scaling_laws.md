@@ -106,7 +106,7 @@ $$N_{\text{opt}} \approx \sqrt{\frac{C}{6 \times 20}}, \qquad D_{\text{opt}} \ap
 3. 對每個 $C_i$，在 $\log N$ 上擬合一條拋物線，取最低點 $N^*(C_i)$；
 4. 在 log-log 上擬合 $N^*(C) = kC^a$。
 
-Lab 07 在 CPU 上用 $10^{12}$–$10^{13}$ FLOPs 的預算（比 GPT-3 小 11 個數量級）做一次。
+Lab 07 在 CPU 上用 $3 \times 10^{12}$–$3 \times 10^{13}$ FLOPs 的預算（比 GPT-3 的約 $3 \times 10^{23}$ 小 10 個數量級）做一次。
 
 ### 2.6 算力最佳以外的考量
 
