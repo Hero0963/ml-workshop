@@ -32,6 +32,7 @@
 | $H(p, q) = H(p) + \mathrm{KL}(p \,\|\, q)$ | (1.3) |
 | perplexity $= e^{\mathcal{L}}$；bpb $= \dfrac{\mathcal{L}_{\text{nats/token}}}{\ln 2 \cdot \overline{\text{bytes/token}}}$ | (1.4) |
 | 加 k 平滑 $\dfrac{c(h, x) + k}{c(h) + k\lvert V\rvert}$ | (1.7) |
+| Witten–Bell 插值 $\lambda(h) = \dfrac{c(h)}{c(h) + u(h)}$ | (1.8)(1.9) |
 
 ## word2vec（第 02 課）
 

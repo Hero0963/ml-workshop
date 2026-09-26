@@ -89,11 +89,16 @@ $$\hat p_{\text{ML}}(x_t \mid h) = \frac{c(h, x_t)}{c(h)}, \qquad h = x_{t-n+1:t
 
 $$\hat p_k(x_t \mid h) = \frac{c(h, x_t) + k}{c(h) + k|V|} \tag{1.7}$$
 
-**插值**（Jelinek–Mercer）：把不同長度前文的估計混在一起，長前文有資料時用它，沒有時自動退回短前文：
+**插值**：把不同長度前文的估計混在一起，長前文有資料時用它，沒有時自動退回短前文。記 $h_j$ 為最後 $j - 1$ 個 token（$j$ 階模型的前文），從均勻分布 $\hat p_0 = 1/|V|$ 開始一階一階往上疊：
 
-$$\hat p(x_t \mid h) = \sum_{j=0}^{n-1} \lambda_j\, \hat p_{\text{ML}}(x_t \mid \text{最後 } j \text{ 個 token}), \qquad \sum_j \lambda_j = 1 \tag{1.8}$$
+$$\hat p_j(x_t \mid h_j) = \lambda(h_j)\, \hat p_{\text{ML}}(x_t \mid h_j) + \left(1 - \lambda(h_j)\right) \hat p_{j-1}(x_t \mid h_{j-1}) \tag{1.8}$$
 
-（$j = 0$ 項用均勻分布。）更講究的 Kneser–Ney 平滑在神經網路之前是業界標準；CCNet 等資料管線到今天還用 n-gram 模型的 perplexity 當品質過濾器（第 10 課）。
+$\lambda$ 是「相信這個前文多少」。若它是固定常數，就是 Jelinek–Mercer 插值；**Witten–Bell** 讓它依前文而定：
+
+$$\lambda(h) = \frac{c(h)}{c(h) + u(h)} \tag{1.9}$$
+
+$u(h)$ 是在 $h$ 之後出現過幾種**不同**的 token。直觀：前文看過很多次、後面接的東西又很固定，就相信它；前文很少見、或後面什麼都可能接（$u$ 大），就多分一點給短前文。沒看過的前文 $c(h) = 0$，$\lambda = 0$，整個交給短前文。
+更講究的 Kneser–Ney 平滑在神經網路之前是業界標準；CCNet 等資料管線到今天還用 n-gram 模型的 perplexity 當品質過濾器（第 10 課）。
 
 ### 2.5 從數數到梯度下降
 
@@ -104,7 +109,7 @@ $$\hat p(x_t \mid h) = \sum_{j=0}^{n-1} \lambda_j\, \hat p_{\text{ML}}(x_t \mid 
 
 ### 2.6 用語言模型生成
 
-按 (1.1) 一個一個抽：$x_t \sim p_\theta(\cdot \mid x_{<t})$。抽樣時常用溫度、top-k、top-p 修改分布（第 05 課）。n-gram 的生成很能說明問題：$n$ 小時字串很亂；$n$ 大時會整段背出訓練文字（因為長前文幾乎只出現過一次）——**「低 loss」和「會創造」是兩件事**，實驗裡會看到。
+按 (1.1) 一個一個抽：$x_t \sim p_\theta(\cdot \mid x_{<t})$。抽樣時常用溫度、top-k、top-p 修改分布（第 05 課）。n-gram 的生成很能說明問題：$n$ 小時字串很亂；$n$ 大時，最大概似的 n-gram 只會走訓練資料裡走過的路，每一段 $n$ 個 token 都原封不動來自訓練文字，生成的是**拼貼**——局部通順，整體跳來跳去；前文長到幾乎只出現過一次時，就會整段背出來。**「低 loss」和「會創造」是兩件事**，實驗裡會看到。
 
 ---
 
@@ -112,8 +117,8 @@ $$\hat p(x_t \mid h) = \sum_{j=0}^{n-1} \lambda_j\, \hat p_{\text{ML}}(x_t \mid 
 
 | 概念 | 位置 |
 |---|---|
-| (1.6)(1.7) 加 k 平滑的 n-gram | `ngram.AddKLM`（計數用 `ngram.NGramCounts`：把前文當成 256 進位的整數，排序後二分搜尋） |
-| (1.8) 插值 | `ngram.InterpolatedLM` |
+| (1.6)(1.7) 加 k 平滑的 n-gram | `ngram.AddKLM`（計數用 `ngram.NGramCounts`：把前文雜湊成一個整數，排序後二分搜尋） |
+| (1.8)(1.9) Witten–Bell 插值 | `ngram.InterpolatedLM`（`up_to(n)` 只用前 $n$ 階，共用同一份計數） |
 | 每位元組的 bits | `ngram.bits_per_byte` |
 | (1.2)(1.4) 神經網路的 loss 與 bpb | `training.lm_loss`、`training.evaluate(..., token_bytes=...)` |
 | 每個 token 的位元組數 | `tokenizer.BPETokenizer.token_byte_lengths`（特殊 token 記 0） |
@@ -140,7 +145,7 @@ $$\hat p(x_t \mid h) = \sum_{j=0}^{n-1} \lambda_j\, \hat p_{\text{ML}}(x_t \mid 
 **動手改**（在 `01_ngram.ipynb`）
 
 6. 把加 k 平滑的 $k$ 從 0.01 掃到 1，每個 $n$ 的最佳 $k$ 一樣嗎？
-7. 調整插值的權重，能把驗證 bpb 再壓低多少？
+7. 把 (1.9) 換成固定的 $\lambda$（Jelinek–Mercer），試幾個值：驗證 bpb 最好能到多少？和 Witten–Bell 比呢？
 8. 把驗證資料換成一段 Python 程式碼（或中文），bpb 會怎麼變？為什麼？
 
 ## 6. 延伸閱讀

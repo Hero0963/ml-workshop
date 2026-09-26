@@ -59,6 +59,30 @@ def test_interpolation_sums_to_one_and_handles_unseen_contexts() -> None:
     assert np.all(model.probs_at(unseen, np.arange(4, len(unseen))) > 0)
 
 
+def test_witten_bell_trusts_frequent_contexts_and_falls_back_on_unseen_ones() -> None:
+    model = InterpolatedLM(3).fit(text_to_bytes("abababababac"))
+    # "ab" was followed by "a" 5 times out of 5: c = 5, u = 1, so lambda = 5/6
+    assert model.next_distribution(b"ab")[ord("a")] > 0.8
+    # an unseen context hands everything to the shorter contexts
+    shorter = model.up_to(2).next_distribution(b"b")
+    assert np.allclose(model.next_distribution(b"zb"), shorter)
+
+
+def test_long_orders_and_shared_counts() -> None:
+    sentence = "the quick brown fox jumps over the lazy dog. "
+    data = text_to_bytes(sentence * 5)
+    full = InterpolatedLM(12).fit(data)
+    for n in (1, 5, 12):
+        separate = InterpolatedLM(n).fit(data)
+        assert bits_per_byte(full.up_to(n), data) == pytest.approx(
+            bits_per_byte(separate, data)
+        )
+    ml = AddKLM.from_counts(full.levels[11], k=0.0)
+    # every 11-byte context has one continuation, so sampling walks the training text
+    out = sample_text(ml, "the quick brown", 40, np.random.default_rng(0))
+    assert out == (sentence * 2)[: len("the quick brown") + 40]
+
+
 def test_sampling_from_a_deterministic_model_repeats_the_text() -> None:
     model = AddKLM(6, k=0.0).fit(text_to_bytes("hello world. " * 10))
     out = sample_text(model, "hello", 20, np.random.default_rng(0))

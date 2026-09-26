@@ -1,9 +1,11 @@
 # src/lm_course/ngram.py
 """Count-based byte-level n-gram language models (lesson 01).
 
-The counts are stored as sorted integer keys: a context of n-1 bytes is read as a base-256
-number, so "context followed by byte b" is the key ``context * 256 + b``. Looking up a
+The counts are stored as sorted integer keys: a context of n-1 bytes is hashed to a 55-bit
+integer, so "context followed by byte b" is the key ``hash(context) * 256 + b``. Looking up a
 probability is a binary search, and fitting on 20 MB of text takes a few seconds with numpy.
+(Two different contexts could share a hash, but with ~10 million contexts and 2^55 possible
+hashes the chance that any pair collides is about 0.1%, and one collision would barely matter.)
 """
 
 import math
@@ -11,7 +13,10 @@ import math
 import numpy as np
 
 VOCAB = 256
-MAX_ORDER = 7  # 256 ** 7 still fits in an int64 key
+HASH_BITS = 55  # hash * 256 + byte must fit in an int64
+HASH_MULTIPLIER = np.uint64(
+    0x9E3779B97F4A7C15
+)  # odd, so each step is a bijection mod 2^64
 
 
 def text_to_bytes(text: str) -> np.ndarray:
@@ -19,24 +24,30 @@ def text_to_bytes(text: str) -> np.ndarray:
 
 
 def _context_keys(data: np.ndarray, order: int, positions: np.ndarray) -> np.ndarray:
-    """Base-256 number formed by the ``order - 1`` bytes before each position."""
-    keys = np.zeros(len(positions), dtype=np.int64)
+    """A hash of the ``order - 1`` bytes before each position (0 for the empty context)."""
+    keys = np.zeros(len(positions), dtype=np.uint64)
     for offset in range(order - 1, 0, -1):
-        keys = keys * VOCAB + data[positions - offset].astype(np.int64)
-    return keys
+        byte = data[positions - offset].astype(np.uint64) + np.uint64(1)
+        keys = (
+            keys + byte
+        ) * HASH_MULTIPLIER  # uint64 arithmetic wraps around mod 2^64
+    # the top bits of a product depend on all the bits of its inputs
+    return (keys >> np.uint64(64 - HASH_BITS)).astype(np.int64)
 
 
 class NGramCounts:
-    """Counts of (context, next byte) and of contexts, for one order n."""
+    """Counts of (context, next byte) and of contexts, for one order n, plus the number of
+    distinct bytes seen after each context (what Witten-Bell smoothing needs)."""
 
     def __init__(self, order: int) -> None:
-        if not 1 <= order <= MAX_ORDER:
-            raise ValueError(f"order must be in 1..{MAX_ORDER}")
+        if order < 1:
+            raise ValueError("order must be at least 1")
         self.order = order
         self.pair_keys = np.zeros(0, dtype=np.int64)
         self.pair_counts = np.zeros(0, dtype=np.int64)
         self.context_keys = np.zeros(0, dtype=np.int64)
         self.context_counts = np.zeros(0, dtype=np.int64)
+        self.context_types = np.zeros(0, dtype=np.int64)
 
     def fit(self, data: np.ndarray) -> "NGramCounts":
         positions = np.arange(self.order - 1, len(data))
@@ -44,6 +55,8 @@ class NGramCounts:
         pairs = contexts * VOCAB + data[positions].astype(np.int64)
         self.pair_keys, self.pair_counts = np.unique(pairs, return_counts=True)
         self.context_keys, self.context_counts = np.unique(contexts, return_counts=True)
+        # pair keys are sorted by context first, so this lines up with context_keys
+        _, self.context_types = np.unique(self.pair_keys // VOCAB, return_counts=True)
         return self
 
     @staticmethod
@@ -54,23 +67,23 @@ class NGramCounts:
 
     def counts_at(
         self, data: np.ndarray, positions: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """c(context, next) and c(context) for the byte at each position of ``data``."""
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """c(context, next), c(context) and the number of distinct bytes seen after the
+        context, for the byte at each position of ``data``."""
         contexts = _context_keys(data, self.order, positions)
         pairs = contexts * VOCAB + data[positions].astype(np.int64)
         return (
             self._lookup(self.pair_keys, self.pair_counts, pairs),
             self._lookup(self.context_keys, self.context_counts, contexts),
+            self._lookup(self.context_keys, self.context_types, contexts),
         )
 
     def next_counts(self, context: bytes) -> np.ndarray:
         """c(context, b) for all 256 bytes b after one given context (zeros if it is too short)."""
         if len(context) < self.order - 1:
             return np.zeros(VOCAB, dtype=np.int64)
-        ctx = np.frombuffer(context[len(context) - (self.order - 1) :], dtype=np.uint8)
-        key = 0
-        for byte in ctx:
-            key = key * VOCAB + int(byte)
+        data = np.frombuffer(context + b"\0", dtype=np.uint8)
+        key = _context_keys(data, self.order, np.array([len(context)]))[0]
         query = key * VOCAB + np.arange(VOCAB, dtype=np.int64)
         return self._lookup(self.pair_keys, self.pair_counts, query)
 
@@ -92,8 +105,15 @@ class AddKLM:
         self.counts.fit(data)
         return self
 
+    @classmethod
+    def from_counts(cls, counts: NGramCounts, k: float = 1.0) -> "AddKLM":
+        """Reuse counts that were already fitted (e.g. one level of an InterpolatedLM)."""
+        model = cls(counts.order, k)
+        model.counts = counts
+        return model
+
     def probs_at(self, data: np.ndarray, positions: np.ndarray) -> np.ndarray:
-        pair, context = self.counts.counts_at(data, positions)
+        pair, context, _ = self.counts.counts_at(data, positions)
         with np.errstate(divide="ignore", invalid="ignore"):
             return (pair + self.k) / (context + self.k * VOCAB)
 
@@ -104,22 +124,18 @@ class AddKLM:
 
 
 class InterpolatedLM:
-    """Mix the maximum-likelihood estimates of every order 1..n (Jelinek-Mercer):
+    """Interpolate every order from the uniform distribution up to n (Witten-Bell):
 
-    P(b | ctx) = sum_j w_j P_ML_j(b | last j-1 bytes of ctx) + w_0 / 256,
+    P_j(b | h) = lam(h) P_ML(b | h) + (1 - lam(h)) P_{j-1}(b | h shortened by one byte),
+    lam(h) = c(h) / (c(h) + u(h)),  P_0(b) = 1 / 256,
 
-    where an order whose context was never seen drops out and the remaining weights are
-    renormalized. Short contexts are always available, long ones are used when they help.
+    where u(h) is the number of distinct bytes seen after h. A context seen often, with few
+    different continuations, is trusted; a rare or unseen one (lam = 0) hands its probability
+    to the shorter context. u(h) is an estimate of how likely a new continuation is.
     """
 
-    def __init__(self, order: int, weights: list[float] | None = None) -> None:
+    def __init__(self, order: int) -> None:
         self.order = order
-        # default: geometric weights that favor longer contexts; weights[0] is the uniform
-        self.weights = weights or [0.5**i for i in range(order, -1, -1)]
-        if len(self.weights) != order + 1:
-            raise ValueError(
-                "need one weight per order plus one for the uniform distribution"
-            )
         self.levels = [NGramCounts(j) for j in range(1, order + 1)]
 
     def fit(self, data: np.ndarray) -> "InterpolatedLM":
@@ -127,25 +143,29 @@ class InterpolatedLM:
             level.fit(data)
         return self
 
+    def up_to(self, order: int) -> "InterpolatedLM":
+        """The same model using only orders 1..order (shares the fitted counts)."""
+        model = InterpolatedLM(0)
+        model.order, model.levels = order, self.levels[:order]
+        return model
+
     def probs_at(self, data: np.ndarray, positions: np.ndarray) -> np.ndarray:
-        mixed = np.full(len(positions), self.weights[0] / VOCAB)
-        total_weight = np.full(len(positions), self.weights[0])
-        for weight, level in zip(self.weights[1:], self.levels):
-            pair, context = level.counts_at(data, positions)
-            seen = context > 0
-            mixed += np.where(seen, weight * pair / np.maximum(context, 1), 0.0)
-            total_weight += np.where(seen, weight, 0.0)
-        return mixed / total_weight
+        probs = np.full(len(positions), 1.0 / VOCAB)
+        for level in self.levels:
+            pair, context, types = level.counts_at(data, positions)
+            lam = context / np.maximum(context + types, 1)
+            probs = lam * pair / np.maximum(context, 1) + (1 - lam) * probs
+        return probs
 
     def next_distribution(self, context: bytes) -> np.ndarray:
-        mixed = np.full(VOCAB, self.weights[0] / VOCAB)
-        total_weight = self.weights[0]
-        for weight, level in zip(self.weights[1:], self.levels):
+        probs = np.full(VOCAB, 1.0 / VOCAB)
+        for level in self.levels:
             counts = level.next_counts(context)
-            if counts.sum() > 0:
-                mixed += weight * counts / counts.sum()
-                total_weight += weight
-        return mixed / total_weight
+            total, types = counts.sum(), np.count_nonzero(counts)
+            if total > 0:
+                lam = total / (total + types)
+                probs = lam * counts / total + (1 - lam) * probs
+        return probs
 
 
 def bits_per_byte(
