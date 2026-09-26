@@ -29,7 +29,7 @@
 
 - **BPE**：GPT-2、CS336 作業 1、nanochat（rustbpe）、Karpathy 的 minBPE 都是同一個演算法 → 第 03 課講一次，差別只在「切字的正規表示式」與詞彙量，用一張表比較。
 - **Transformer 架構**：GPT-2（2019）→ CS336 講的「現代預設」（RMSNorm、RoPE、SwiGLU）→ nanochat 再往前走（ReLU²、QK-norm、logit soft-cap…）→ 用同一個可切換的 `GPTConfig` 實作，第 04–06 課逐一比較。
-- **後訓練**：CS336 作業 5（SFT、數學推理的 RL、DPO）與 nanochat（SFT、GSM8K 上的簡化 GRPO）→ 第 11、12 課用同一個玩具任務（加法）做完 SFT → 工具使用 → RL → DPO。
+- **後訓練**：CS336 作業 5（SFT、數學推理的 RL、DPO）與 nanochat（SFT、GSM8K 上的簡化 GRPO）→ 第 11 課用同一個 SFT 模型學會講故事、加法（三種回答格式）與工具使用；第 12 課在「故事有沒有切題」上做 GRPO、KL 懲罰與 DPO，並說明為什麼加法題的 RL 在這個規模學不起來。
 - **embedding**：word2vec 的「詞向量」與 GPT 的「token embedding 表」是同一種東西；第 13 課把預訓練好的 GPT 變成句子 embedding 模型，繞回起點。
 
 ## 課程地圖
@@ -116,7 +116,7 @@ uv run pytest                # 基線：全部測試應該通過（需要網路�
 | GPT-2 124M 的 `vocab.json`、`merges.txt` | 1.5 MB | Lab 03、05 | Modified MIT |
 | GPT-2 124M 的 `model.safetensors` | 548 MB | Lab 05 | Modified MIT |
 
-**硬體**：所有實驗都能在 CPU 上跑。notebook 裡的輸出是在 4 核心雲端 CPU 上實跑的結果；最久的是 Lab 06（約 40 分鐘，其中預訓練 27 分鐘）。有 GPU 就把 notebook 開頭的步數調大，或用 `scripts/pretrain.py` 做更長的訓練。
+**硬體**：所有實驗都能在 CPU 上跑。notebook 裡的輸出是在 4 核心雲端 CPU 上實跑的結果；最久的是 Lab 07（IsoFLOP 實驗約 80 分鐘，只跑前兩個預算約 25 分鐘）與 Lab 06（約 40 分鐘，其中預訓練 27 分鐘），其次是 Lab 13（約 23 分鐘）與 Lab 11（約 18 分鐘），其餘都在 10 分鐘內。有 GPU 就把 notebook 開頭的步數調大，或用 `scripts/pretrain.py` 做更長的訓練。
 
 ## 程式碼怎麼讀
 

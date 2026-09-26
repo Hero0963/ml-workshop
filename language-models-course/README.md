@@ -58,9 +58,11 @@ are marked `network` and skip themselves when offline.
 tokenizer; later labs train an identical one if it is missing.
 
 **Hardware.** Every lab runs on a CPU; the executed outputs come from a 4-core cloud CPU. Most
-labs take a few minutes; the longest are lab 06 (pretraining, about 45 minutes including the
-short comparisons), lab 11 (two SFT runs) and lab 07 (the IsoFLOP sweep). With a GPU, raise the
-step counts at the top of each notebook, or pretrain for longer from the command line:
+labs take a few minutes; the longest are lab 07 (the IsoFLOP sweep, about 80 minutes; its first
+two budgets alone take about 25), lab 06 (about 40 minutes, 27 of them pretraining), lab 13
+(about 23 minutes) and lab 11 (about 18 minutes). Do not run two training notebooks at the same
+time: they compete for the same cores. With a GPU, raise the step counts at the top of each
+notebook, or pretrain for longer from the command line:
 
 ```bash
 uv run python scripts/pretrain.py --steps 3000
@@ -85,8 +87,8 @@ language-models-course/
 │   ├── kernels.py           #   online softmax, tiled (FlashAttention-style) attention, roofline
 │   ├── quantization.py      #   absmax int8 / int4 weight quantization
 │   ├── data_pipeline.py     #   Gopher rules, MinHash + LSH dedup, quality classifier, contamination
-│   ├── chat.py              #   chat format, SFT masks, addition task, calculator tool, chat engine
-│   ├── rl.py                #   policy-gradient / GRPO loss, DPO, pass@k
+│   ├── chat.py              #   chat format, SFT masks, addition task, topic reward, calculator tool, chat engine
+│   ├── rl.py                #   policy-gradient / GRPO loss, KL penalty, DPO, pass@k
 │   ├── embeddings.py        #   pooling, InfoNCE, Matryoshka, retrieval metrics, BM25
 │   ├── artifacts.py         #   shared tokenizer, token streams and base model
 │   └── data.py              #   downloads and generated corpora
