@@ -6,6 +6,7 @@
   with a baseline, which is what nanochat's ``chat_rl`` does.
 - ``group_advantages``: GRPO's baseline = the mean reward of the other samples of the same
   prompt (optionally divided by their standard deviation).
+- ``kl_penalty``: the per-token KL(pi || pi_ref) estimate GRPO adds to its loss.
 - ``dpo_loss``: Direct Preference Optimization.
 - ``pass_at_k``: the unbiased estimator from the HumanEval paper.
 """
@@ -80,6 +81,19 @@ def policy_gradient_loss(
         ratio * adv, torch.clamp(ratio, 1 - clip_eps, 1 + clip_eps) * adv
     )
     return -(per_token * mask).sum() / mask.sum().clamp(min=1)
+
+
+def kl_penalty(
+    logprobs: torch.Tensor, reference_logprobs: torch.Tensor, mask: torch.Tensor
+) -> torch.Tensor:
+    """Mean over completion tokens of ref/pi - log(ref/pi) - 1 (the "k3" estimator).
+
+    Each term is >= 0, and on tokens sampled from pi its expectation is exactly
+    KL(pi || pi_ref); DeepSeekMath's GRPO adds beta times this to the loss.
+    """
+    log_ratio = reference_logprobs - logprobs
+    per_token = torch.exp(log_ratio) - log_ratio - 1
+    return (per_token * mask).sum() / mask.sum().clamp(min=1)
 
 
 def dpo_loss(

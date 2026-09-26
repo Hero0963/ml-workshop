@@ -9,6 +9,7 @@
 - DPO 怎麼做到「不需要獎勵模型、也不需要抽樣」？
 - DeepSeek-R1 用的 GRPO 是什麼？nanochat 為什麼說它的「GRPO」其實更像 REINFORCE？
 - RL 到底讓模型學會新東西，還是只是讓它更常答對本來就會的題目？
+- 為什麼獎勵越高，結果有時候反而越糟？
 
 ---
 
@@ -89,7 +90,13 @@ DeepSeekMath（Shao 等人 2024）提出 GRPO：對每個 prompt 抽 $G$ 個回�
 
 $$A_i = \frac{r_i - \mathrm{mean}(r_1, \dots, r_G)}{\mathrm{std}(r_1, \dots, r_G)} \tag{12.9}$$
 
-再用 (12.5) 的 clip 目標，加上對參考模型的 KL 懲罰。DeepSeek-R1（2025）用 GRPO 搭配**規則式獎勵**（答案對不對、格式對不對）直接在 base model 上訓練（R1-Zero），模型自發地寫出越來越長的推理過程。這類方法稱為 **RLVR**（reinforcement learning with verifiable rewards），也是 CS336 作業 5 的主題。
+再用 (12.5) 的 clip 目標，加上對參考模型的 KL 懲罰。KL 不是精確算出來的，而是在模型自己抽出的每個 token 上估計（Schulman 的「k3」估計量）：
+
+$$\hat{\mathrm{KL}}_t = \frac{\pi_{\text{ref}}(y_t \mid \cdot)}{\pi_\theta(y_t \mid \cdot)} - \log \frac{\pi_{\text{ref}}(y_t \mid \cdot)}{\pi_\theta(y_t \mid \cdot)} - 1 \tag{12.10}$$
+
+因為 $u - \log u - 1 \ge 0$，每一項都非負；在 $y_t \sim \pi_\theta$ 時期望值正好是 $\mathrm{KL}(\pi_\theta \,\|\, \pi_{\text{ref}})$（練習 6）。
+
+DeepSeek-R1（2025）用 GRPO 搭配**規則式獎勵**（答案對不對、格式對不對）直接在 base model 上訓練（R1-Zero），模型自發地寫出越來越長的推理過程。這類方法稱為 **RLVR**（reinforcement learning with verifiable rewards），也是 CS336 作業 5 的主題。
 
 後續的修正：
 
@@ -102,14 +109,17 @@ $$A_i = \frac{r_i - \mathrm{mean}(r_1, \dots, r_G)}{\mathrm{std}(r_1, \dots, r_G
 
 **pass@k**：對一題抽 $k$ 個答案，至少一個對的機率。用 $n \ge k$ 個樣本、其中 $c$ 個正確，不偏的估計是（Chen 等人 2021）
 
-$$\text{pass@}k = 1 - \binom{n - c}{k}\Big/\binom{n}{k} \tag{12.10}$$
+$$\text{pass@}k = 1 - \binom{n - c}{k}\Big/\binom{n}{k} \tag{12.11}$$
 
 Yue 等人（2025）比較 RLVR 前後的模型：RL 大幅提高 pass@1，但在 $k$ 很大時，**base model 的 pass@k 反而比較高**——RL 主要是讓模型更穩定地走向它本來就找得到的正確路徑（分布變尖），而不是學到全新的解法。這個結論仍有爭論，但它提醒我們：同時看 pass@1 與 pass@k。Lab 12 會在小模型上量這兩個數字。
+
+反過來說，pass@k 也是 RL 之前的**健康檢查**：如果模型抽很多次都幾乎做不到，組內的獎勵就全是 0，RL 沒有訊號可學。Lab 12 §7 記錄了一個在小模型上失敗的例子：3 位數加法的 step-by-step 答案，greedy 大多對，但 temperature 1 時錯誤分散在上百個「個位數加法事實」上，RL 的梯度方向雖然正確，訊號卻被雜訊淹沒。
 
 ### 2.7 獎勵被鑽漏洞
 
 - 獎勵模型只是人類偏好的近似；最佳化得太用力，真正的品質會先升後降（Gao 等人 2022 的 overoptimization scaling laws）。KL 懲罰與提早停止是常見對策。
 - 可驗證的獎勵比較難鑽，但仍要小心：答案的抽取規則（例如「取最後一個數字」）本身就可能被利用。
+- Lab 12 有一個一眼就看得出來的例子：獎勵是「故事開頭有沒有提到主題字」，GRPO 之後模型把主題字塞進每一句（「the horse played with the horse」）——獎勵大漲，故事變差。加上 KL 懲罰 (12.10) 後，獎勵少漲一點，文字也比較像原本的模型。
 
 ---
 
@@ -120,9 +130,11 @@ Yue 等人（2025）比較 RLVR 前後的模型：RL 大幅提高 pass@1，但�
 | 每個回答 token 的 $\log\pi$ | `completion_logprobs`（同一 prompt 的多個回答一起算，含遮罩） |
 | (12.9) 與 nanochat 的 $r - \mathrm{mean}$ | `group_advantages(rewards, normalize_std=...)` |
 | (12.3)(12.5) | `policy_gradient_loss`（不給 `old_logprobs` 就是 on-policy 的 REINFORCE；token 層級平均） |
+| (12.10) | `kl_penalty` |
 | (12.8) | `dpo_loss` |
-| (12.10) | `pass_at_k` |
-| 獎勵：加法答對與否 | `chat.addition_reward` |
+| (12.11) | `pass_at_k` |
+| 獎勵：故事開頭有沒有提到主題（Lab 12 主任務） | `chat.mentions_topic`、`chat.story_request`、`chat.HELD_OUT_TOPICS` |
+| 獎勵：加法答對與否（Lab 12 §7） | `chat.addition_reward` |
 | 同一 prompt 批次抽樣（有 KV cache） | `sampling.generate(..., num_samples=G)` |
 
 ## 4. 常見誤解
@@ -141,12 +153,15 @@ Yue 等人（2025）比較 RLVR 前後的模型：RL 大幅提高 pass@1，但�
 3. 驗證 (12.7) 代入 (12.4) 時 $Z(x)$ 會消掉。
 4. $n = 16$ 個樣本中 $c = 2$ 個正確：pass@1、pass@4、pass@16 各是多少？
 5. 一組 8 個回答的獎勵是 $(1, 0, 0, 0, 0, 0, 0, 0)$：用 (12.9) 與 nanochat 的 $r - \mathrm{mean}$，答對的那個 advantage 各是多少？
+6. 證明 (12.10) 非負，且 $\mathbb{E}_{y_t \sim \pi_\theta}[\hat{\mathrm{KL}}_t] = \mathrm{KL}(\pi_\theta \,\|\, \pi_{\text{ref}})$。為什麼不直接用 $\log \pi_\theta - \log \pi_{\text{ref}}$（它的期望值也是 KL）？
 
 **動手改**（在 `12_rl.ipynb`）
 
-6. 把 advantage 改成除以 std（`normalize_std=True`），學習曲線有什麼不同？
-7. 把每題的樣本數從 16 降到 4，有多少題的 advantage 全為 0？
-8. DPO 的 $\beta$ 從 0.1 改成 1.0，對參考模型的偏離（平均 log-ratio）怎麼變？
+7. 把 advantage 改成除以 std（`normalize_std=True`），學習曲線有什麼不同？
+8. 把每個主題的樣本數 $G$ 從 16 降到 4：「沒有訊號」的 prompt 變多少？學習變快還是變慢（以抽樣的總數計）？
+9. KL 懲罰的 $\beta$ 試 0.03、0.3、1.0，畫出「held-out 獎勵 vs KL/token」的取捨曲線。
+10. 修補獎勵：主題字出現超過 3 次就扣分，或乘上 $1 - \text{repetition}$。鑽漏洞的行為消失了嗎？模型又找到什麼新漏洞？
+11. DPO 的 $\beta$ 從 0.1 改成 1.0，KL/token 怎麼變？再用 DPO 後的模型重新抽樣、組一批新的配對再訓練一輪（iterative DPO），和 GRPO 差多少？
 
 ## 6. 延伸閱讀
 

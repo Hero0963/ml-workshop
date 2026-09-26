@@ -90,7 +90,8 @@
 | PPO-clip $\min(\rho A, \mathrm{clip}(\rho, 1 \pm \epsilon)A)$ | (12.5) |
 | DPO $-\log\sigma\left(\beta\log\frac{\pi(y_w)}{\pi_{\text{ref}}(y_w)} - \beta\log\frac{\pi(y_l)}{\pi_{\text{ref}}(y_l)}\right)$ | (12.8) |
 | GRPO advantage $(r_i - \bar r)/\mathrm{std}(r)$（nanochat：$r_i - \bar r$） | (12.9) |
-| pass@k $= 1 - \binom{n-c}{k}/\binom{n}{k}$ | (12.10) |
+| 每個 token 的 KL 估計 $\frac{\pi_{\text{ref}}}{\pi_\theta} - \log\frac{\pi_{\text{ref}}}{\pi_\theta} - 1$ | (12.10) |
+| pass@k $= 1 - \binom{n-c}{k}/\binom{n}{k}$ | (12.11) |
 | InfoNCE $-\log\dfrac{e^{s(q_i, d_i)/\tau}}{\sum_j e^{s(q_i, d_j)/\tau}}$ | (13.1) |
 | BM25 | (13.4) |
 | 置中正確率 $(\text{acc} - \text{acc}_{\text{rand}})/(1 - \text{acc}_{\text{rand}})$ | (14.2) |

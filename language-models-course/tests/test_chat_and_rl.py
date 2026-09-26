@@ -26,6 +26,7 @@ from lm_course.rl import (
     completion_logprobs,
     dpo_loss,
     group_advantages,
+    kl_penalty,
     pass_at_k,
     policy_gradient_loss,
 )
@@ -106,6 +107,24 @@ def test_step_by_step_reply_is_correct_column_addition(a: int, b: int) -> None:
     assert int("".join(str(d) for d in reversed(digits))) == a + b
     assert p.question("steps").endswith("Think step by step.")
     assert p.question("tool").endswith("Use the calculator.")
+
+
+def test_kl_penalty_is_an_unbiased_kl_estimate() -> None:
+    p = torch.tensor([0.5, 0.3, 0.2])
+    q = torch.tensor([0.2, 0.2, 0.6])
+    tokens = torch.arange(3)[None]
+    per_token = kl_penalty(p.log()[None], q.log()[None], torch.ones(1, 3))
+    # weight each token by how often pi samples it: the exact expectation under pi
+    weighted = sum(
+        p[i]
+        * kl_penalty(
+            p.log()[i : i + 1, None], q.log()[i : i + 1, None], torch.ones(1, 1)
+        )
+        for i in tokens[0]
+    )
+    assert per_token >= 0
+    assert torch.allclose(weighted, (p * (p / q).log()).sum())
+    assert kl_penalty(p.log()[None], p.log()[None], torch.ones(1, 3)) == 0
 
 
 def test_topic_reward() -> None:
